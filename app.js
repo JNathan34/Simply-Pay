@@ -52,6 +52,7 @@
   let cloudSyncTimer = null;
   let cloudSyncing = false;
   let cloudSyncPending = false;
+  let cloudReconnectPromise = null;
   let applyingCloudState = false;
   let lastGoogleSyncAt = "";
 
@@ -178,10 +179,10 @@
   }
 
   function saveState(options = {}) {
-    const { touch = true, queueSync = true } = options;
+    const { touch = true, queueSync = true, syncDelay = 0 } = options;
     if (touch) state.updatedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    if (queueSync && !applyingCloudState) queueCloudSync();
+    if (queueSync && !applyingCloudState) queueCloudSync(syncDelay);
   }
 
   function uid() {
@@ -260,6 +261,17 @@
     const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
     const month = new Intl.DateTimeFormat(undefined, { month: "short" }).format(date);
     return `${weekday} the ${ordinalDay(date.getDate())} ${month} ${date.getFullYear()}`;
+  }
+
+  function formatSyncTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "just now";
+    return new Intl.DateTimeFormat(undefined, {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
   }
 
   function escapeHtml(value) {
@@ -869,122 +881,268 @@
     return y;
   }
 
-  function exportInvoiceWord(invoice) {
+  async function exportInvoiceWord(invoice) {
+    if (!window.JSZip) {
+      showToast("Word export is still loading. Try again in a second.");
+      return;
+    }
+
+    try {
+      const blob = await createInvoiceDocx(invoice);
+      downloadGeneratedBlob(`${invoiceFileName(invoice)}.docx`, blob);
+      showToast(`Invoice ${invoice.number} Word document downloaded.`);
+    } catch (error) {
+      showToast("Could not create the Word document.");
+    }
+  }
+
+  async function createInvoiceDocx(invoice) {
+    const zip = new window.JSZip();
+
+    zip.file("[Content_Types].xml", docxContentTypesXml());
+    zip.folder("_rels").file(".rels", docxPackageRelationshipsXml());
+    zip.folder("docProps").file("core.xml", docxCorePropertiesXml(invoice));
+    zip.folder("docProps").file("app.xml", docxAppPropertiesXml());
+
+    const word = zip.folder("word");
+    word.file("document.xml", docxDocumentXml(invoice));
+    word.file("styles.xml", docxStylesXml());
+    word.folder("_rels").file("document.xml.rels", docxDocumentRelationshipsXml());
+
+    return zip.generateAsync({
+      type: "blob",
+      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  }
+
+  function docxDocumentXml(invoice) {
     const details = invoice.details || {};
     const paid = invoiceIsPaid(invoice);
-    const rows = sortedEntries(invoice.entries)
-      .map(
-        (entry, index) => `
-          <tr style="background:${index % 2 === 0 ? "#f9fbfb" : "#ffffff"};">
-            <td>${escapeHtml(formatWorkDate(entry.date))}</td>
-            <td>${escapeHtml(entry.work || "Manual Labour")}</td>
-            <td style="text-align:right;">${formatHours(entry.hours)}</td>
-          </tr>
-        `
-      )
+    const workTitle = invoice.entries[0]?.work || "Manual Labour";
+    const period = `${formatShortDate(invoice.periodStart)} to ${formatShortDate(invoice.periodEnd)}`;
+    const paidText = paid ? `PAID${invoice.paidAt ? ` ${formatShortDate(invoice.paidAt)}` : ""}` : "";
+
+    const body = [
+      docxTable([
+        [
+          docxCell([docxParagraph(details.businessName || "A nathan Brickwork", { bold: true, size: 54, font: "Cambria" })], 6500, { border: "none" }),
+          docxCell(
+            [
+              docxParagraph("INVOICE", { align: "right", bold: true, color: "0D514A", size: 44 }),
+              docxParagraph(`No. ${invoice.number}`, { align: "right", bold: true, color: "63716D", size: 20 }),
+              paidText ? docxParagraph(paidText, { align: "right", bold: true, color: "0D514A", size: 20 }) : "",
+            ],
+            2900,
+            { border: "none" }
+          ),
+        ],
+      ]),
+      docxParagraph("", { after: 160 }),
+      docxTable([
+        [
+          docxCell(
+            [docxParagraph("INVOICE DATE", { bold: true, color: "63716D", size: 18 }), docxParagraph(formatInvoiceDate(invoice.date), { bold: true, size: 24 })],
+            4700,
+            { shading: "F9FBFB" }
+          ),
+          docxCell(
+            [docxParagraph("WORK PERIOD", { bold: true, color: "63716D", size: 18 }), docxParagraph(period, { bold: true, size: 24 })],
+            4700,
+            { shading: "F9FBFB" }
+          ),
+        ],
+      ]),
+      docxParagraph("", { after: 180 }),
+      docxTable([
+        [
+          docxCell(
+            [docxParagraph("TOTAL AMOUNT DUE", { bold: true, color: "63716D", size: 18 }), docxParagraph(plainMoney(invoice.total, invoice.currency), { bold: true, color: "0D514A", size: 48 })],
+            4700,
+            { shading: "E6F5EF", borderColor: "B6D6CE" }
+          ),
+          docxCell(
+            [docxParagraph(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, { align: "right", bold: true, size: 22 }), docxParagraph(workTitle, { align: "right", bold: true, size: 22 })],
+            4700,
+            { shading: "E6F5EF", borderColor: "B6D6CE" }
+          ),
+        ],
+      ]),
+      docxParagraph("Work Summary", { bold: true, size: 26, before: 360, after: 120 }),
+      docxParagraph(`${workTitle} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`, { size: 22, after: 120 }),
+      docxTable([
+        [
+          docxCell(
+            [
+              docxParagraph("PAYMENT DETAILS", { bold: true, color: "63716D", size: 18 }),
+              docxParagraph(`Name: ${details.bankName || details.yourName || "Jacob Nathan"}`, { size: 21 }),
+              docxParagraph(`Account Number: ${details.accountNumber || ""}`, { size: 21 }),
+              docxParagraph(`Sort Code: ${details.sortCode || ""}`, { size: 21 }),
+            ],
+            9400,
+            { shading: "F9FBFB" }
+          ),
+        ],
+      ]),
+      docxParagraph("Work Log", { bold: true, size: 26, before: 360, after: 120 }),
+      docxWorkLogTable(invoice),
+      docxParagraph(invoice.note || "Thank you for your business", { bold: true, size: 22, before: 360, after: 320 }),
+      docxParagraph(details.yourName || details.bankName || "Jacob Nathan", { bold: true, size: 22 }),
+      docxSectionProperties(),
+    ].join("");
+
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+        <w:body>${body}</w:body>
+      </w:document>`;
+  }
+
+  function docxWorkLogTable(invoice) {
+    const header = [
+      docxCell([docxParagraph("Date", { bold: true, color: "FFFFFF", size: 19 })], 3200, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Work", { bold: true, color: "FFFFFF", size: 19 })], 4700, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Hours", { bold: true, color: "FFFFFF", size: 19 })], 1500, { shading: "16756B", borderColor: "16756B" }),
+    ];
+    const rows = sortedEntries(invoice.entries).map((entry, index) => [
+      docxCell([docxParagraph(formatWorkDate(entry.date), { size: 20 })], 3200, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(entry.work || "Manual Labour", { size: 20 })], 4700, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(formatHours(entry.hours), { align: "right", size: 20 })], 1500, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+    ]);
+
+    return docxTable([header, ...rows]);
+  }
+
+  function docxTable(rows) {
+    return `<w:tbl>
+      <w:tblPr>
+        <w:tblW w:w="9400" w:type="dxa"/>
+        <w:tblBorders>
+          <w:top w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+          <w:left w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+          <w:bottom w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+          <w:right w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+          <w:insideH w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+          <w:insideV w:val="single" w:sz="4" w:space="0" w:color="DFE7E4"/>
+        </w:tblBorders>
+      </w:tblPr>
+      ${rows.map((row) => `<w:tr>${row.join("")}</w:tr>`).join("")}
+    </w:tbl>`;
+  }
+
+  function docxCell(content, width, options = {}) {
+    const borderColor = options.borderColor || "DFE7E4";
+    const borders =
+      options.border === "none"
+        ? `<w:tcBorders><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></w:tcBorders>`
+        : `<w:tcBorders><w:top w:val="single" w:sz="4" w:color="${borderColor}"/><w:left w:val="single" w:sz="4" w:color="${borderColor}"/><w:bottom w:val="single" w:sz="4" w:color="${borderColor}"/><w:right w:val="single" w:sz="4" w:color="${borderColor}"/></w:tcBorders>`;
+
+    return `<w:tc>
+      <w:tcPr>
+        <w:tcW w:w="${width}" w:type="dxa"/>
+        ${options.shading ? `<w:shd w:fill="${options.shading}"/>` : ""}
+        ${borders}
+        <w:tcMar><w:top w:w="120" w:type="dxa"/><w:left w:w="140" w:type="dxa"/><w:bottom w:w="120" w:type="dxa"/><w:right w:w="140" w:type="dxa"/></w:tcMar>
+      </w:tcPr>
+      ${content.filter(Boolean).join("")}
+    </w:tc>`;
+  }
+
+  function docxParagraph(text, options = {}) {
+    const paragraphProps = [
+      options.align ? `<w:jc w:val="${options.align}"/>` : "",
+      options.before || options.after ? `<w:spacing w:before="${options.before || 0}" w:after="${options.after || 0}"/>` : "",
+    ]
+      .filter(Boolean)
+      .join("");
+    const runProps = [
+      options.bold ? "<w:b/>" : "",
+      options.color ? `<w:color w:val="${options.color}"/>` : "",
+      options.size ? `<w:sz w:val="${options.size}"/>` : "",
+      options.font ? `<w:rFonts w:ascii="${xmlEscape(options.font)}" w:hAnsi="${xmlEscape(options.font)}"/>` : "",
+    ]
+      .filter(Boolean)
       .join("");
 
-    const html = `
-      <!doctype html>
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>${escapeHtml(invoiceFileName(invoice))}</title>
-          <style>
-            @page { margin: 0.68in; }
-            body { background: #ffffff; color: #17211f; font-family: Calibri, Arial, sans-serif; }
-            .accent { height: 10px; background: #16756b; margin: -0.68in -0.68in 30px; }
-            table { border-collapse: collapse; width: 100%; }
-            .header td { border: 0; padding: 0 0 22px; vertical-align: top; }
-            .brand { font-family: Cambria, Georgia, serif; font-size: 27pt; font-weight: bold; color: #17211f; }
-            .invoice-title { color: #0d514a; font-size: 22pt; font-weight: bold; text-align: right; letter-spacing: 1px; }
-            .invoice-no { color: #63716d; font-size: 10pt; font-weight: bold; text-align: right; }
-            .paid-stamp { display: inline-block; margin-top: 8px; border: 1px solid #16756b; background: #e6f5ef; color: #0d514a; padding: 5px 9px; font-size: 9pt; font-weight: bold; }
-            .rule { border-top: 1px solid #dfe7e4; height: 18px; }
-            .meta td { border: 1px solid #dfe7e4; background: #f9fbfb; padding: 11px 13px; width: 50%; }
-            .label { color: #63716d; font-size: 8.5pt; font-weight: bold; text-transform: uppercase; }
-            .value { color: #17211f; font-size: 12pt; font-weight: bold; padding-top: 4px; }
-            .total { margin-top: 18px; border: 1px solid #b6d6ce; background: #e6f5ef; }
-            .total td { border: 0; padding: 14px 16px; vertical-align: middle; }
-            .total-label { color: #63716d; font-size: 9pt; font-weight: bold; text-transform: uppercase; }
-            .total-value { color: #0d514a; font-size: 24pt; font-weight: bold; padding-top: 3px; }
-            .summary { color: #17211f; font-size: 11pt; font-weight: bold; text-align: right; }
-            h2 { margin: 24px 0 8px; color: #17211f; font-size: 13pt; }
-            p { margin: 0 0 5px; font-size: 11pt; line-height: 1.35; }
-            .muted { color: #63716d; }
-            .payment { margin-top: 18px; border: 1px solid #dfe7e4; background: #f9fbfb; }
-            .payment td { border: 0; padding: 12px 14px; }
-            .work-log { margin-top: 10px; }
-            .work-log th, .work-log td { border: 1px solid #dfe7e4; padding: 8px; font-size: 10.5pt; }
-            .work-log th { background: #16756b; color: #ffffff; text-align: left; font-weight: bold; }
-            .thanks { margin-top: 24px; border-top: 1px solid #dfe7e4; padding-top: 18px; font-weight: bold; }
-            .signature { margin-top: 36px; font-weight: bold; }
-          </style>
-        </head>
-        <body>
-          <div class="accent"></div>
-          <table class="header">
-            <tr>
-              <td style="width:68%;"><div class="brand">${escapeHtml(details.businessName || "A nathan Brickwork")}</div></td>
-              <td style="width:32%;">
-                <div class="invoice-title">INVOICE</div>
-                <div class="invoice-no">No. ${escapeHtml(invoice.number)}</div>
-                ${paid ? `<div class="paid-stamp">PAID${invoice.paidAt ? ` ${escapeHtml(formatShortDate(invoice.paidAt))}` : ""}</div>` : ""}
-              </td>
-            </tr>
-          </table>
-          <div class="rule"></div>
-          <table class="meta">
-            <tr>
-              <td>
-                <div class="label">Invoice Date</div>
-                <div class="value">${escapeHtml(formatInvoiceDate(invoice.date))}</div>
-              </td>
-              <td>
-                <div class="label">Work Period</div>
-                <div class="value">${escapeHtml(formatShortDate(invoice.periodStart))} to ${escapeHtml(formatShortDate(invoice.periodEnd))}</div>
-              </td>
-            </tr>
-          </table>
-          <table class="total">
-            <tr>
-              <td style="width:48%;">
-                <div class="total-label">Total Amount Due</div>
-                <div class="total-value">${escapeHtml(plainMoney(invoice.total, invoice.currency))}</div>
-              </td>
-              <td style="width:52%;" class="summary">
-                ${formatHours(invoice.hours)} hours at ${escapeHtml(money(invoice.rate, invoice.currency))} per hour<br />
-                ${escapeHtml(invoice.entries[0]?.work || "Manual Labour")}
-              </td>
-            </tr>
-          </table>
-          <h2>Work Summary</h2>
-          <p>${escapeHtml(invoice.entries[0]?.work || "Manual Labour")} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.</p>
-          <table class="payment">
-            <tr>
-              <td>
-                <div class="label">Payment Details</div>
-                <p><strong>Name:</strong> ${escapeHtml(details.bankName || details.yourName || "Jacob Nathan")}</p>
-                <p><strong>Account Number:</strong> ${escapeHtml(details.accountNumber || "")}</p>
-                <p><strong>Sort Code:</strong> ${escapeHtml(details.sortCode || "")}</p>
-              </td>
-            </tr>
-          </table>
-          <h2>Work Log</h2>
-          <table class="work-log">
-            <thead>
-              <tr><th>Date</th><th>Work</th><th>Hours</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-          <p class="thanks">${escapeHtml(invoice.note || "Thank you for your business")}</p>
-          <p class="signature">${escapeHtml(details.yourName || details.bankName || "Jacob Nathan")}</p>
-        </body>
-      </html>
-    `;
+    return `<w:p>
+      ${paragraphProps ? `<w:pPr>${paragraphProps}</w:pPr>` : ""}
+      <w:r>${runProps ? `<w:rPr>${runProps}</w:rPr>` : ""}<w:t xml:space="preserve">${xmlEscape(text)}</w:t></w:r>
+    </w:p>`;
+  }
 
-    downloadBlob(`${invoiceFileName(invoice)}.doc`, html, "application/msword;charset=utf-8");
-    showToast(`Invoice ${invoice.number} Word document downloaded.`);
+  function docxSectionProperties() {
+    return `<w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="980" w:right="980" w:bottom="980" w:left="980" w:header="720" w:footer="720" w:gutter="0"/>
+    </w:sectPr>`;
+  }
+
+  function docxContentTypesXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+        <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+        <Default Extension="xml" ContentType="application/xml"/>
+        <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+        <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+        <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+        <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+      </Types>`;
+  }
+
+  function docxPackageRelationshipsXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+        <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+        <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+      </Relationships>`;
+  }
+
+  function docxDocumentRelationshipsXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+        <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+      </Relationships>`;
+  }
+
+  function docxCorePropertiesXml(invoice) {
+    const now = new Date().toISOString();
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <dc:title>${xmlEscape(invoiceFileName(invoice))}</dc:title>
+        <dc:creator>Simply Pay</dc:creator>
+        <cp:lastModifiedBy>Simply Pay</cp:lastModifiedBy>
+        <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+        <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+      </cp:coreProperties>`;
+  }
+
+  function docxAppPropertiesXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+        <Application>Simply Pay</Application>
+      </Properties>`;
+  }
+
+  function docxStylesXml() {
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+      <w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+        <w:docDefaults>
+          <w:rPrDefault>
+            <w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="22"/><w:color w:val="17211F"/></w:rPr>
+          </w:rPrDefault>
+          <w:pPrDefault>
+            <w:pPr><w:spacing w:after="80"/></w:pPr>
+          </w:pPrDefault>
+        </w:docDefaults>
+      </w:styles>`;
+  }
+
+  function xmlEscape(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&apos;");
   }
 
   function invoiceFileName(invoice) {
@@ -994,6 +1152,10 @@
 
   function downloadBlob(filename, content, type) {
     const blob = new Blob([content], { type });
+    downloadGeneratedBlob(filename, blob);
+  }
+
+  function downloadGeneratedBlob(filename, blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -1070,7 +1232,7 @@
 
     if (state.account && googleAccessToken) {
       els.googleStatus.textContent = lastGoogleSyncAt
-        ? `Google Drive sync is on. Last saved ${formatShortDate(lastGoogleSyncAt)}.`
+        ? `Google Drive sync is on. Last saved ${formatSyncTime(lastGoogleSyncAt)}.`
         : "Google Drive sync is on.";
       return;
     }
@@ -1172,15 +1334,62 @@
     }
   }
 
-  function queueCloudSync() {
-    if (!state.account || !googleAccessToken || applyingCloudState) return;
+  function queueCloudSync(delayMs = 0) {
+    if (!state.account || applyingCloudState) return;
 
     window.clearTimeout(cloudSyncTimer);
     cloudSyncTimer = window.setTimeout(() => {
-      pushGoogleSave().catch(() => {
+      pushGoogleSaveWithReconnect().catch(() => {
         updateGoogleStatus("Google sync paused. Click Sync now to reconnect.");
       });
-    }, 900);
+    }, Math.max(0, delayMs));
+  }
+
+  async function ensureGoogleAccessToken() {
+    if (googleAccessToken) return true;
+    if (!state.account) return false;
+
+    if (window.location.protocol === "file:") {
+      updateGoogleStatus("Google sync needs the app opened from http://localhost or HTTPS.");
+      return false;
+    }
+
+    if (!window.google?.accounts?.oauth2) {
+      updateGoogleStatus("Google sync will start when Google finishes loading.");
+      return false;
+    }
+
+    if (!cloudReconnectPromise) {
+      cloudReconnectPromise = requestGoogleDriveAccess("")
+        .then(() => Boolean(googleAccessToken))
+        .catch(() => {
+          updateGoogleStatus("Google needs Drive permission again. Click Sync now.");
+          return false;
+        })
+        .finally(() => {
+          cloudReconnectPromise = null;
+        });
+    }
+
+    return cloudReconnectPromise;
+  }
+
+  async function pushGoogleSaveWithReconnect(retry = true) {
+    const hasAccess = await ensureGoogleAccessToken();
+    if (!hasAccess) return;
+
+    try {
+      await pushGoogleSave();
+    } catch (error) {
+      if (retry && state.account && !googleAccessToken) {
+        const refreshed = await ensureGoogleAccessToken();
+        if (refreshed) {
+          await pushGoogleSaveWithReconnect(false);
+          return;
+        }
+      }
+      throw error;
+    }
   }
 
   async function pullThenPushGoogleSave() {
@@ -1192,7 +1401,7 @@
       const remoteState = normalizeRemoteState(remotePayload);
       if (shouldUseRemoteState(remoteState)) {
         applyRemoteState(remoteState);
-        lastGoogleSyncAt = todayIso();
+        lastGoogleSyncAt = new Date().toISOString();
         showToast("Loaded your Google save.");
         return;
       }
@@ -1218,7 +1427,7 @@
         const created = await createGoogleSave();
         googleDriveFileId = created.id || "";
       }
-      lastGoogleSyncAt = todayIso();
+      lastGoogleSyncAt = new Date().toISOString();
       updateGoogleStatus();
     } finally {
       cloudSyncing = false;

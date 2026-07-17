@@ -2,7 +2,7 @@
   "name": "Simply Pay",
   "short_name": "Simply Pay",
   "description": "Track work hours, invoices, and billing history.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
