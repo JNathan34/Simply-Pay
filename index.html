@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#16756b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Hours Log" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>Hours Log</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="icons/icon-180.png" />
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Hours Log</p>
+          <h1>Work Tracker</h1>
+        </div>
+        <div class="topbar-actions">
+          <div class="account-pill hidden" id="accountPill">
+            <span class="account-dot"></span>
+            <span id="accountPillText">Signed in</span>
+          </div>
+          <button class="icon-button ghost" id="openSettings" type="button" title="Open settings">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="summary-grid" aria-label="Current work summary">
+          <article class="metric-card">
+            <span>Unbilled hours</span>
+            <strong id="summaryHours">0</strong>
+          </article>
+          <article class="metric-card">
+            <span>Hourly rate</span>
+            <strong id="summaryRate">&pound;0.00</strong>
+          </article>
+          <article class="metric-card accent">
+            <span>Current total</span>
+            <strong id="summaryTotal">&pound;0.00</strong>
+          </article>
+          <article class="metric-card">
+            <span>Invoices made</span>
+            <strong id="summaryInvoices">0</strong>
+          </article>
+        </section>
+
+        <section class="main-grid">
+          <section class="panel entry-panel">
+            <div class="panel-heading">
+              <h2 id="entryFormTitle">Add Work Day</h2>
+              <button class="icon-button ghost hidden" id="cancelEdit" type="button" title="Cancel edit">
+                <i data-lucide="x"></i>
+                <span>Cancel</span>
+              </button>
+            </div>
+
+            <form id="entryForm" class="form-grid">
+              <input id="entryId" type="hidden" />
+
+              <label>
+                <span>Date worked</span>
+                <input id="workDate" type="date" required />
+              </label>
+
+              <label>
+                <span>Work done</span>
+                <input id="workDescription" type="text" placeholder="Manual Labour" required />
+              </label>
+
+              <label>
+                <span>Hours worked</span>
+                <input id="hoursWorked" type="number" min="0" step="0.25" inputmode="decimal" required />
+              </label>
+
+              <button class="primary-button" id="saveEntry" type="submit">
+                <i data-lucide="plus"></i>
+                <span>Add To Log</span>
+              </button>
+            </form>
+          </section>
+
+          <section class="panel log-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Current Log</h2>
+                <p id="logCount">0 work days</p>
+              </div>
+              <button class="icon-button ghost" id="clearLog" type="button" title="Clear current log">
+                <i data-lucide="rotate-ccw"></i>
+                <span>Clear</span>
+              </button>
+            </div>
+
+            <div class="log-list" id="logList"></div>
+            <div class="empty-state hidden" id="emptyLog">
+              <i data-lucide="calendar-clock"></i>
+              <p>No unbilled hours yet.</p>
+            </div>
+          </section>
+
+          <section class="panel invoice-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Create Invoice</h2>
+                <p id="invoiceHelp">Add hours first, then create an invoice when you are ready.</p>
+              </div>
+            </div>
+
+            <form id="invoiceForm" class="form-grid">
+              <div class="two-column">
+                <label>
+                  <span>Invoice date</span>
+                  <input id="invoiceDate" type="date" required />
+                </label>
+                <label>
+                  <span>Next invoice number</span>
+                  <input id="invoiceNumber" type="text" readonly />
+                </label>
+              </div>
+
+              <label>
+                <span>Note on bill</span>
+                <input id="billNote" type="text" placeholder="Thank you for your business" />
+              </label>
+
+              <button class="primary-button" id="createInvoice" type="button">
+                <i data-lucide="receipt-text"></i>
+                <span>Create Invoice From Current Log</span>
+              </button>
+            </form>
+          </section>
+
+          <section class="panel history-panel">
+            <div class="panel-heading">
+              <div>
+                <h2>Invoice History</h2>
+                <p id="historyCount">0 invoices</p>
+              </div>
+            </div>
+
+            <div class="history-list" id="historyList"></div>
+            <div class="empty-state hidden" id="emptyHistory">
+              <i data-lucide="archive"></i>
+              <p>No invoices created yet.</p>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="settings-backdrop hidden" id="settingsOverlay" aria-hidden="true">
+      <aside class="settings-menu" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="settings-header">
+          <div>
+            <p class="eyebrow">Saved Details</p>
+            <h2 id="settingsTitle">Settings</h2>
+          </div>
+          <button class="icon-only ghost" id="closeSettings" type="button" title="Close settings">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+
+        <form id="settingsForm" class="settings-form">
+          <section class="settings-section">
+            <h3>Google Account</h3>
+            <div class="account-card">
+              <div class="account-avatar" id="accountAvatar">
+                <i data-lucide="user"></i>
+              </div>
+              <div>
+                <strong id="accountName">Not signed in</strong>
+                <span id="accountEmail">Add a Google Client ID to enable sign-in.</span>
+              </div>
+            </div>
+            <label>
+              <span>Google Client ID</span>
+              <input id="googleClientId" type="text" placeholder="1234567890-abc.apps.googleusercontent.com" autocomplete="off" />
+            </label>
+            <div class="google-actions">
+              <div class="google-button-shell" id="googleButton"></div>
+              <button class="icon-button ghost hidden" id="signOutGoogle" type="button" title="Sign out">
+                <i data-lucide="log-out"></i>
+                <span>Sign out</span>
+              </button>
+            </div>
+            <p class="settings-note" id="googleStatus">Google sign-in is ready once a Client ID is saved.</p>
+          </section>
+
+          <section class="settings-section">
+            <h3>Appearance</h3>
+            <label class="toggle-row">
+              <span class="toggle-copy">
+                <strong>Dark mode</strong>
+                <small>Use a darker app look.</small>
+              </span>
+              <input id="darkMode" type="checkbox" />
+              <span class="toggle-switch" aria-hidden="true"></span>
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h3>Your Bill Details</h3>
+            <label>
+              <span>Business / heading</span>
+              <input id="businessName" type="text" placeholder="A nathan Brickwork" autocomplete="organization" />
+            </label>
+            <label>
+              <span>Your name</span>
+              <input id="yourName" type="text" placeholder="Jacob Nathan" autocomplete="name" />
+            </label>
+            <label>
+              <span>Email / phone</span>
+              <input id="businessContact" type="text" placeholder="you@example.com" autocomplete="email" />
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h3>Bank Details</h3>
+            <label>
+              <span>Name on account</span>
+              <input id="bankName" type="text" placeholder="Jacob Nathan" />
+            </label>
+            <label>
+              <span>Account number</span>
+              <input id="accountNumber" type="text" inputmode="numeric" placeholder="58925008" />
+            </label>
+            <label>
+              <span>Sort code</span>
+              <input id="sortCode" type="text" inputmode="numeric" placeholder="09-01-28" />
+            </label>
+          </section>
+
+          <section class="settings-section">
+            <h3>Defaults</h3>
+            <div class="two-column">
+              <label>
+                <span>Currency</span>
+                <select id="currency">
+                  <option value="GBP">GBP</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="CAD">CAD</option>
+                  <option value="AUD">AUD</option>
+                </select>
+              </label>
+              <label>
+                <span>Hourly rate</span>
+                <input id="defaultRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="53" />
+              </label>
+            </div>
+            <label>
+              <span>Default work</span>
+              <input id="defaultWork" type="text" placeholder="Manual Labour" />
+            </label>
+            <label>
+              <span>Next invoice number</span>
+              <input id="nextInvoiceNumber" type="text" placeholder="14" />
+            </label>
+          </section>
+
+          <button class="primary-button" id="settingsDone" type="button">
+            <i data-lucide="check"></i>
+            <span>Done</span>
+          </button>
+        </form>
+      </aside>
+    </div>
+
+    <div class="toast hidden" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
