@@ -6,10 +6,11 @@
     <meta name="theme-color" content="#16756b" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Hours Log" />
+    <meta name="apple-mobile-web-app-title" content="Simply Pay" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>Hours Log</title>
+    <title>Simply Pay</title>
     <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
     <link rel="stylesheet" href="styles.css" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -20,19 +21,20 @@
   <body>
     <div class="app-shell">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Hours Log</p>
-          <h1>Work Tracker</h1>
-        </div>
-        <div class="topbar-actions">
-          <div class="account-pill hidden" id="accountPill">
-            <span class="account-dot"></span>
-            <span id="accountPillText">Signed in</span>
+        <div class="topbar-content">
+          <div class="brand-lockup">
+            <img class="brand-mark" src="icons/simply-pay-logo.svg" alt="" />
+            <div>
+              <p class="eyebrow">Work billing</p>
+              <h1>Simply Pay</h1>
+            </div>
           </div>
-          <button class="icon-button ghost" id="openSettings" type="button" title="Open settings">
-            <i data-lucide="settings"></i>
-            <span>Settings</span>
-          </button>
+          <div class="topbar-actions">
+            <button class="menu-button" id="openSettings" type="button" title="Open menu" aria-label="Open menu">
+              <i data-lucide="menu"></i>
+              <span class="sr-only">Menu</span>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -164,8 +166,8 @@
       <aside class="settings-menu" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="settings-header">
           <div>
-            <p class="eyebrow">Saved Details</p>
-            <h2 id="settingsTitle">Settings</h2>
+            <p class="eyebrow">Simply Pay</p>
+            <h2 id="settingsTitle">Menu</h2>
           </div>
           <button class="icon-only ghost" id="closeSettings" type="button" title="Close settings">
             <i data-lucide="x"></i>
@@ -181,7 +183,7 @@
               </div>
               <div>
                 <strong id="accountName">Not signed in</strong>
-                <span id="accountEmail">Add a Google Client ID to enable sign-in.</span>
+                <span id="accountEmail">Sign in to sync your hours automatically.</span>
               </div>
             </div>
             <label>
@@ -190,12 +192,16 @@
             </label>
             <div class="google-actions">
               <div class="google-button-shell" id="googleButton"></div>
+              <button class="icon-button secondary hidden" id="syncNowGoogle" type="button" title="Sync now">
+                <i data-lucide="cloud-upload"></i>
+                <span>Sync now</span>
+              </button>
               <button class="icon-button ghost hidden" id="signOutGoogle" type="button" title="Sign out">
                 <i data-lucide="log-out"></i>
                 <span>Sign out</span>
               </button>
             </div>
-            <p class="settings-note" id="googleStatus">Google sign-in is ready once a Client ID is saved.</p>
+            <p class="settings-note" id="googleStatus">Google sign-in is ready. Your hours will sync after permission.</p>
           </section>
 
           <section class="settings-section">

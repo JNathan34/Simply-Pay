@@ -1,6 +1,6 @@
 {
-  "name": "Hours Log",
-  "short_name": "Hours Log",
+  "name": "Simply Pay",
+  "short_name": "Simply Pay",
   "description": "Track work hours, invoices, and billing history.",
   "start_url": "./index.html",
   "scope": "./",

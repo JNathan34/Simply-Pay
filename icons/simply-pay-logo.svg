@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Simply Pay">
+  <rect width="64" height="64" rx="14" fill="#0d514a"/>
+  <path d="M18 35.5h28" stroke="#36c6b3" stroke-width="5" stroke-linecap="round"/>
+  <path d="M21 25h22" stroke="#edf6f3" stroke-width="5" stroke-linecap="round"/>
+  <path d="M21 46h16" stroke="#edf6f3" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="46" cy="46" r="6" fill="#36c6b3"/>
+</svg>

@@ -1,10 +1,11 @@
-const CACHE_NAME = "hours-log-v4";
+const CACHE_NAME = "simply-pay-v1";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./manifest.webmanifest",
+  "./icons/simply-pay-logo.svg",
   "./icons/icon-180.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
