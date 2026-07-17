@@ -255,6 +255,13 @@
     }).format(parseIsoDate(isoDate));
   }
 
+  function formatWorkDate(isoDate) {
+    const date = parseIsoDate(isoDate);
+    const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
+    const month = new Intl.DateTimeFormat(undefined, { month: "short" }).format(date);
+    return `${weekday} the ${ordinalDay(date.getDate())} ${month} ${date.getFullYear()}`;
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -397,6 +404,12 @@
 
   function clearLog() {
     if (!state.entries.length) return;
+    const workDays = state.entries.length;
+    const confirmed = window.confirm(
+      `Clear ${workDays} ${workDays === 1 ? "work day" : "work days"} (${formatHours(currentHours())} hours) from the current log? Invoice history will stay saved.`
+    );
+    if (!confirmed) return;
+
     state.entries = [];
     saveState();
     resetEntryForm();
@@ -495,7 +508,7 @@
           <article class="work-card">
             <div class="work-card-header">
               <div>
-                <strong>${escapeHtml(formatShortDate(entry.date))}</strong>
+                <strong>${escapeHtml(formatWorkDate(entry.date))}</strong>
                 <span>${escapeHtml(entry.work || "Manual Labour")}</span>
               </div>
               <span class="badge">${formatHours(entry.hours)} hrs</span>
@@ -808,7 +821,7 @@
   }
 
   function drawPdfWorkTable(doc, invoice, margin, startY, width, pageHeight, colors) {
-    const colWidths = [120, width - 210, 90];
+    const colWidths = [170, width - 260, 90];
     const headers = ["Date", "Work", "Hours"];
     let y = startY;
 
@@ -845,7 +858,7 @@
       doc.rect(margin, y, width, rowHeight);
       doc.setTextColor(...colors.ink);
       let x = margin;
-      doc.text(formatShortDate(entry.date), x + 8, y + 19);
+      doc.text(doc.splitTextToSize(formatWorkDate(entry.date), colWidths[0] - 16), x + 8, y + 19);
       x += colWidths[0];
       doc.text(doc.splitTextToSize(entry.work || "Manual Labour", colWidths[1] - 16), x + 8, y + 19);
       x += colWidths[1];
@@ -863,7 +876,7 @@
       .map(
         (entry, index) => `
           <tr style="background:${index % 2 === 0 ? "#f9fbfb" : "#ffffff"};">
-            <td>${escapeHtml(formatShortDate(entry.date))}</td>
+            <td>${escapeHtml(formatWorkDate(entry.date))}</td>
             <td>${escapeHtml(entry.work || "Manual Labour")}</td>
             <td style="text-align:right;">${formatHours(entry.hours)}</td>
           </tr>

@@ -833,6 +833,20 @@ select:focus {
     width: 100%;
   }
 
+  .log-panel .panel-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .log-panel .panel-heading > .icon-button {
+    width: auto;
+    min-height: 40px;
+    padding-inline: 12px;
+    justify-self: end;
+  }
+
   .two-column {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
@@ -847,6 +861,57 @@ select:focus {
   .work-card-header,
   .history-card-header {
     display: grid;
+  }
+
+  .log-list {
+    gap: 10px;
+  }
+
+  .work-card {
+    gap: 11px;
+    padding: 13px;
+    border-color: var(--accent-border);
+    background: linear-gradient(180deg, var(--card-bg) 0%, var(--surface-strong) 100%);
+  }
+
+  .work-card-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .work-card-header > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .work-card strong {
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  .work-card .badge {
+    justify-self: end;
+    min-height: 28px;
+    padding: 5px 11px;
+  }
+
+  .work-meta {
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+  }
+
+  .work-card .card-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .work-card .card-actions .icon-button {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
   }
 
   .history-badges {
