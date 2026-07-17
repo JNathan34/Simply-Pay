@@ -132,8 +132,11 @@ button:disabled {
 
 .topbar-content,
 .workspace {
-  width: min(calc(100% - (var(--page-gutter) * 2)), var(--content-max));
+  width: 100%;
+  max-width: 1248px;
   margin-inline: auto;
+  padding-left: var(--page-gutter);
+  padding-right: var(--page-gutter);
 }
 
 .topbar-content {
@@ -142,7 +145,8 @@ button:disabled {
   justify-content: space-between;
   gap: 16px;
   min-height: 104px;
-  padding: 18px 0;
+  padding-top: 18px;
+  padding-bottom: 18px;
 }
 
 .brand-lockup {
@@ -203,7 +207,8 @@ button:disabled {
 .workspace {
   display: grid;
   gap: 18px;
-  padding: 18px 0 34px;
+  padding-top: 18px;
+  padding-bottom: 34px;
 }
 
 .main-grid {
@@ -765,7 +770,8 @@ select:focus {
     min-height: 108px;
     align-items: center;
     gap: 12px;
-    padding: 18px 0 14px;
+    padding-top: 18px;
+    padding-bottom: 14px;
   }
 
   .topbar h1 {

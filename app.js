@@ -91,7 +91,6 @@
     accountAvatar: document.querySelector("#accountAvatar"),
     googleButton: document.querySelector("#googleButton"),
     googleStatus: document.querySelector("#googleStatus"),
-    googleClientId: document.querySelector("#googleClientId"),
     signOutGoogle: document.querySelector("#signOutGoogle"),
     syncNowGoogle: document.querySelector("#syncNowGoogle"),
     businessName: document.querySelector("#businessName"),
@@ -173,7 +172,7 @@
       ...defaultState.settings,
       ...settings,
       nextInvoiceNumber: String(settings.nextInvoiceNumber || defaultState.settings.nextInvoiceNumber),
-      googleClientId: String(settings.googleClientId || defaultState.settings.googleClientId),
+      googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
       darkMode: Boolean(settings.darkMode),
     };
   }
@@ -314,7 +313,6 @@
       defaultRate: els.defaultRate.value,
       defaultWork: els.defaultWork.value.trim() || "Manual Labour",
       nextInvoiceNumber: els.nextInvoiceNumber.value.trim() || "1",
-      googleClientId: els.googleClientId.value.trim(),
       darkMode: els.darkMode.checked,
     });
 
@@ -1236,15 +1234,11 @@
 
   function applyRemoteState(remoteState) {
     const currentAccount = state.account;
-    const currentClientId = state.settings.googleClientId;
     applyingCloudState = true;
     state = normalizeState({
       ...remoteState,
       account: currentAccount || remoteState.account,
-      settings: {
-        ...remoteState.settings,
-        googleClientId: remoteState.settings?.googleClientId || currentClientId || DEFAULT_GOOGLE_CLIENT_ID,
-      },
+      settings: remoteState.settings,
     });
     saveState({ touch: false, queueSync: false });
     syncFormsFromState();
