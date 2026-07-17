@@ -84,7 +84,11 @@
     workDate: document.querySelector("#workDate"),
     entryCompany: document.querySelector("#entryCompany"),
     workDescription: document.querySelector("#workDescription"),
+    chargeType: document.querySelector("#chargeType"),
+    hoursWorkedLabel: document.querySelector("#hoursWorkedLabel"),
     hoursWorked: document.querySelector("#hoursWorked"),
+    fixedAmountLabel: document.querySelector("#fixedAmountLabel"),
+    fixedAmount: document.querySelector("#fixedAmount"),
     saveEntry: document.querySelector("#saveEntry span"),
     cancelEdit: document.querySelector("#cancelEdit"),
     logList: document.querySelector("#logList"),
@@ -183,9 +187,15 @@
 
   function normalizeEntry(entry, settings = defaultState.settings) {
     const source = entry && typeof entry === "object" ? entry : {};
+    const fixedAmount = roundMoney(source.fixedAmount ?? source.amount);
+    const chargeType = source.chargeType === "fixed" || (fixedAmount > 0 && asNumber(source.hours) <= 0) ? "fixed" : "hours";
+
     return {
       ...source,
       company: companyFromList(source.company || source.companyName || settings.defaultCompany, settings.companies),
+      chargeType,
+      hours: chargeType === "fixed" ? 0 : asNumber(source.hours),
+      fixedAmount: chargeType === "fixed" ? fixedAmount : 0,
     };
   }
 
@@ -256,8 +266,60 @@
     return Math.round((asNumber(value) + Number.EPSILON) * 100) / 100;
   }
 
+  function entryIsFixed(entry) {
+    return entry?.chargeType === "fixed";
+  }
+
+  function entryHours(entry) {
+    return entryIsFixed(entry) ? 0 : asNumber(entry?.hours);
+  }
+
+  function entryAmount(entry, rate = hourlyRate()) {
+    return entryIsFixed(entry) ? roundMoney(entry?.fixedAmount) : roundMoney(entryHours(entry) * rate);
+  }
+
+  function entryQuantityLabel(entry) {
+    return entryIsFixed(entry) ? "Fixed" : `${formatHours(entryHours(entry))} hrs`;
+  }
+
+  function entriesNeedHourlyRate(entries) {
+    return entries.some((entry) => !entryIsFixed(entry));
+  }
+
+  function entriesHours(entries) {
+    return entries.reduce((total, entry) => total + entryHours(entry), 0);
+  }
+
+  function entriesTotal(entries, rate = hourlyRate()) {
+    return roundMoney(entries.reduce((total, entry) => total + entryAmount(entry, rate), 0));
+  }
+
+  function entriesFixedTotal(entries) {
+    return roundMoney(entries.filter(entryIsFixed).reduce((total, entry) => total + entryAmount(entry), 0));
+  }
+
+  function billingSummary(entries, currency = state.settings.currency || "GBP", rate = hourlyRate()) {
+    const hours = entriesHours(entries);
+    const fixedTotal = entriesFixedTotal(entries);
+    if (hours > 0 && fixedTotal > 0) return `${formatHours(hours)} hrs + ${money(fixedTotal, currency)} fixed`;
+    if (hours > 0) return `${formatHours(hours)} hrs`;
+    if (fixedTotal > 0) return `${money(fixedTotal, currency)} fixed`;
+    return "0 hrs";
+  }
+
+  function invoiceBillingSummary(invoice) {
+    const entries = invoice.entries || [];
+    const hours = entriesHours(entries);
+    const fixedTotal = entriesFixedTotal(entries);
+    if (hours > 0 && fixedTotal > 0) {
+      return `${formatHours(hours)} hours at ${money(invoice.rate, invoice.currency)} per hour + ${money(fixedTotal, invoice.currency)} fixed`;
+    }
+    if (hours > 0) return `${formatHours(hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`;
+    return `${money(invoice.total, invoice.currency)} fixed amount`;
+  }
+
   function currentHours() {
-    return state.entries.reduce((total, entry) => total + asNumber(entry.hours), 0);
+    return entriesHours(state.entries);
   }
 
   function hourlyRate() {
@@ -265,7 +327,7 @@
   }
 
   function currentTotal() {
-    return roundMoney(currentHours() * hourlyRate());
+    return entriesTotal(state.entries);
   }
 
   function formatHours(value) {
@@ -643,11 +705,14 @@
   function syncFormsFromState() {
     els.workDate.value = todayIso();
     els.workDescription.value = state.settings.defaultWork || "Manual Labour";
+    els.chargeType.value = "hours";
     els.hoursWorked.value = "";
+    els.fixedAmount.value = "";
     els.invoiceDate.value = state.invoiceDraft.invoiceDate || todayIso();
     els.billNote.value = state.invoiceDraft.billNote || defaultState.invoiceDraft.billNote;
     els.invoiceNumber.value = state.settings.nextInvoiceNumber || "1";
     renderCompanyControls();
+    updateChargeTypeControls();
 
     Object.entries(state.settings).forEach(([key, value]) => {
       if (!els[key]) return;
@@ -657,6 +722,14 @@
         els[key].value = Array.isArray(value) ? value.join("\n") : value;
       }
     });
+  }
+
+  function updateChargeTypeControls() {
+    const fixed = els.chargeType.value === "fixed";
+    els.hoursWorkedLabel.classList.toggle("hidden", fixed);
+    els.fixedAmountLabel.classList.toggle("hidden", !fixed);
+    els.hoursWorked.required = !fixed;
+    els.fixedAmount.required = fixed;
   }
 
   function syncSettingsFromForm() {
@@ -700,9 +773,16 @@
   function submitEntry(event) {
     event.preventDefault();
 
-    const hours = asNumber(els.hoursWorked.value);
-    if (hours <= 0) {
+    const chargeType = els.chargeType.value === "fixed" ? "fixed" : "hours";
+    const hours = chargeType === "hours" ? asNumber(els.hoursWorked.value) : 0;
+    const fixedAmount = chargeType === "fixed" ? roundMoney(els.fixedAmount.value) : 0;
+
+    if (chargeType === "hours" && hours <= 0) {
       showToast("Enter hours greater than zero.");
+      return;
+    }
+    if (chargeType === "fixed" && fixedAmount <= 0) {
+      showToast("Enter a fixed amount greater than zero.");
       return;
     }
 
@@ -711,7 +791,9 @@
       date: els.workDate.value || todayIso(),
       company: companyFromList(els.entryCompany.value, state.settings.companies),
       work: els.workDescription.value.trim() || state.settings.defaultWork || "Manual Labour",
+      chargeType,
       hours,
+      fixedAmount,
       createdAt: new Date().toISOString(),
     };
     state.settings.defaultCompany = entry.company;
@@ -738,7 +820,10 @@
     els.workDate.value = todayIso();
     renderCompanySelect(els.entryCompany, state.settings.companies, state.settings.defaultCompany);
     els.workDescription.value = state.settings.defaultWork || "Manual Labour";
+    els.chargeType.value = "hours";
     els.hoursWorked.value = "";
+    els.fixedAmount.value = "";
+    updateChargeTypeControls();
     els.entryFormTitle.textContent = "Add Work Day";
     els.saveEntry.textContent = "Add To Log";
     els.cancelEdit.classList.add("hidden");
@@ -752,11 +837,14 @@
     els.workDate.value = entry.date;
     renderCompanySelect(els.entryCompany, [...state.settings.companies, entryCompanyName(entry)], entryCompanyName(entry));
     els.workDescription.value = entry.work || state.settings.defaultWork || "Manual Labour";
-    els.hoursWorked.value = entry.hours;
+    els.chargeType.value = entryIsFixed(entry) ? "fixed" : "hours";
+    els.hoursWorked.value = entryIsFixed(entry) ? "" : entryHours(entry);
+    els.fixedAmount.value = entryIsFixed(entry) ? entry.fixedAmount : "";
+    updateChargeTypeControls();
     els.entryFormTitle.textContent = "Edit Work Day";
     els.saveEntry.textContent = "Update Log";
     els.cancelEdit.classList.remove("hidden");
-    els.hoursWorked.focus();
+    (entryIsFixed(entry) ? els.fixedAmount : els.hoursWorked).focus();
   }
 
   function deleteEntry(id) {
@@ -770,7 +858,7 @@
     if (!state.entries.length) return;
     const workDays = state.entries.length;
     const confirmed = window.confirm(
-      `Clear ${workDays} ${workDays === 1 ? "work day" : "work days"} (${formatHours(currentHours())} hours) from the current log? Invoice history will stay saved.`
+      `Clear ${workDays} ${workDays === 1 ? "work day" : "work days"} (${billingSummary(state.entries)}, ${money(currentTotal())}) from the current log? Invoice history will stay saved.`
     );
     if (!confirmed) return;
 
@@ -791,15 +879,15 @@
       showToast(`Add work days for ${company} before creating an invoice.`);
       return;
     }
-    if (hourlyRate() <= 0) {
+    if (entriesNeedHourlyRate(entries) && hourlyRate() <= 0) {
       showToast("Set your hourly rate in Settings first.");
       openSettings();
       return;
     }
 
-    const hours = entries.reduce((total, entry) => total + asNumber(entry.hours), 0);
+    const hours = entriesHours(entries);
     const rate = hourlyRate();
-    const total = roundMoney(hours * rate);
+    const total = entriesTotal(entries, rate);
     const number = String(state.settings.nextInvoiceNumber || "1").trim();
     const invoice = {
       id: uid(),
@@ -878,10 +966,12 @@
       const day = map.get(date) || {
         date,
         hours: 0,
+        fixedTotal: 0,
         companies: new Set(),
         items: [],
       };
-      day.hours += asNumber(entry.hours);
+      day.hours += entryHours(entry);
+      if (entryIsFixed(entry)) day.fixedTotal += entryAmount(entry);
       day.companies.add(entry.company || state.settings.defaultCompany);
       day.items.push(entry);
       map.set(date, day);
@@ -904,6 +994,13 @@
       dates.push(date);
     }
     return dates;
+  }
+
+  function calendarDayBillingLabel(day) {
+    if (!day) return "";
+    const hoursText = day.hours > 0 ? `${formatHours(day.hours)}h` : "";
+    const fixedText = day.fixedTotal > 0 ? money(day.fixedTotal) : "";
+    return [hoursText, fixedText].filter(Boolean).join(" + ");
   }
 
   function renderCompanyDots(companies) {
@@ -935,11 +1032,12 @@
     const monthWork = [...workByDate.values()].filter((day) => monthKey(parseIsoDate(day.date)) === month);
     const workedDays = monthWork.length;
     const workedHours = monthWork.reduce((total, day) => total + day.hours, 0);
+    const workedFixedTotal = monthWork.reduce((total, day) => total + day.fixedTotal, 0);
     const selectedDay = workByDate.get(selectedCalendarDate);
 
     els.calendarMonthTitle.textContent = formatCalendarMonth(calendarMonthDate);
     els.calendarSummary.textContent = workedDays
-      ? `${workedDays} ${workedDays === 1 ? "worked day" : "worked days"} - ${formatHours(workedHours)} hrs`
+      ? `${workedDays} ${workedDays === 1 ? "worked day" : "worked days"} - ${[workedHours > 0 ? `${formatHours(workedHours)} hrs` : "", workedFixedTotal > 0 ? `${money(workedFixedTotal)} fixed` : ""].filter(Boolean).join(" + ")}`
       : "No worked days this month";
     renderCalendarLegend(monthWork);
 
@@ -952,8 +1050,9 @@
         const isSelected = isoDate === selectedCalendarDate;
         const dayCompanies = day ? [...day.companies] : [];
         const companies = dayCompanies.join(", ");
+        const dayBilling = calendarDayBillingLabel(day);
         const title = day
-          ? `${formatWorkDate(isoDate)} - ${formatHours(day.hours)} hrs - ${companies}`
+          ? `${formatWorkDate(isoDate)} - ${dayBilling} - ${companies}`
           : formatWorkDate(isoDate);
         const style = dayCompanies.length ? ` style="${companyColorStyle(dayCompanies[0])}"` : "";
 
@@ -964,7 +1063,7 @@
             <span class="calendar-day-number">${date.getDate()}</span>
             ${
               day
-                ? `<div class="calendar-company-dots">${renderCompanyDots(dayCompanies)}</div><strong>${formatHours(day.hours)}h</strong><small>${escapeHtml(companies)}</small>`
+                ? `<div class="calendar-company-dots">${renderCompanyDots(dayCompanies)}</div><strong>${escapeHtml(dayBilling)}</strong><small>${escapeHtml(companies)}</small>`
                 : ""
             }
           </button>
@@ -987,7 +1086,7 @@
     els.calendarDayDetails.innerHTML = `
       <div class="calendar-detail-heading">
         <strong>${escapeHtml(formatWorkDate(day.date))}</strong>
-        <span>${formatHours(day.hours)} hrs total</span>
+        <span>${escapeHtml(calendarDayBillingLabel(day))} total</span>
       </div>
       <div class="calendar-detail-list">
         ${items
@@ -999,7 +1098,7 @@
                   <span>${escapeHtml(item.work || "Manual Labour")}</span>
                 </div>
                 <div>
-                  <span>${formatHours(item.hours)} hrs</span>
+                  <span>${entryIsFixed(item) ? money(entryAmount(item)) : `${formatHours(entryHours(item))} hrs`}</span>
                   <small>${escapeHtml(item.source)}</small>
                 </div>
               </div>
@@ -1047,15 +1146,15 @@
     const hours = currentHours();
     const company = selectedInvoiceCompany();
     const companyEntries = entriesForCompany(company);
-    const companyHours = companyEntries.reduce((total, entry) => total + asNumber(entry.hours), 0);
+    const companyTotal = entriesTotal(companyEntries);
     els.summaryHours.textContent = formatHours(hours);
     els.summaryRate.textContent = money(hourlyRate());
     els.summaryTotal.textContent = money(currentTotal());
     els.summaryInvoices.textContent = state.invoices.length;
-    els.createInvoice.disabled = !companyEntries.length || hourlyRate() <= 0;
+    els.createInvoice.disabled = !companyEntries.length || (entriesNeedHourlyRate(companyEntries) && hourlyRate() <= 0);
     els.invoiceHelp.textContent = companyEntries.length
-      ? `${formatHours(companyHours)} unbilled hours for ${company} ready for invoice ${state.settings.nextInvoiceNumber || "1"}.`
-      : "Add hours first, then create an invoice when you are ready.";
+      ? `${billingSummary(companyEntries)} for ${company} (${money(companyTotal)}) ready for invoice ${state.settings.nextInvoiceNumber || "1"}.`
+      : "Add work first, then create an invoice when you are ready.";
     els.invoiceNumber.value = state.settings.nextInvoiceNumber || "1";
   }
 
@@ -1070,13 +1169,14 @@
             <div class="work-card-header">
               <div>
                 <strong>${escapeHtml(formatWorkDate(entry.date))}</strong>
-                <span>${escapeHtml(entry.work || "Manual Labour")}</span>
-              </div>
-              <span class="badge">${formatHours(entry.hours)} hrs</span>
+              <span>${escapeHtml(entry.work || "Manual Labour")}</span>
+            </div>
+              <span class="badge">${escapeHtml(entryQuantityLabel(entry))}</span>
             </div>
             <div class="work-meta">
               <span>${escapeHtml(entryCompanyName(entry))}</span>
-              <span>${money(asNumber(entry.hours) * hourlyRate())}</span>
+              <span>${entryIsFixed(entry) ? "Fixed amount" : "Hourly"}</span>
+              <span>${money(entryAmount(entry))}</span>
             </div>
             <div class="card-actions">
               <button class="icon-button ghost" type="button" data-action="edit-entry" data-id="${entry.id}">
@@ -1116,7 +1216,7 @@
               </div>
             </div>
             <div class="history-meta">
-              <span>${formatHours(invoice.hours)} hrs</span>
+              <span>${escapeHtml(billingSummary(invoice.entries || [], invoice.currency, invoice.rate))}</span>
               <span>${escapeHtml(formatShortDate(invoice.periodStart))} to ${escapeHtml(formatShortDate(invoice.periodEnd))}</span>
               ${paid && invoice.paidAt ? `<span>Paid ${escapeHtml(formatShortDate(invoice.paidAt))}</span>` : ""}
             </div>
@@ -1325,7 +1425,7 @@
     doc.text(plainMoney(invoice.total, invoice.currency), margin + 18, y + 55);
     doc.setTextColor(...ink);
     doc.setFontSize(11);
-    doc.text(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, pageWidth - margin - 18, y + 32, { align: "right" });
+    doc.text(invoiceBillingSummary(invoice), pageWidth - margin - 18, y + 32, { align: "right" });
     doc.setTextColor(...muted);
     doc.text(companyName, pageWidth - margin - 18, y + 52, { align: "right" });
     y += 108;
@@ -1339,7 +1439,7 @@
     doc.setFontSize(10.5);
     doc.setTextColor(...muted);
     const summaryLines = [
-      `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`
+      `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}: ${billingSummary(invoice.entries || [], invoice.currency, invoice.rate)}.`
     ].filter(Boolean);
     summaryLines.forEach((lineText) => {
       const wrapped = doc.splitTextToSize(lineText, contentWidth);
@@ -1403,8 +1503,8 @@
   }
 
   function drawPdfWorkTable(doc, invoice, margin, startY, width, pageHeight, colors) {
-    const colWidths = [170, width - 260, 90];
-    const headers = ["Date", "Work", "Hours"];
+    const colWidths = [150, width - 340, 82, 108];
+    const headers = ["Date", "Work", "Hours", "Amount"];
     let y = startY;
 
     const drawHeader = () => {
@@ -1431,7 +1531,7 @@
         drawHeader();
       }
 
-      const rowHeight = 30;
+      const rowHeight = 32;
       if (index % 2 === 0) {
         doc.setFillColor(249, 251, 251);
         doc.rect(margin, y, width, rowHeight, "F");
@@ -1444,7 +1544,9 @@
       x += colWidths[0];
       doc.text(doc.splitTextToSize(invoiceWorkDescription(entry, invoice), colWidths[1] - 16), x + 8, y + 19);
       x += colWidths[1];
-      doc.text(formatHours(entry.hours), x + colWidths[2] - 8, y + 19, { align: "right" });
+      doc.text(entryIsFixed(entry) ? "Fixed" : formatHours(entryHours(entry)), x + colWidths[2] - 8, y + 19, { align: "right" });
+      x += colWidths[2];
+      doc.text(plainMoney(entryAmount(entry, invoice.rate), invoice.currency), x + colWidths[3] - 8, y + 19, { align: "right" });
       y += rowHeight;
     });
 
@@ -1537,14 +1639,17 @@
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
           docxCell(
-            [docxParagraph(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, { align: "right", bold: true, size: 22 }), docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
+            [docxParagraph(invoiceBillingSummary(invoice), { align: "right", bold: true, size: 22 }), docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
             4700,
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
         ],
       ]),
       docxParagraph("Work Summary", { bold: true, size: 26, before: 360, after: 120 }),
-      docxParagraph(`${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`, { size: 22, after: 120 }),
+      docxParagraph(
+        `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}: ${billingSummary(invoice.entries || [], invoice.currency, invoice.rate)}.`,
+        { size: 22, after: 120 }
+      ),
       docxTable([
         [
           docxCell(
@@ -1574,14 +1679,16 @@
 
   function docxWorkLogTable(invoice) {
     const header = [
-      docxCell([docxParagraph("Date", { bold: true, color: "FFFFFF", size: 19 })], 3200, { shading: "16756B", borderColor: "16756B" }),
-      docxCell([docxParagraph("Work", { bold: true, color: "FFFFFF", size: 19 })], 4700, { shading: "16756B", borderColor: "16756B" }),
-      docxCell([docxParagraph("Hours", { bold: true, color: "FFFFFF", size: 19 })], 1500, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Date", { bold: true, color: "FFFFFF", size: 19 })], 2800, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Work", { bold: true, color: "FFFFFF", size: 19 })], 4100, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Hours", { bold: true, color: "FFFFFF", size: 19 })], 1200, { shading: "16756B", borderColor: "16756B" }),
+      docxCell([docxParagraph("Amount", { bold: true, color: "FFFFFF", size: 19 })], 1300, { shading: "16756B", borderColor: "16756B" }),
     ];
     const rows = sortedEntries(invoice.entries).map((entry, index) => [
-      docxCell([docxParagraph(formatWorkDate(entry.date), { size: 20 })], 3200, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(invoiceWorkDescription(entry, invoice), { size: 20 })], 4700, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(formatHours(entry.hours), { align: "right", size: 20 })], 1500, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(formatWorkDate(entry.date), { size: 20 })], 2800, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(invoiceWorkDescription(entry, invoice), { size: 20 })], 4100, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(entryIsFixed(entry) ? "Fixed" : formatHours(entryHours(entry)), { align: "right", size: 20 })], 1200, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(plainMoney(entryAmount(entry, invoice.rate), invoice.currency), { align: "right", size: 20 })], 1300, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
     ]);
 
     return docxTable([header, ...rows]);
@@ -2211,6 +2318,7 @@
 
   function bindEvents() {
     els.entryForm.addEventListener("submit", submitEntry);
+    els.chargeType.addEventListener("change", updateChargeTypeControls);
     els.cancelEdit.addEventListener("click", resetEntryForm);
     els.logList.addEventListener("click", handleLogAction);
     els.historyList.addEventListener("click", handleHistoryAction);
