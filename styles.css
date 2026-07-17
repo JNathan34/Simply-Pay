@@ -220,6 +220,7 @@ button:disabled {
 
 .panel,
 .metric-card {
+  min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -256,6 +257,12 @@ button:disabled {
   gap: 14px;
 }
 
+.summary-grid > *,
+.main-grid > *,
+.workspace > * {
+  min-width: 0;
+}
+
 .metric-card {
   display: grid;
   gap: 8px;
@@ -287,6 +294,13 @@ button:disabled {
 .history-list {
   display: grid;
   gap: 14px;
+}
+
+.form-grid,
+.two-column,
+.form-grid > *,
+.two-column > * {
+  min-width: 0;
 }
 
 label {
@@ -850,6 +864,16 @@ select:focus {
   .two-column {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+  }
+
+  .primary-button {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .primary-button span {
+    min-width: 0;
   }
 
   input,
