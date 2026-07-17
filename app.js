@@ -7,6 +7,18 @@
   const GOOGLE_SAVE_FILE_NAME = "hours-log-save.json";
   const DEFAULT_GOOGLE_CLIENT_ID = "664652124946-e7abvmled21k144u686pfbie60pu5giu.apps.googleusercontent.com";
   const DEFAULT_COMPANY = "General";
+  const COMPANY_COLORS = [
+    { name: "Teal", value: "#16756b" },
+    { name: "Indigo", value: "#4f46e5" },
+    { name: "Amber", value: "#d97706" },
+    { name: "Rose", value: "#be123c" },
+    { name: "Blue", value: "#2563eb" },
+    { name: "Green", value: "#16a34a" },
+    { name: "Purple", value: "#9333ea" },
+    { name: "Red", value: "#dc2626" },
+    { name: "Cyan", value: "#0891b2" },
+    { name: "Gold", value: "#ca8a04" },
+  ];
 
   const toIsoDate = (date) => {
     const localDate = new Date(date);
@@ -35,6 +47,7 @@
       defaultRate: "",
       defaultWork: "Manual Labour",
       companies: [DEFAULT_COMPANY],
+      companyColors: {},
       defaultCompany: DEFAULT_COMPANY,
       nextInvoiceNumber: "14",
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
@@ -209,11 +222,13 @@
   function normalizeSettings(settings) {
     const companies = normalizeCompanies(settings.companies);
     const defaultCompany = companyChoice(settings.defaultCompany || companies[0], companies);
+    const companyColors = normalizeCompanyColors(settings.companyColors, companies);
 
     return {
       ...defaultState.settings,
       ...settings,
       companies,
+      companyColors,
       defaultCompany,
       nextInvoiceNumber: String(settings.nextInvoiceNumber || defaultState.settings.nextInvoiceNumber),
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
@@ -411,6 +426,34 @@
     return choices.find((choice) => sameCompanyName(choice, company)) || choices[0] || DEFAULT_COMPANY;
   }
 
+  function validCompanyColor(value) {
+    const color = String(value || "").trim().toLocaleLowerCase();
+    return COMPANY_COLORS.some((option) => option.value === color) ? color : "";
+  }
+
+  function automaticCompanyColor(company) {
+    const name = normalizeCompanyName(company) || DEFAULT_COMPANY;
+    let hash = 0;
+
+    for (let index = 0; index < name.length; index += 1) {
+      hash = (hash * 31 + name.charCodeAt(index)) % 2147483647;
+    }
+
+    return COMPANY_COLORS[Math.abs(hash) % COMPANY_COLORS.length].value;
+  }
+
+  function normalizeCompanyColors(colors = {}, companies = [DEFAULT_COMPANY]) {
+    const source = colors && typeof colors === "object" ? colors : {};
+    const normalized = {};
+
+    normalizeCompanies(companies).forEach((company) => {
+      const storedKey = Object.keys(source).find((key) => sameCompanyName(key, company));
+      normalized[company] = validCompanyColor(source[storedKey]) || automaticCompanyColor(company);
+    });
+
+    return normalized;
+  }
+
   function invoiceCompanyOptionsFromEntries(entries, settings = defaultState.settings) {
     const companies = uniqueCompanyNames((entries || []).map((entry) => entry.company || entry.companyName));
     return companies.length ? companies : settings.companies;
@@ -457,15 +500,9 @@
   }
 
   function companyColor(company) {
-    const palette = ["#16756b", "#4f46e5", "#d97706", "#be123c", "#2563eb", "#16a34a", "#9333ea", "#dc2626", "#0891b2", "#ca8a04"];
     const name = normalizeCompanyName(company) || DEFAULT_COMPANY;
-    let hash = 0;
-
-    for (let index = 0; index < name.length; index += 1) {
-      hash = (hash * 31 + name.charCodeAt(index)) % 2147483647;
-    }
-
-    return palette[Math.abs(hash) % palette.length];
+    const colorKey = Object.keys(state.settings.companyColors || {}).find((key) => sameCompanyName(key, name));
+    return validCompanyColor(state.settings.companyColors?.[colorKey]) || automaticCompanyColor(name);
   }
 
   function companyColorStyle(company) {
@@ -502,12 +539,28 @@
     return value;
   }
 
+  function renderCompanyColorOptions(selectedColor) {
+    const selected = validCompanyColor(selectedColor) || COMPANY_COLORS[0].value;
+    return COMPANY_COLORS.map(
+      (option) => `<option value="${option.value}" ${option.value === selected ? "selected" : ""}>${escapeHtml(option.name)}</option>`
+    ).join("");
+  }
+
   function renderCompaniesList() {
     els.companiesList.innerHTML = state.settings.companies
       .map(
         (company) => `
-          <div class="company-pill">
-            <span>${escapeHtml(company)}</span>
+          <div class="company-pill" style="${companyColorStyle(company)}">
+            <div class="company-pill-main">
+              <span class="company-color-swatch" aria-hidden="true"></span>
+              <strong>${escapeHtml(company)}</strong>
+            </div>
+            <label class="company-color-control">
+              <span>Color</span>
+              <select data-action="set-company-color" data-company="${escapeHtml(company)}">
+                ${renderCompanyColorOptions(companyColor(company))}
+              </select>
+            </label>
             <button class="icon-only ghost" type="button" data-action="remove-company" data-company="${escapeHtml(company)}" title="Remove company" ${
           state.settings.companies.length <= 1 ? "disabled" : ""
         }>
@@ -517,6 +570,23 @@
         `
       )
       .join("");
+  }
+
+  function setCompanyColor(company, color) {
+    const name = companyFromList(company, state.settings.companies);
+    const selectedColor = validCompanyColor(color);
+    if (!selectedColor) return;
+
+    state.settings.companyColors = normalizeCompanyColors(
+      {
+        ...(state.settings.companyColors || {}),
+        [name]: selectedColor,
+      },
+      state.settings.companies
+    );
+    saveState();
+    render();
+    showToast(`${name} colour updated.`);
   }
 
   function addCompany() {
@@ -538,6 +608,13 @@
     }
 
     state.settings.companies = normalizeCompanies([...state.settings.companies, company]);
+    state.settings.companyColors = normalizeCompanyColors(
+      {
+        ...(state.settings.companyColors || {}),
+        [company]: automaticCompanyColor(company),
+      },
+      state.settings.companies
+    );
     state.settings.defaultCompany = company;
     els.newCompanyName.value = "";
     els.entryCompany.value = company;
@@ -553,6 +630,7 @@
     }
 
     state.settings.companies = normalizeCompanies(state.settings.companies.filter((item) => !sameCompanyName(item, company)));
+    state.settings.companyColors = normalizeCompanyColors(state.settings.companyColors, state.settings.companies);
     if (sameCompanyName(state.settings.defaultCompany, company)) {
       state.settings.defaultCompany = state.settings.companies[0];
     }
@@ -595,6 +673,7 @@
       defaultRate: els.defaultRate.value,
       defaultWork: els.defaultWork.value.trim() || "Manual Labour",
       companies: state.settings.companies,
+      companyColors: state.settings.companyColors,
       defaultCompany: state.settings.defaultCompany,
       nextInvoiceNumber: els.nextInvoiceNumber.value.trim() || "1",
       darkMode: els.darkMode.checked,
@@ -1094,6 +1173,12 @@
     const button = event.target.closest("button[data-action]");
     if (!button) return;
     if (button.dataset.action === "remove-company") removeCompany(button.dataset.company);
+  }
+
+  function handleCompanyChange(event) {
+    const select = event.target.closest('select[data-action="set-company-color"]');
+    if (!select) return;
+    setCompanyColor(select.dataset.company, select.value);
   }
 
   function handleCalendarAction(event) {
@@ -2139,11 +2224,11 @@
     els.invoiceForm.addEventListener("change", syncInvoiceDraftFromForm);
     els.settingsForm.addEventListener("submit", (event) => event.preventDefault());
     els.settingsForm.addEventListener("input", (event) => {
-      if (event.target === els.newCompanyName) return;
+      if (event.target === els.newCompanyName || els.companiesList.contains(event.target)) return;
       syncSettingsFromForm();
     });
     els.settingsForm.addEventListener("change", (event) => {
-      if (event.target === els.newCompanyName) return;
+      if (event.target === els.newCompanyName || els.companiesList.contains(event.target)) return;
       syncSettingsFromForm();
     });
     els.addCompany.addEventListener("click", addCompany);
@@ -2153,6 +2238,7 @@
       addCompany();
     });
     els.companiesList.addEventListener("click", handleCompanyAction);
+    els.companiesList.addEventListener("change", handleCompanyChange);
     els.openSettings.addEventListener("click", openSettings);
     els.closeSettings.addEventListener("click", closeSettings);
     els.settingsDone.addEventListener("click", closeSettings);
