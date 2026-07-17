@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=20" />
+    <link rel="stylesheet" href="styles.css?v=21" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -74,7 +74,10 @@
 
               <label>
                 <span>Date worked</span>
-                <input id="workDate" type="date" required />
+                <span class="field-shell icon-field">
+                  <i data-lucide="calendar-days"></i>
+                  <input id="workDate" type="date" required />
+                </span>
               </label>
 
               <label>
@@ -97,12 +100,18 @@
 
               <label id="hoursWorkedLabel">
                 <span>Hours worked</span>
-                <input id="hoursWorked" type="number" min="0" step="0.25" inputmode="decimal" />
+                <span class="field-shell suffix-field">
+                  <input id="hoursWorked" type="number" min="0" step="0.25" inputmode="decimal" />
+                  <span class="field-affix">hrs</span>
+                </span>
               </label>
 
               <label class="hidden" id="fixedAmountLabel">
                 <span>Fixed amount</span>
-                <input id="fixedAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="22" />
+                <span class="field-shell prefix-field">
+                  <span class="field-affix" data-currency-symbol>£</span>
+                  <input id="fixedAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="22" />
+                </span>
               </label>
 
               <button class="primary-button" id="saveEntry" type="submit">
@@ -183,7 +192,10 @@
               <div class="two-column">
                 <label>
                   <span>Invoice date</span>
-                  <input id="invoiceDate" type="date" required />
+                  <span class="field-shell icon-field">
+                    <i data-lucide="calendar-days"></i>
+                    <input id="invoiceDate" type="date" required />
+                  </span>
                 </label>
                 <label>
                   <span>Next invoice number</span>
@@ -333,7 +345,11 @@
               </label>
               <label>
                 <span>Hourly rate</span>
-                <input id="defaultRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="53" />
+                <span class="field-shell prefix-field rate-field">
+                  <span class="field-affix" data-currency-symbol>£</span>
+                  <input id="defaultRate" type="number" min="0" step="0.01" inputmode="decimal" placeholder="53" />
+                  <span class="field-affix">/hr</span>
+                </span>
               </label>
             </div>
             <label>

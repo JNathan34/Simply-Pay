@@ -134,6 +134,7 @@
     accountNumber: document.querySelector("#accountNumber"),
     sortCode: document.querySelector("#sortCode"),
     currency: document.querySelector("#currency"),
+    currencySymbols: document.querySelectorAll("[data-currency-symbol]"),
     defaultRate: document.querySelector("#defaultRate"),
     defaultWork: document.querySelector("#defaultWork"),
     newCompanyName: document.querySelector("#newCompanyName"),
@@ -342,6 +343,20 @@
       style: "currency",
       currency,
     }).format(asNumber(value));
+  }
+
+  function currencySymbol(currency = state.settings.currency || "GBP") {
+    try {
+      const parts = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).formatToParts(0);
+      return parts.find((part) => part.type === "currency")?.value || currency;
+    } catch (error) {
+      return currency;
+    }
   }
 
   function plainMoney(value, currency = state.settings.currency || "GBP") {
@@ -1132,6 +1147,7 @@
 
   function render() {
     applyTheme();
+    renderCurrencySymbols();
     renderCompanyControls();
     renderSummary();
     renderLog();
@@ -1140,6 +1156,13 @@
     renderAccount();
     scheduleGoogleSignIn();
     refreshIcons();
+  }
+
+  function renderCurrencySymbols() {
+    const symbol = currencySymbol();
+    els.currencySymbols.forEach((element) => {
+      element.textContent = symbol;
+    });
   }
 
   function renderSummary() {
