@@ -296,6 +296,13 @@ button:disabled {
   gap: 14px;
 }
 
+.log-list {
+  max-height: clamp(360px, 58vh, 620px);
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
 .form-grid,
 .two-column,
 .form-grid > *,
@@ -525,6 +532,33 @@ select:focus {
   font-weight: 900;
 }
 
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: -2px 0 12px;
+}
+
+.calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.company-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--company-color, var(--teal));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--company-color, var(--teal)) 18%, transparent);
+}
+
 .calendar-weekdays,
 .calendar-grid {
   display: grid;
@@ -573,8 +607,10 @@ select:focus {
 }
 
 .calendar-day.has-work {
-  border-color: var(--accent-border);
+  border-color: var(--company-color, var(--accent-border));
   background: var(--mint);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--company-color, var(--teal)) 17%, var(--surface-strong)) 0%, var(--surface-strong) 100%);
+  box-shadow: inset 0 4px 0 var(--company-color, var(--teal));
 }
 
 .calendar-day.today {
@@ -586,15 +622,30 @@ select:focus {
   box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
+.calendar-day.has-work.today {
+  box-shadow: inset 0 4px 0 var(--company-color, var(--teal)), inset 0 0 0 2px var(--teal);
+}
+
+.calendar-day.has-work.selected {
+  box-shadow: inset 0 4px 0 var(--company-color, var(--teal)), 0 0 0 3px var(--focus-ring);
+}
+
 .calendar-day-number {
   font-size: 12px;
   font-weight: 900;
 }
 
 .calendar-day strong {
-  color: var(--teal-dark);
+  color: var(--company-color, var(--teal-dark));
   font-size: 15px;
   line-height: 1.1;
+}
+
+.calendar-company-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 9px;
 }
 
 .calendar-day small {
@@ -647,7 +698,9 @@ select:focus {
 .calendar-detail-item {
   align-items: flex-start;
   border-top: 1px solid var(--line);
+  border-left: 4px solid var(--company-color, var(--teal));
   padding: 10px 0;
+  padding-left: 10px;
 }
 
 .calendar-detail-item:first-child {
@@ -843,6 +896,10 @@ select:focus {
 
 .google-button-shell {
   min-height: 40px;
+}
+
+.google-button-shell:empty {
+  min-height: 0;
 }
 
 .company-add-row {
@@ -1090,6 +1147,8 @@ select:focus {
 
   .log-list {
     gap: 10px;
+    max-height: 52vh;
+    padding-right: 2px;
   }
 
   .work-card {

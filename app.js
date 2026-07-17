@@ -93,6 +93,7 @@
     summaryInvoices: document.querySelector("#summaryInvoices"),
     calendarSummary: document.querySelector("#calendarSummary"),
     calendarMonthTitle: document.querySelector("#calendarMonthTitle"),
+    calendarLegend: document.querySelector("#calendarLegend"),
     workCalendar: document.querySelector("#workCalendar"),
     calendarDayDetails: document.querySelector("#calendarDayDetails"),
     calendarPrev: document.querySelector("#calendarPrev"),
@@ -455,6 +456,22 @@
     return state.entries.filter((entry) => sameCompanyName(entryCompanyName(entry), company));
   }
 
+  function companyColor(company) {
+    const palette = ["#16756b", "#4f46e5", "#d97706", "#be123c", "#2563eb", "#16a34a", "#9333ea", "#dc2626", "#0891b2", "#ca8a04"];
+    const name = normalizeCompanyName(company) || DEFAULT_COMPANY;
+    let hash = 0;
+
+    for (let index = 0; index < name.length; index += 1) {
+      hash = (hash * 31 + name.charCodeAt(index)) % 2147483647;
+    }
+
+    return palette[Math.abs(hash) % palette.length];
+  }
+
+  function companyColorStyle(company) {
+    return `--company-color: ${companyColor(company)};`;
+  }
+
   function renderCompanyControls() {
     const entrySelection = state.settings.companies.some((company) => sameCompanyName(company, els.entryCompany.value))
       ? els.entryCompany.value
@@ -810,6 +827,28 @@
     return dates;
   }
 
+  function renderCompanyDots(companies) {
+    return companies
+      .map((company) => `<span class="company-dot" style="${companyColorStyle(company)}" title="${escapeHtml(company)}"></span>`)
+      .join("");
+  }
+
+  function renderCalendarLegend(days) {
+    const companies = uniqueCompanyNames(days.flatMap((day) => [...day.companies]));
+
+    els.calendarLegend.classList.toggle("hidden", companies.length === 0);
+    els.calendarLegend.innerHTML = companies
+      .map(
+        (company) => `
+          <span class="calendar-legend-item">
+            <span class="company-dot" style="${companyColorStyle(company)}"></span>
+            <span>${escapeHtml(company)}</span>
+          </span>
+        `
+      )
+      .join("");
+  }
+
   function renderCalendar() {
     const days = calendarMonthDates(calendarMonthDate);
     const workByDate = calendarDayMap();
@@ -823,6 +862,7 @@
     els.calendarSummary.textContent = workedDays
       ? `${workedDays} ${workedDays === 1 ? "worked day" : "worked days"} - ${formatHours(workedHours)} hrs`
       : "No worked days this month";
+    renderCalendarLegend(monthWork);
 
     els.workCalendar.innerHTML = days
       .map((date) => {
@@ -831,17 +871,23 @@
         const inMonth = date.getMonth() === calendarMonthDate.getMonth();
         const isToday = isoDate === todayIso();
         const isSelected = isoDate === selectedCalendarDate;
-        const companies = day ? [...day.companies].join(", ") : "";
+        const dayCompanies = day ? [...day.companies] : [];
+        const companies = dayCompanies.join(", ");
         const title = day
           ? `${formatWorkDate(isoDate)} - ${formatHours(day.hours)} hrs - ${companies}`
           : formatWorkDate(isoDate);
+        const style = dayCompanies.length ? ` style="${companyColorStyle(dayCompanies[0])}"` : "";
 
         return `
           <button class="calendar-day ${inMonth ? "" : "outside-month"} ${day ? "has-work" : ""} ${isToday ? "today" : ""} ${
           isSelected ? "selected" : ""
-        }" type="button" data-date="${isoDate}" title="${escapeHtml(title)}" aria-pressed="${isSelected ? "true" : "false"}">
+        }" type="button" data-date="${isoDate}" title="${escapeHtml(title)}" aria-pressed="${isSelected ? "true" : "false"}"${style}>
             <span class="calendar-day-number">${date.getDate()}</span>
-            ${day ? `<strong>${formatHours(day.hours)}h</strong><small>${escapeHtml(companies)}</small>` : ""}
+            ${
+              day
+                ? `<div class="calendar-company-dots">${renderCompanyDots(dayCompanies)}</div><strong>${formatHours(day.hours)}h</strong><small>${escapeHtml(companies)}</small>`
+                : ""
+            }
           </button>
         `;
       })
@@ -868,7 +914,7 @@
         ${items
           .map(
             (item) => `
-              <div class="calendar-detail-item">
+              <div class="calendar-detail-item" style="${companyColorStyle(item.company || state.settings.defaultCompany)}">
                 <div>
                   <strong>${escapeHtml(item.company || state.settings.defaultCompany)}</strong>
                   <span>${escapeHtml(item.work || "Manual Labour")}</span>
@@ -1623,6 +1669,7 @@
       lastTokenClientId = "";
       googleTokenClient = null;
       els.googleButton.innerHTML = "";
+      els.googleButton.classList.remove("hidden");
       els.syncNowGoogle.classList.add("hidden");
       els.googleStatus.textContent = "Google sign-in is ready once a Client ID is saved.";
       return;
@@ -1634,7 +1681,15 @@
     }
 
     setupGoogleTokenClient(clientId);
-    els.syncNowGoogle.classList.toggle("hidden", !state.account);
+    const signedIn = Boolean(state.account);
+    els.syncNowGoogle.classList.toggle("hidden", !signedIn);
+    els.googleButton.classList.toggle("hidden", signedIn);
+
+    if (signedIn) {
+      els.googleButton.innerHTML = "";
+      updateGoogleStatus();
+      return;
+    }
 
     if (lastRenderedGoogleClientId === clientId && els.googleButton.children.length) {
       updateGoogleStatus();
