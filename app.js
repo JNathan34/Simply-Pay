@@ -6,6 +6,7 @@
   const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
   const GOOGLE_SAVE_FILE_NAME = "hours-log-save.json";
   const DEFAULT_GOOGLE_CLIENT_ID = "664652124946-e7abvmled21k144u686pfbie60pu5giu.apps.googleusercontent.com";
+  const DEFAULT_COMPANY = "General";
 
   const toIsoDate = (date) => {
     const localDate = new Date(date);
@@ -21,6 +22,7 @@
     invoiceDraft: {
       invoiceDate: todayIso(),
       billNote: "Thank you for your business",
+      company: DEFAULT_COMPANY,
     },
     settings: {
       businessName: "A nathan Brickwork",
@@ -32,6 +34,8 @@
       currency: "GBP",
       defaultRate: "",
       defaultWork: "Manual Labour",
+      companies: [DEFAULT_COMPANY],
+      defaultCompany: DEFAULT_COMPANY,
       nextInvoiceNumber: "14",
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
       darkMode: false,
@@ -55,6 +59,8 @@
   let cloudReconnectPromise = null;
   let applyingCloudState = false;
   let lastGoogleSyncAt = "";
+  let calendarMonthDate = startOfMonthDate(todayIso());
+  let selectedCalendarDate = todayIso();
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -63,6 +69,7 @@
     entryFormTitle: document.querySelector("#entryFormTitle"),
     entryId: document.querySelector("#entryId"),
     workDate: document.querySelector("#workDate"),
+    entryCompany: document.querySelector("#entryCompany"),
     workDescription: document.querySelector("#workDescription"),
     hoursWorked: document.querySelector("#hoursWorked"),
     saveEntry: document.querySelector("#saveEntry span"),
@@ -71,6 +78,7 @@
     emptyLog: document.querySelector("#emptyLog"),
     logCount: document.querySelector("#logCount"),
     clearLog: document.querySelector("#clearLog"),
+    invoiceCompany: document.querySelector("#invoiceCompany"),
     invoiceDate: document.querySelector("#invoiceDate"),
     invoiceNumber: document.querySelector("#invoiceNumber"),
     billNote: document.querySelector("#billNote"),
@@ -83,6 +91,13 @@
     summaryRate: document.querySelector("#summaryRate"),
     summaryTotal: document.querySelector("#summaryTotal"),
     summaryInvoices: document.querySelector("#summaryInvoices"),
+    calendarSummary: document.querySelector("#calendarSummary"),
+    calendarMonthTitle: document.querySelector("#calendarMonthTitle"),
+    workCalendar: document.querySelector("#workCalendar"),
+    calendarDayDetails: document.querySelector("#calendarDayDetails"),
+    calendarPrev: document.querySelector("#calendarPrev"),
+    calendarToday: document.querySelector("#calendarToday"),
+    calendarNext: document.querySelector("#calendarNext"),
     openSettings: document.querySelector("#openSettings"),
     closeSettings: document.querySelector("#closeSettings"),
     settingsDone: document.querySelector("#settingsDone"),
@@ -103,6 +118,9 @@
     currency: document.querySelector("#currency"),
     defaultRate: document.querySelector("#defaultRate"),
     defaultWork: document.querySelector("#defaultWork"),
+    newCompanyName: document.querySelector("#newCompanyName"),
+    addCompany: document.querySelector("#addCompany"),
+    companiesList: document.querySelector("#companiesList"),
     nextInvoiceNumber: document.querySelector("#nextInvoiceNumber"),
     darkMode: document.querySelector("#darkMode"),
     toast: document.querySelector("#toast"),
@@ -131,23 +149,41 @@
   }
 
   function normalizeState(stored) {
+    const settings = normalizeSettings(stored.settings || {});
+    const entries = Array.isArray(stored.entries) ? stored.entries.map((entry) => normalizeEntry(entry, settings)) : [];
+    const invoices = Array.isArray(stored.invoices) ? stored.invoices.map((invoice) => normalizeInvoice(invoice, settings)) : [];
+    const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
+    invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
+
     return {
       ...structuredClone(defaultState),
       ...stored,
-      entries: Array.isArray(stored.entries) ? stored.entries : [],
-      invoices: Array.isArray(stored.invoices) ? stored.invoices.map(normalizeInvoice) : [],
-      invoiceDraft: { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) },
-      settings: normalizeSettings(stored.settings || {}),
+      entries,
+      invoices,
+      invoiceDraft,
+      settings,
       account: stored.account || null,
       updatedAt: stored.updatedAt || "",
     };
   }
 
-  function normalizeInvoice(invoice) {
-    const paidAt = invoice.paidAt ? String(invoice.paidAt).slice(0, 10) : "";
+  function normalizeEntry(entry, settings = defaultState.settings) {
+    const source = entry && typeof entry === "object" ? entry : {};
     return {
-      ...invoice,
-      status: invoice.status || (paidAt ? "paid" : "unpaid"),
+      ...source,
+      company: companyFromList(source.company || source.companyName || settings.defaultCompany, settings.companies),
+    };
+  }
+
+  function normalizeInvoice(invoice, settings = defaultState.settings) {
+    const source = invoice && typeof invoice === "object" ? invoice : {};
+    const paidAt = source.paidAt ? String(source.paidAt).slice(0, 10) : "";
+    const entries = Array.isArray(source.entries) ? source.entries.map((entry) => normalizeEntry(entry, settings)) : [];
+    return {
+      ...source,
+      entries,
+      company: normalizeCompanyName(source.company) || invoiceCompanyNameFromEntries(entries, settings),
+      status: source.status || (paidAt ? "paid" : "unpaid"),
       paidAt,
     };
   }
@@ -163,15 +199,21 @@
     migrated.invoiceDraft = {
       invoiceDate: oldBill.invoiceDate || todayIso(),
       billNote: oldBill.billNote || defaultState.invoiceDraft.billNote,
+      company: migrated.settings.defaultCompany,
     };
     migrated.account = old.account || null;
     return migrated;
   }
 
   function normalizeSettings(settings) {
+    const companies = normalizeCompanies(settings.companies);
+    const defaultCompany = companyChoice(settings.defaultCompany || companies[0], companies);
+
     return {
       ...defaultState.settings,
       ...settings,
+      companies,
+      defaultCompany,
       nextInvoiceNumber: String(settings.nextInvoiceNumber || defaultState.settings.nextInvoiceNumber),
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
       darkMode: Boolean(settings.darkMode),
@@ -263,6 +305,30 @@
     return `${weekday} the ${ordinalDay(date.getDate())} ${month} ${date.getFullYear()}`;
   }
 
+  function startOfMonthDate(isoDate) {
+    const date = parseIsoDate(isoDate);
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+  }
+
+  function addMonths(date, amount) {
+    return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+  }
+
+  function monthKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function formatCalendarMonth(date) {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  }
+
+  function shortWeekday(date) {
+    return new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(date);
+  }
+
   function formatSyncTime(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "just now";
@@ -300,6 +366,185 @@
     return `${prefix}${String(Number(number) + 1).padStart(number.length, "0")}`;
   }
 
+  function normalizeCompanyName(value) {
+    return String(value || "")
+      .trim()
+      .replace(/\s+/g, " ")
+      .slice(0, 80);
+  }
+
+  function uniqueCompanyNames(values) {
+    const source = Array.isArray(values) ? values : String(values || "").split(/\r?\n/);
+    const seen = new Set();
+    const companies = [];
+
+    source.forEach((value) => {
+      const company = normalizeCompanyName(value);
+      const key = company.toLocaleLowerCase();
+      if (!company || seen.has(key)) return;
+      seen.add(key);
+      companies.push(company);
+    });
+
+    return companies;
+  }
+
+  function normalizeCompanies(values) {
+    const companies = uniqueCompanyNames(values);
+    return companies.length ? companies : [DEFAULT_COMPANY];
+  }
+
+  function sameCompanyName(first, second) {
+    return normalizeCompanyName(first).toLocaleLowerCase() === normalizeCompanyName(second).toLocaleLowerCase();
+  }
+
+  function companyFromList(value, companies = [DEFAULT_COMPANY]) {
+    const choices = normalizeCompanies(companies);
+    const company = normalizeCompanyName(value);
+    return choices.find((choice) => sameCompanyName(choice, company)) || company || choices[0] || DEFAULT_COMPANY;
+  }
+
+  function companyChoice(value, companies = [DEFAULT_COMPANY]) {
+    const choices = normalizeCompanies(companies);
+    const company = normalizeCompanyName(value);
+    return choices.find((choice) => sameCompanyName(choice, company)) || choices[0] || DEFAULT_COMPANY;
+  }
+
+  function invoiceCompanyOptionsFromEntries(entries, settings = defaultState.settings) {
+    const companies = uniqueCompanyNames((entries || []).map((entry) => entry.company || entry.companyName));
+    return companies.length ? companies : settings.companies;
+  }
+
+  function invoiceCompanyNameFromEntries(entries, settings = defaultState.settings) {
+    const companies = uniqueCompanyNames((entries || []).map((entry) => entry.company || entry.companyName || settings.defaultCompany));
+    if (companies.length > 1) return "Multiple companies";
+    return companies[0] || settings.defaultCompany || DEFAULT_COMPANY;
+  }
+
+  function entryCompanyName(entry) {
+    return companyFromList(entry?.company || entry?.companyName || state.settings.defaultCompany, [
+      ...state.settings.companies,
+      entry?.company,
+      entry?.companyName,
+    ]);
+  }
+
+  function invoiceCompanyName(invoice) {
+    return normalizeCompanyName(invoice?.company) || invoiceCompanyNameFromEntries(invoice?.entries || [], state.settings);
+  }
+
+  function invoiceHasMultipleCompanies(invoice) {
+    return uniqueCompanyNames((invoice?.entries || []).map((entry) => entryCompanyName(entry))).length > 1;
+  }
+
+  function invoiceWorkDescription(entry, invoice) {
+    const work = entry.work || "Manual Labour";
+    if (!invoiceHasMultipleCompanies(invoice)) return work;
+    return `${work} (${entryCompanyName(entry)})`;
+  }
+
+  function invoiceCompanyOptions() {
+    return invoiceCompanyOptionsFromEntries(state.entries, state.settings);
+  }
+
+  function selectedInvoiceCompany() {
+    return companyChoice(els.invoiceCompany.value || state.invoiceDraft.company || state.settings.defaultCompany, invoiceCompanyOptions());
+  }
+
+  function entriesForCompany(company) {
+    return state.entries.filter((entry) => sameCompanyName(entryCompanyName(entry), company));
+  }
+
+  function renderCompanyControls() {
+    const entrySelection = state.settings.companies.some((company) => sameCompanyName(company, els.entryCompany.value))
+      ? els.entryCompany.value
+      : state.settings.defaultCompany;
+    const invoiceChoices = invoiceCompanyOptions();
+    const invoiceSelection = invoiceChoices.some((company) => sameCompanyName(company, els.invoiceCompany.value))
+      ? els.invoiceCompany.value
+      : companyChoice(state.invoiceDraft.company || state.settings.defaultCompany, invoiceChoices);
+
+    renderCompanySelect(els.entryCompany, state.settings.companies, entrySelection);
+    renderCompanySelect(els.invoiceCompany, invoiceChoices, invoiceSelection);
+    renderCompaniesList();
+  }
+
+  function renderCompanySelect(select, companies, selected) {
+    const choices = normalizeCompanies(companies);
+    const selectedCompany = normalizeCompanyName(selected);
+
+    if (selectedCompany && !choices.some((company) => sameCompanyName(company, selectedCompany))) {
+      choices.push(selectedCompany);
+    }
+
+    const value = companyFromList(selectedCompany, choices);
+    select.innerHTML = choices
+      .map((company) => `<option value="${escapeHtml(company)}">${escapeHtml(company)}</option>`)
+      .join("");
+    select.value = value;
+    return value;
+  }
+
+  function renderCompaniesList() {
+    els.companiesList.innerHTML = state.settings.companies
+      .map(
+        (company) => `
+          <div class="company-pill">
+            <span>${escapeHtml(company)}</span>
+            <button class="icon-only ghost" type="button" data-action="remove-company" data-company="${escapeHtml(company)}" title="Remove company" ${
+          state.settings.companies.length <= 1 ? "disabled" : ""
+        }>
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        `
+      )
+      .join("");
+  }
+
+  function addCompany() {
+    const company = normalizeCompanyName(els.newCompanyName.value);
+    if (!company) {
+      showToast("Enter a company name.");
+      return;
+    }
+
+    const existing = state.settings.companies.find((item) => sameCompanyName(item, company));
+    if (existing) {
+      state.settings.defaultCompany = existing;
+      els.newCompanyName.value = "";
+      els.entryCompany.value = existing;
+      saveState();
+      render();
+      showToast("Company already exists.");
+      return;
+    }
+
+    state.settings.companies = normalizeCompanies([...state.settings.companies, company]);
+    state.settings.defaultCompany = company;
+    els.newCompanyName.value = "";
+    els.entryCompany.value = company;
+    saveState();
+    render();
+    showToast("Company added.");
+  }
+
+  function removeCompany(company) {
+    if (state.settings.companies.length <= 1) {
+      showToast("Keep at least one company.");
+      return;
+    }
+
+    state.settings.companies = normalizeCompanies(state.settings.companies.filter((item) => !sameCompanyName(item, company)));
+    if (sameCompanyName(state.settings.defaultCompany, company)) {
+      state.settings.defaultCompany = state.settings.companies[0];
+    }
+
+    saveState();
+    render();
+    showToast("Company removed.");
+  }
+
   function syncFormsFromState() {
     els.workDate.value = todayIso();
     els.workDescription.value = state.settings.defaultWork || "Manual Labour";
@@ -307,6 +552,7 @@
     els.invoiceDate.value = state.invoiceDraft.invoiceDate || todayIso();
     els.billNote.value = state.invoiceDraft.billNote || defaultState.invoiceDraft.billNote;
     els.invoiceNumber.value = state.settings.nextInvoiceNumber || "1";
+    renderCompanyControls();
 
     Object.entries(state.settings).forEach(([key, value]) => {
       if (!els[key]) return;
@@ -331,6 +577,8 @@
       currency: els.currency.value,
       defaultRate: els.defaultRate.value,
       defaultWork: els.defaultWork.value.trim() || "Manual Labour",
+      companies: state.settings.companies,
+      defaultCompany: state.settings.defaultCompany,
       nextInvoiceNumber: els.nextInvoiceNumber.value.trim() || "1",
       darkMode: els.darkMode.checked,
     });
@@ -345,10 +593,12 @@
 
   function syncInvoiceDraftFromForm() {
     state.invoiceDraft = {
+      company: selectedInvoiceCompany(),
       invoiceDate: els.invoiceDate.value || todayIso(),
       billNote: els.billNote.value.trim() || defaultState.invoiceDraft.billNote,
     };
     saveState();
+    renderSummary();
   }
 
   function submitEntry(event) {
@@ -363,10 +613,14 @@
     const entry = {
       id: els.entryId.value || uid(),
       date: els.workDate.value || todayIso(),
+      company: companyFromList(els.entryCompany.value, state.settings.companies),
       work: els.workDescription.value.trim() || state.settings.defaultWork || "Manual Labour",
       hours,
       createdAt: new Date().toISOString(),
     };
+    state.settings.defaultCompany = entry.company;
+    selectedCalendarDate = entry.date;
+    calendarMonthDate = startOfMonthDate(entry.date);
 
     if (els.entryId.value) {
       const existing = state.entries.find((item) => item.id === entry.id);
@@ -386,6 +640,7 @@
   function resetEntryForm() {
     els.entryId.value = "";
     els.workDate.value = todayIso();
+    renderCompanySelect(els.entryCompany, state.settings.companies, state.settings.defaultCompany);
     els.workDescription.value = state.settings.defaultWork || "Manual Labour";
     els.hoursWorked.value = "";
     els.entryFormTitle.textContent = "Add Work Day";
@@ -399,6 +654,7 @@
 
     els.entryId.value = entry.id;
     els.workDate.value = entry.date;
+    renderCompanySelect(els.entryCompany, [...state.settings.companies, entryCompanyName(entry)], entryCompanyName(entry));
     els.workDescription.value = entry.work || state.settings.defaultWork || "Manual Labour";
     els.hoursWorked.value = entry.hours;
     els.entryFormTitle.textContent = "Edit Work Day";
@@ -432,8 +688,11 @@
   function createInvoice() {
     syncInvoiceDraftFromForm();
 
-    if (!state.entries.length) {
-      showToast("Add work days before creating an invoice.");
+    const company = selectedInvoiceCompany();
+    const entries = sortedEntries(entriesForCompany(company)).map((entry) => ({ ...entry, company: entryCompanyName(entry) }));
+
+    if (!entries.length) {
+      showToast(`Add work days for ${company} before creating an invoice.`);
       return;
     }
     if (hourlyRate() <= 0) {
@@ -442,7 +701,6 @@
       return;
     }
 
-    const entries = sortedEntries(state.entries).map((entry) => ({ ...entry }));
     const hours = entries.reduce((total, entry) => total + asNumber(entry.hours), 0);
     const rate = hourlyRate();
     const total = roundMoney(hours * rate);
@@ -452,6 +710,7 @@
       number,
       date: state.invoiceDraft.invoiceDate || todayIso(),
       note: state.invoiceDraft.billNote || defaultState.invoiceDraft.billNote,
+      company,
       entries,
       hours,
       rate,
@@ -473,25 +732,187 @@
     };
 
     state.invoices.unshift(invoice);
-    state.entries = [];
+    state.entries = state.entries.filter((entry) => !sameCompanyName(entryCompanyName(entry), company));
     state.settings.nextInvoiceNumber = incrementInvoiceNumber(number);
     state.invoiceDraft.invoiceDate = todayIso();
+    state.invoiceDraft.company = invoiceCompanyOptions()[0] || state.settings.defaultCompany;
     saveState();
     resetEntryForm();
     syncFormsFromState();
     render();
-    showToast(`Invoice ${invoice.number} created.`);
+    showToast(`Invoice ${invoice.number} created for ${company}.`);
   }
 
   function sortedEntries(entries) {
     return [...entries].sort((a, b) => `${a.date}${a.createdAt}`.localeCompare(`${b.date}${b.createdAt}`));
   }
 
+  function calendarWorkItems() {
+    const currentItems = state.entries.map((entry) => ({
+      ...entry,
+      company: entryCompanyName(entry),
+      source: "Current log",
+      billed: false,
+    }));
+    const invoiceItems = state.invoices.flatMap((invoice) =>
+      (invoice.entries || []).map((entry) => ({
+        ...entry,
+        company: companyFromList(entry.company || entry.companyName || invoice.company || state.settings.defaultCompany, [
+          ...state.settings.companies,
+          entry.company,
+          entry.companyName,
+          invoice.company,
+        ]),
+        source: `Invoice ${invoice.number}`,
+        billed: true,
+        invoiceNumber: invoice.number,
+        paid: invoiceIsPaid(invoice),
+      }))
+    );
+
+    return [...currentItems, ...invoiceItems].filter((entry) => entry.date);
+  }
+
+  function calendarDayMap(items = calendarWorkItems()) {
+    const map = new Map();
+    items.forEach((entry) => {
+      const date = String(entry.date || "").slice(0, 10);
+      if (!date) return;
+
+      const day = map.get(date) || {
+        date,
+        hours: 0,
+        companies: new Set(),
+        items: [],
+      };
+      day.hours += asNumber(entry.hours);
+      day.companies.add(entry.company || state.settings.defaultCompany);
+      day.items.push(entry);
+      map.set(date, day);
+    });
+    return map;
+  }
+
+  function calendarMonthDates(monthDate) {
+    const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    const lastDay = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+    const leadingDays = (firstDay.getDay() + 6) % 7;
+    const startDate = new Date(firstDay);
+    startDate.setDate(firstDay.getDate() - leadingDays);
+
+    const dates = [];
+    const totalCells = Math.ceil((leadingDays + lastDay.getDate()) / 7) * 7;
+    for (let index = 0; index < totalCells; index += 1) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + index);
+      dates.push(date);
+    }
+    return dates;
+  }
+
+  function renderCalendar() {
+    const days = calendarMonthDates(calendarMonthDate);
+    const workByDate = calendarDayMap();
+    const month = monthKey(calendarMonthDate);
+    const monthWork = [...workByDate.values()].filter((day) => monthKey(parseIsoDate(day.date)) === month);
+    const workedDays = monthWork.length;
+    const workedHours = monthWork.reduce((total, day) => total + day.hours, 0);
+    const selectedDay = workByDate.get(selectedCalendarDate);
+
+    els.calendarMonthTitle.textContent = formatCalendarMonth(calendarMonthDate);
+    els.calendarSummary.textContent = workedDays
+      ? `${workedDays} ${workedDays === 1 ? "worked day" : "worked days"} - ${formatHours(workedHours)} hrs`
+      : "No worked days this month";
+
+    els.workCalendar.innerHTML = days
+      .map((date) => {
+        const isoDate = toIsoDate(date);
+        const day = workByDate.get(isoDate);
+        const inMonth = date.getMonth() === calendarMonthDate.getMonth();
+        const isToday = isoDate === todayIso();
+        const isSelected = isoDate === selectedCalendarDate;
+        const companies = day ? [...day.companies].join(", ") : "";
+        const title = day
+          ? `${formatWorkDate(isoDate)} - ${formatHours(day.hours)} hrs - ${companies}`
+          : formatWorkDate(isoDate);
+
+        return `
+          <button class="calendar-day ${inMonth ? "" : "outside-month"} ${day ? "has-work" : ""} ${isToday ? "today" : ""} ${
+          isSelected ? "selected" : ""
+        }" type="button" data-date="${isoDate}" title="${escapeHtml(title)}" aria-pressed="${isSelected ? "true" : "false"}">
+            <span class="calendar-day-number">${date.getDate()}</span>
+            ${day ? `<strong>${formatHours(day.hours)}h</strong><small>${escapeHtml(companies)}</small>` : ""}
+          </button>
+        `;
+      })
+      .join("");
+
+    renderCalendarDayDetails(selectedDay);
+  }
+
+  function renderCalendarDayDetails(day) {
+    if (!day) {
+      els.calendarDayDetails.classList.add("hidden");
+      els.calendarDayDetails.innerHTML = "";
+      return;
+    }
+
+    const items = sortedEntries(day.items);
+    els.calendarDayDetails.classList.remove("hidden");
+    els.calendarDayDetails.innerHTML = `
+      <div class="calendar-detail-heading">
+        <strong>${escapeHtml(formatWorkDate(day.date))}</strong>
+        <span>${formatHours(day.hours)} hrs total</span>
+      </div>
+      <div class="calendar-detail-list">
+        ${items
+          .map(
+            (item) => `
+              <div class="calendar-detail-item">
+                <div>
+                  <strong>${escapeHtml(item.company || state.settings.defaultCompany)}</strong>
+                  <span>${escapeHtml(item.work || "Manual Labour")}</span>
+                </div>
+                <div>
+                  <span>${formatHours(item.hours)} hrs</span>
+                  <small>${escapeHtml(item.source)}</small>
+                </div>
+              </div>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function showCalendarMonth(amount) {
+    calendarMonthDate = addMonths(calendarMonthDate, amount);
+    selectedCalendarDate = toIsoDate(calendarMonthDate);
+    renderCalendar();
+    refreshIcons();
+  }
+
+  function showCurrentCalendarMonth() {
+    selectedCalendarDate = todayIso();
+    calendarMonthDate = startOfMonthDate(selectedCalendarDate);
+    renderCalendar();
+    refreshIcons();
+  }
+
+  function selectCalendarDay(date) {
+    selectedCalendarDate = String(date || todayIso()).slice(0, 10);
+    calendarMonthDate = startOfMonthDate(selectedCalendarDate);
+    renderCalendar();
+    refreshIcons();
+  }
+
   function render() {
     applyTheme();
+    renderCompanyControls();
     renderSummary();
     renderLog();
     renderHistory();
+    renderCalendar();
     renderAccount();
     scheduleGoogleSignIn();
     refreshIcons();
@@ -499,13 +920,16 @@
 
   function renderSummary() {
     const hours = currentHours();
+    const company = selectedInvoiceCompany();
+    const companyEntries = entriesForCompany(company);
+    const companyHours = companyEntries.reduce((total, entry) => total + asNumber(entry.hours), 0);
     els.summaryHours.textContent = formatHours(hours);
     els.summaryRate.textContent = money(hourlyRate());
     els.summaryTotal.textContent = money(currentTotal());
     els.summaryInvoices.textContent = state.invoices.length;
-    els.createInvoice.disabled = !state.entries.length || hourlyRate() <= 0;
-    els.invoiceHelp.textContent = state.entries.length
-      ? `${formatHours(hours)} unbilled hours ready for invoice ${state.settings.nextInvoiceNumber || "1"}.`
+    els.createInvoice.disabled = !companyEntries.length || hourlyRate() <= 0;
+    els.invoiceHelp.textContent = companyEntries.length
+      ? `${formatHours(companyHours)} unbilled hours for ${company} ready for invoice ${state.settings.nextInvoiceNumber || "1"}.`
       : "Add hours first, then create an invoice when you are ready.";
     els.invoiceNumber.value = state.settings.nextInvoiceNumber || "1";
   }
@@ -526,6 +950,7 @@
               <span class="badge">${formatHours(entry.hours)} hrs</span>
             </div>
             <div class="work-meta">
+              <span>${escapeHtml(entryCompanyName(entry))}</span>
               <span>${money(asNumber(entry.hours) * hourlyRate())}</span>
             </div>
             <div class="card-actions">
@@ -555,7 +980,7 @@
             <div class="history-card-header">
               <div>
                 <strong>Invoice ${escapeHtml(invoice.number)}</strong>
-                <span>${escapeHtml(formatShortDate(invoice.date))}</span>
+                <span>${escapeHtml(invoiceCompanyName(invoice))} - ${escapeHtml(formatShortDate(invoice.date))}</span>
               </div>
               <div class="history-badges">
                 <span class="status-badge ${paid ? "paid" : "unpaid"}">
@@ -617,6 +1042,18 @@
     if (!button) return;
     if (button.dataset.action === "edit-entry") editEntry(button.dataset.id);
     if (button.dataset.action === "delete-entry") deleteEntry(button.dataset.id);
+  }
+
+  function handleCompanyAction(event) {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+    if (button.dataset.action === "remove-company") removeCompany(button.dataset.company);
+  }
+
+  function handleCalendarAction(event) {
+    const button = event.target.closest("button[data-date]");
+    if (!button) return;
+    selectCalendarDay(button.dataset.date);
   }
 
   function handleHistoryAction(event) {
@@ -701,6 +1138,7 @@
     const muted = [99, 113, 109];
     const contentWidth = pageWidth - margin * 2;
     const workTitle = invoice.entries[0]?.work || state.settings.defaultWork || "Manual Labour";
+    const companyName = invoiceCompanyName(invoice);
     const paid = invoiceIsPaid(invoice);
     let y = 58;
 
@@ -737,10 +1175,11 @@
     doc.line(margin, y, pageWidth - margin, y);
     y += 26;
 
-    const cardGap = 12;
-    const cardWidth = (contentWidth - cardGap) / 2;
+    const cardGap = 10;
+    const cardWidth = (contentWidth - cardGap * 2) / 3;
     drawPdfInfoCard(doc, margin, y, cardWidth, "Invoice Date", formatInvoiceDate(invoice.date), muted, ink);
-    drawPdfInfoCard(doc, margin + cardWidth + cardGap, y, cardWidth, "Work Period", `${formatShortDate(invoice.periodStart)} to ${formatShortDate(invoice.periodEnd)}`, muted, ink);
+    drawPdfInfoCard(doc, margin + cardWidth + cardGap, y, cardWidth, "Company", companyName, muted, ink);
+    drawPdfInfoCard(doc, margin + (cardWidth + cardGap) * 2, y, cardWidth, "Work Period", `${formatShortDate(invoice.periodStart)} to ${formatShortDate(invoice.periodEnd)}`, muted, ink);
     y += 74;
 
     doc.setFillColor(...mint);
@@ -757,7 +1196,7 @@
     doc.setFontSize(11);
     doc.text(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, pageWidth - margin - 18, y + 32, { align: "right" });
     doc.setTextColor(...muted);
-    doc.text(workTitle, pageWidth - margin - 18, y + 52, { align: "right" });
+    doc.text(companyName, pageWidth - margin - 18, y + 52, { align: "right" });
     y += 108;
 
     doc.setTextColor(...ink);
@@ -769,7 +1208,7 @@
     doc.setFontSize(10.5);
     doc.setTextColor(...muted);
     const summaryLines = [
-      `${workTitle} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`
+      `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`
     ].filter(Boolean);
     summaryLines.forEach((lineText) => {
       const wrapped = doc.splitTextToSize(lineText, contentWidth);
@@ -829,7 +1268,7 @@
     doc.text(label.toUpperCase(), x + 14, y + 20);
     doc.setFontSize(12);
     doc.setTextColor(...ink);
-    doc.text(value, x + 14, y + 40);
+    doc.text(doc.splitTextToSize(value, width - 28).slice(0, 2), x + 14, y + 40);
   }
 
   function drawPdfWorkTable(doc, invoice, margin, startY, width, pageHeight, colors) {
@@ -872,7 +1311,7 @@
       let x = margin;
       doc.text(doc.splitTextToSize(formatWorkDate(entry.date), colWidths[0] - 16), x + 8, y + 19);
       x += colWidths[0];
-      doc.text(doc.splitTextToSize(entry.work || "Manual Labour", colWidths[1] - 16), x + 8, y + 19);
+      doc.text(doc.splitTextToSize(invoiceWorkDescription(entry, invoice), colWidths[1] - 16), x + 8, y + 19);
       x += colWidths[1];
       doc.text(formatHours(entry.hours), x + colWidths[2] - 8, y + 19, { align: "right" });
       y += rowHeight;
@@ -919,6 +1358,7 @@
     const details = invoice.details || {};
     const paid = invoiceIsPaid(invoice);
     const workTitle = invoice.entries[0]?.work || "Manual Labour";
+    const companyName = invoiceCompanyName(invoice);
     const period = `${formatShortDate(invoice.periodStart)} to ${formatShortDate(invoice.periodEnd)}`;
     const paidText = paid ? `PAID${invoice.paidAt ? ` ${formatShortDate(invoice.paidAt)}` : ""}` : "";
 
@@ -942,12 +1382,17 @@
         [
           docxCell(
             [docxParagraph("INVOICE DATE", { bold: true, color: "63716D", size: 18 }), docxParagraph(formatInvoiceDate(invoice.date), { bold: true, size: 24 })],
-            4700,
+            3134,
+            { shading: "F9FBFB" }
+          ),
+          docxCell(
+            [docxParagraph("COMPANY", { bold: true, color: "63716D", size: 18 }), docxParagraph(companyName, { bold: true, size: 24 })],
+            3133,
             { shading: "F9FBFB" }
           ),
           docxCell(
             [docxParagraph("WORK PERIOD", { bold: true, color: "63716D", size: 18 }), docxParagraph(period, { bold: true, size: 24 })],
-            4700,
+            3133,
             { shading: "F9FBFB" }
           ),
         ],
@@ -961,14 +1406,14 @@
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
           docxCell(
-            [docxParagraph(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, { align: "right", bold: true, size: 22 }), docxParagraph(workTitle, { align: "right", bold: true, size: 22 })],
+            [docxParagraph(`${formatHours(invoice.hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`, { align: "right", bold: true, size: 22 }), docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
             4700,
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
         ],
       ]),
       docxParagraph("Work Summary", { bold: true, size: 26, before: 360, after: 120 }),
-      docxParagraph(`${workTitle} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`, { size: 22, after: 120 }),
+      docxParagraph(`${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}.`, { size: 22, after: 120 }),
       docxTable([
         [
           docxCell(
@@ -1004,7 +1449,7 @@
     ];
     const rows = sortedEntries(invoice.entries).map((entry, index) => [
       docxCell([docxParagraph(formatWorkDate(entry.date), { size: 20 })], 3200, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(entry.work || "Manual Labour", { size: 20 })], 4700, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
+      docxCell([docxParagraph(invoiceWorkDescription(entry, invoice), { size: 20 })], 4700, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
       docxCell([docxParagraph(formatHours(entry.hours), { align: "right", size: 20 })], 1500, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
     ]);
 
@@ -1147,7 +1592,7 @@
 
   function invoiceFileName(invoice) {
     const name = invoice.details?.yourName || invoice.details?.bankName || "Invoice";
-    return sanitizeFileName(`Invoice ${invoice.number} ${name}`);
+    return sanitizeFileName(`Invoice ${invoice.number} ${invoiceCompanyName(invoice)} ${name}`);
   }
 
   function downloadBlob(filename, content, type) {
@@ -1630,12 +2075,29 @@
     els.logList.addEventListener("click", handleLogAction);
     els.historyList.addEventListener("click", handleHistoryAction);
     els.clearLog.addEventListener("click", clearLog);
+    els.workCalendar.addEventListener("click", handleCalendarAction);
+    els.calendarPrev.addEventListener("click", () => showCalendarMonth(-1));
+    els.calendarNext.addEventListener("click", () => showCalendarMonth(1));
+    els.calendarToday.addEventListener("click", showCurrentCalendarMonth);
     els.createInvoice.addEventListener("click", createInvoice);
     els.invoiceForm.addEventListener("input", syncInvoiceDraftFromForm);
     els.invoiceForm.addEventListener("change", syncInvoiceDraftFromForm);
     els.settingsForm.addEventListener("submit", (event) => event.preventDefault());
-    els.settingsForm.addEventListener("input", syncSettingsFromForm);
-    els.settingsForm.addEventListener("change", syncSettingsFromForm);
+    els.settingsForm.addEventListener("input", (event) => {
+      if (event.target === els.newCompanyName) return;
+      syncSettingsFromForm();
+    });
+    els.settingsForm.addEventListener("change", (event) => {
+      if (event.target === els.newCompanyName) return;
+      syncSettingsFromForm();
+    });
+    els.addCompany.addEventListener("click", addCompany);
+    els.newCompanyName.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      addCompany();
+    });
+    els.companiesList.addEventListener("click", handleCompanyAction);
     els.openSettings.addEventListener("click", openSettings);
     els.closeSettings.addEventListener("click", closeSettings);
     els.settingsDone.addEventListener("click", closeSettings);

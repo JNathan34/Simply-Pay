@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=12" />
+    <link rel="stylesheet" href="styles.css?v=14" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -78,6 +78,11 @@
               </label>
 
               <label>
+                <span>Company</span>
+                <select id="entryCompany" required></select>
+              </label>
+
+              <label>
                 <span>Work done</span>
                 <input id="workDescription" type="text" placeholder="Manual Labour" required />
               </label>
@@ -113,6 +118,40 @@
             </div>
           </section>
 
+          <section class="panel calendar-panel">
+            <div class="panel-heading calendar-heading">
+              <div>
+                <h2>Work Calendar</h2>
+                <p id="calendarSummary">No worked days this month</p>
+              </div>
+              <div class="calendar-actions">
+                <button class="icon-only ghost" id="calendarPrev" type="button" title="Previous month">
+                  <i data-lucide="chevron-left"></i>
+                </button>
+                <button class="icon-button ghost" id="calendarToday" type="button" title="Go to this month">
+                  <i data-lucide="calendar-days"></i>
+                  <span>Today</span>
+                </button>
+                <button class="icon-only ghost" id="calendarNext" type="button" title="Next month">
+                  <i data-lucide="chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="calendar-month" id="calendarMonthTitle"></div>
+            <div class="calendar-weekdays" aria-hidden="true">
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun</span>
+            </div>
+            <div class="calendar-grid" id="workCalendar" aria-label="Worked days calendar"></div>
+            <div class="calendar-day-details hidden" id="calendarDayDetails"></div>
+          </section>
+
           <section class="panel invoice-panel">
             <div class="panel-heading">
               <div>
@@ -122,6 +161,11 @@
             </div>
 
             <form id="invoiceForm" class="form-grid">
+              <label>
+                <span>Company to bill</span>
+                <select id="invoiceCompany" required></select>
+              </label>
+
               <div class="two-column">
                 <label>
                   <span>Invoice date</span>
@@ -211,6 +255,21 @@
               <input id="darkMode" type="checkbox" />
               <span class="toggle-switch" aria-hidden="true"></span>
             </label>
+          </section>
+
+          <section class="settings-section">
+            <h3>Companies</h3>
+            <div class="company-add-row">
+              <label>
+                <span>Company name</span>
+                <input id="newCompanyName" type="text" placeholder="Company name" autocomplete="organization" />
+              </label>
+              <button class="icon-button secondary" id="addCompany" type="button" title="Add company">
+                <i data-lucide="plus"></i>
+                <span>Add</span>
+              </button>
+            </div>
+            <div class="company-list" id="companiesList"></div>
           </section>
 
           <section class="settings-section">
