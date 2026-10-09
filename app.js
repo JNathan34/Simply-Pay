@@ -77,7 +77,7 @@
   let selectedCalendarDate = todayIso();
   let activeProduct = "simply-pay";
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
-  const PLEXPOINT_LOGIN_API = "https://plexpoint.uk/api/portal/auth/login";
+  const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false };
 
   const els = {
@@ -161,9 +161,7 @@
     darkMode: document.querySelector("#darkMode"),
     plexpointNotice: document.querySelector("#plexpointNotice"),
     plexSigninPanel: document.querySelector("#plexSigninPanel"),
-    plexSigninForm: document.querySelector("#plexSigninForm"),
-    plexSigninEmail: document.querySelector("#plexSigninEmail"),
-    plexSigninPassword: document.querySelector("#plexSigninPassword"),
+    plexSigninButton: document.querySelector("#plexSigninButton"),
     plexUserTotal: document.querySelector("#plexUserTotal"),
     plexSubscribedTotal: document.querySelector("#plexSubscribedTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
@@ -1437,14 +1435,14 @@
     return data;
   }
 
-  async function plexSignIn(email, password) {
-    const response = await fetch(PLEXPOINT_LOGIN_API, {
+  async function plexAuth(action, body = {}) {
+    const response = await fetch(`${PLEXPOINT_PLEX_API}${action}`, {
       method: "POST", credentials: "include", cache: "no-store",
       headers: { "Content-Type": "application/json", "X-PlexPoint-Request": "1" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(body),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || "Unable to sign in to PlexPoint.");
+    if (!response.ok && response.status !== 202) throw new Error(data.message || "Unable to sign in with Plex.");
     return data;
   }
 
@@ -1515,19 +1513,31 @@
     }
   }
 
-  async function submitPlexSignin(event) {
-    event.preventDefault();
-    const email = els.plexSigninEmail.value.trim();
-    const password = els.plexSigninPassword.value;
-    if (!email || !password) return;
-    plexMessage("Signing in to PlexPoint…");
+  async function startPlexSignin() {
+    plexMessage("Opening Plex sign-in…");
     try {
-      await plexSignIn(email, password);
-      els.plexSigninPassword.value = "";
-      await loadPlexManager();
+      const data = await plexAuth("start", { returnTo: `${window.location.origin}${window.location.pathname}` });
+      const authorizationUrl = new URL(data.authorizationUrl);
+      if (authorizationUrl.origin !== "https://app.plex.tv" || authorizationUrl.pathname !== "/auth" || authorizationUrl.username || authorizationUrl.password) {
+        throw new Error("Plex returned an unexpected sign-in address.");
+      }
+      window.location.assign(authorizationUrl.href);
     } catch (error) {
       plexMessage(error.message, true);
     }
+  }
+
+  async function finishPlexSignin() {
+    selectProduct("plexpoint");
+    plexMessage("Completing Plex sign-in…");
+    try {
+      const data = await plexAuth("complete");
+      if (data.pending) {
+        plexMessage("Waiting for Plex approval. Refresh after you finish signing in.");
+        return;
+      }
+      await loadPlexManager();
+    } catch (error) { plexMessage(error.message, true); }
   }
 
   async function submitPlexPlan(event) {
@@ -2695,7 +2705,7 @@
     els.companiesList.addEventListener("click", handleCompanyAction);
     els.companiesList.addEventListener("change", handleCompanyChange);
     els.plexRefresh.addEventListener("click", loadPlexManager);
-    els.plexSigninForm.addEventListener("submit", submitPlexSignin);
+    els.plexSigninButton.addEventListener("click", startPlexSignin);
     els.plexSearch.addEventListener("input", renderPlexUsers);
     els.plexUserRows.addEventListener("click", (event) => {
       const id = event.target.closest("[data-plex-user-id]")?.dataset.plexUserId;
@@ -2733,5 +2743,9 @@
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
+  if (new URLSearchParams(window.location.search).get("plex") === "return") {
+    history.replaceState({}, "", window.location.pathname);
+    void finishPlexSignin();
+  }
   registerServiceWorker();
 })();
