@@ -399,7 +399,7 @@ button:disabled {
 .plex-tier-picker select { padding-left: 42px; color: var(--ink); }
 .plex-access-picker { --access-color: #4ee1b7; position: relative; display: block; }
 .plex-access-picker[data-access="pending"] { --access-color: #ffec8a; }
-.plex-access-picker[data-access="suspended"] { --access-color: #ffb1bc; }
+.plex-access-picker[data-access="suspended"] { --access-color: #ff6b78; }
 .plex-access-picker[data-access="cancelled"] { --access-color: #b8c7c2; }
 .plex-access-picker .plex-access-icon { position: absolute; z-index: 1; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: var(--access-color); pointer-events: none; }
 .plex-access-picker select { padding-left: 42px; color: var(--ink); }
