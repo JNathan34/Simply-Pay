@@ -1131,13 +1131,13 @@ select:focus {
 }
 
 .status-badge.paid {
-  background: var(--mint);
-  color: var(--teal-dark);
+  background: #164d34;
+  color: #a7f3c8;
 }
 
 .status-badge.pending { background: #2e2850; color: #d6cbff; }
-.status-badge.due, .status-badge.unpaid { background: #4b3612; color: #ffd47d; }
-.status-badge.overdue { background: #4b1f27; color: #ffbac3; }
+.status-badge.due, .status-badge.unpaid { background: #5a390f; color: #ffd28a; }
+.status-badge.overdue { background: #5a1f2a; color: #ffc1ca; }
 .status-badge.neutral { background: #263532; color: #c1d0cc; }
 
 .empty-state {
