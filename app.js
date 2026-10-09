@@ -169,7 +169,6 @@
     plexActiveCustomers: document.querySelector("#plexActiveCustomers"),
     plexDueSoonTotal: document.querySelector("#plexDueSoonTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
-    plexRefresh: document.querySelector("#plexRefresh"),
     plexSearch: document.querySelector("#plexSearch"),
     plexUserRows: document.querySelector("#plexUserRows"),
     plexEmptyUsers: document.querySelector("#plexEmptyUsers"),
@@ -2725,7 +2724,6 @@
     });
     els.companiesList.addEventListener("click", handleCompanyAction);
     els.companiesList.addEventListener("change", handleCompanyChange);
-    els.plexRefresh.addEventListener("click", loadPlexManager);
     els.plexSigninButton.addEventListener("click", startPlexSignin);
     els.plexSearch.addEventListener("input", renderPlexUsers);
     els.plexUserRows.addEventListener("click", (event) => {
