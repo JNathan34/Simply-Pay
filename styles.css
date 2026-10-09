@@ -395,6 +395,7 @@ button:disabled {
 .plex-tier-picker .plex-tier-icon { position: absolute; z-index: 1; top: 50%; left: 13px; transform: translateY(-50%); pointer-events: none; }
 .plex-tier-picker select { padding-left: 42px; color: var(--ink); }
 .plex-save-membership { margin-top: 2px; }
+.plex-record-payment { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
 .plex-history-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
 .plex-history-row:first-child { border-top: 0; }
