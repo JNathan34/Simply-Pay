@@ -1422,6 +1422,8 @@
   const plexDate = (value) => value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(value)) : "—";
   const plexDateInput = (value) => value ? new Date(value).toISOString().slice(0, 10) : "";
   const plexTierSlug = (name) => String(name || "none").toLowerCase().replace(/\s+tier$/, "").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "") || "none";
+  const plexAccessIcons = { enabled: "shield-check", pending: "clock-3", suspended: "shield-alert", cancelled: "shield-x" };
+  const plexMethodIcons = { bank_transfer: "landmark", cash: "banknote", card: "credit-card", paypal: "wallet-cards", other: "ellipsis" };
   const plexStatusClass = (status) => {
     const normalized = String(status || "").toLowerCase().replace(/\s+/g, "_");
     if (["paid", "enabled"].includes(normalized)) return "paid";
@@ -1431,6 +1433,28 @@
     return "neutral";
   };
   const plexInitial = (name) => String(name || "?").trim().charAt(0).toUpperCase() || "?";
+
+  function updatePlexPickerIcon(picker, iconClass, iconName) {
+    const currentIcon = picker.querySelector(`.${iconClass}`);
+    if (!currentIcon) return;
+    const icon = document.createElement("i");
+    icon.className = iconClass;
+    icon.setAttribute("data-lucide", iconName);
+    icon.setAttribute("aria-hidden", "true");
+    currentIcon.replaceWith(icon);
+  }
+
+  function updatePlexAccessPicker() {
+    const access = els.plexAccess.value;
+    els.plexAccessPicker.dataset.access = access;
+    updatePlexPickerIcon(els.plexAccessPicker, "plex-access-icon", plexAccessIcons[access] || "shield");
+  }
+
+  function updatePlexMethodPicker() {
+    const method = els.plexMethod.value;
+    els.plexMethodPicker.dataset.method = method;
+    updatePlexPickerIcon(els.plexMethodPicker, "plex-method-icon", plexMethodIcons[method] || "wallet");
+  }
 
   function plexMessage(message = "", error = false) {
     els.plexpointNotice.textContent = message;
@@ -1511,7 +1535,7 @@
     els.plexTierPicker.dataset.tier = plexTierSlug(selectedTierName);
     els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(plexTierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
-    els.plexAccessPicker.dataset.access = els.plexAccess.value;
+    updatePlexAccessPicker();
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
@@ -1586,7 +1610,7 @@
     plexMessage("Recording payment…");
     try {
       plexManager.detail = await plexRequest("billing", { action: "record_payment", userId: plexManager.detail.account.id, amountMinor: Math.round(Number(els.plexAmount.value) * 100), coverageMonths: Number(els.plexMonths.value), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() });
-      els.plexPaymentForm.reset(); els.plexMethodPicker.dataset.method = els.plexMethod.value; els.plexReceivedOn.value = plexToday();
+      els.plexPaymentForm.reset(); updatePlexMethodPicker(); els.plexReceivedOn.value = plexToday();
       await loadPlexManager(); renderPlexDetail(); plexMessage("Payment recorded.");
     } catch (error) { plexMessage(error.message, true); }
   }
@@ -2747,10 +2771,12 @@
       els.plexTierPicker.dataset.tier = els.plexTier.selectedOptions[0]?.dataset.tier || "none";
     });
     els.plexAccess.addEventListener("change", () => {
-      els.plexAccessPicker.dataset.access = els.plexAccess.value;
+      updatePlexAccessPicker();
+      refreshIcons();
     });
     els.plexMethod.addEventListener("change", () => {
-      els.plexMethodPicker.dataset.method = els.plexMethod.value;
+      updatePlexMethodPicker();
+      refreshIcons();
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
@@ -2781,6 +2807,7 @@
 
   bindEvents();
   els.plexReceivedOn.value = plexToday();
+  updatePlexMethodPicker();
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
