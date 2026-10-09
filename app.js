@@ -31,7 +31,7 @@
   const defaultState = {
     entries: [],
     invoices: [],
-    plexSubscriptions: [],
+    plexPayments: [],
     invoiceDraft: {
       invoiceDate: todayIso(),
       billNote: "Thank you for your business",
@@ -121,16 +121,18 @@
     workspace: document.querySelector("#workspace"),
     billingContent: document.querySelector("#billingContent"),
     plexpointContent: document.querySelector("#plexpointContent"),
-    subscriptionForm: document.querySelector("#subscriptionForm"),
-    subscriptionName: document.querySelector("#subscriptionName"),
-    subscriptionPrice: document.querySelector("#subscriptionPrice"),
-    subscriptionCycle: document.querySelector("#subscriptionCycle"),
-    subscriptionCount: document.querySelector("#subscriptionCount"),
-    subscriptionMonthlyTotal: document.querySelector("#subscriptionMonthlyTotal"),
-    subscriptionYearlyTotal: document.querySelector("#subscriptionYearlyTotal"),
-    subscriptionListCount: document.querySelector("#subscriptionListCount"),
-    subscriptionList: document.querySelector("#subscriptionList"),
-    emptySubscriptions: document.querySelector("#emptySubscriptions"),
+    paymentForm: document.querySelector("#paymentForm"),
+    paymentUser: document.querySelector("#paymentUser"),
+    paymentPlan: document.querySelector("#paymentPlan"),
+    paymentAmount: document.querySelector("#paymentAmount"),
+    paymentStatus: document.querySelector("#paymentStatus"),
+    paymentDueDate: document.querySelector("#paymentDueDate"),
+    paymentUserCount: document.querySelector("#paymentUserCount"),
+    paymentReceivedTotal: document.querySelector("#paymentReceivedTotal"),
+    paymentOutstandingTotal: document.querySelector("#paymentOutstandingTotal"),
+    paymentListCount: document.querySelector("#paymentListCount"),
+    paymentList: document.querySelector("#paymentList"),
+    emptyPayments: document.querySelector("#emptyPayments"),
     productSwitcher: document.querySelector("#productSwitcher"),
     productMenu: document.querySelector("#productMenu"),
     brandMark: document.querySelector("#brandMark"),
@@ -195,8 +197,10 @@
     const settings = normalizeSettings(stored.settings || {});
     const entries = Array.isArray(stored.entries) ? stored.entries.map((entry) => normalizeEntry(entry, settings)) : [];
     const invoices = Array.isArray(stored.invoices) ? stored.invoices.map((invoice) => normalizeInvoice(invoice, settings)) : [];
-    const plexSubscriptions = Array.isArray(stored.plexSubscriptions)
-      ? stored.plexSubscriptions.map(normalizePlexSubscription).filter(Boolean)
+    const plexPayments = Array.isArray(stored.plexPayments)
+      ? stored.plexPayments.map(normalizePlexPayment).filter(Boolean)
+      : Array.isArray(stored.plexSubscriptions)
+        ? stored.plexSubscriptions.map(subscriptionToPayment).filter(Boolean)
       : [];
     const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
     invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
@@ -206,7 +210,7 @@
       ...stored,
       entries,
       invoices,
-      plexSubscriptions,
+      plexPayments,
       invoiceDraft,
       settings,
       account: stored.account || null,
@@ -241,17 +245,31 @@
     };
   }
 
-  function normalizePlexSubscription(subscription) {
-    const source = subscription && typeof subscription === "object" ? subscription : {};
-    const name = String(source.name || "").trim();
-    const price = roundMoney(source.price);
-    if (!name || price <= 0) return null;
+  function normalizePlexPayment(payment) {
+    const source = payment && typeof payment === "object" ? payment : {};
+    const user = String(source.user || "").trim();
+    const plan = String(source.plan || "").trim();
+    const amount = roundMoney(source.amount);
+    if (!user || !plan || amount <= 0) return null;
     return {
       id: String(source.id || uid()),
-      name,
-      price,
-      cycle: source.cycle === "yearly" ? "yearly" : "monthly",
+      user,
+      plan,
+      amount,
+      status: source.status === "paid" ? "paid" : "due",
+      dueDate: String(source.dueDate || "").slice(0, 10),
     };
+  }
+
+  function subscriptionToPayment(subscription) {
+    const source = subscription && typeof subscription === "object" ? subscription : {};
+    return normalizePlexPayment({
+      id: source.id,
+      user: source.name,
+      plan: source.cycle === "yearly" ? "Yearly plan" : "Monthly plan",
+      amount: source.price,
+      status: "due",
+    });
   }
 
   function migrateOldState(old) {
@@ -1193,7 +1211,7 @@
     renderSummary();
     renderLog();
     renderHistory();
-    renderPlexSubscriptions();
+    renderPlexPayments();
     renderCalendar();
     renderAccount();
     scheduleGoogleSignIn();
@@ -1309,67 +1327,71 @@
       .join("");
   }
 
-  function subscriptionMonthlyCost(subscription) {
-    return subscription.cycle === "yearly" ? subscription.price / 12 : subscription.price;
-  }
+  function renderPlexPayments() {
+    const payments = [...state.plexPayments].sort((left, right) => left.user.localeCompare(right.user));
+    const received = payments.filter((payment) => payment.status === "paid").reduce((total, payment) => total + payment.amount, 0);
+    const outstanding = payments.filter((payment) => payment.status === "due").reduce((total, payment) => total + payment.amount, 0);
 
-  function renderPlexSubscriptions() {
-    const subscriptions = [...state.plexSubscriptions].sort((left, right) => left.name.localeCompare(right.name));
-    const monthlyTotal = subscriptions.reduce((total, subscription) => total + subscriptionMonthlyCost(subscription), 0);
-    const yearlyTotal = monthlyTotal * 12;
-
-    els.subscriptionCount.textContent = String(subscriptions.length);
-    els.subscriptionMonthlyTotal.textContent = money(monthlyTotal);
-    els.subscriptionYearlyTotal.textContent = money(yearlyTotal);
-    els.subscriptionListCount.textContent = `${subscriptions.length} saved`;
-    els.emptySubscriptions.classList.toggle("hidden", subscriptions.length > 0);
-    els.subscriptionList.innerHTML = subscriptions
-      .map((subscription) => {
-        const cycleLabel = subscription.cycle === "yearly" ? "Yearly" : "Monthly";
-        const cycleCost = subscription.cycle === "yearly" ? `${money(subscription.price)} / year` : `${money(subscription.price)} / month`;
+    els.paymentUserCount.textContent = String(new Set(payments.map((payment) => payment.user.toLowerCase())).size);
+    els.paymentReceivedTotal.textContent = money(received);
+    els.paymentOutstandingTotal.textContent = money(outstanding);
+    els.paymentListCount.textContent = `${payments.length} saved`;
+    els.emptyPayments.classList.toggle("hidden", payments.length > 0);
+    els.paymentList.innerHTML = payments
+      .map((payment) => {
+        const dueDate = payment.dueDate ? `Due ${formatShortDate(payment.dueDate)}` : "No due date";
+        const statusText = payment.status === "paid" ? "Paid" : "Due";
         return `
           <article class="subscription-row">
-            <div class="subscription-mark">${escapeHtml(subscription.name.charAt(0).toUpperCase())}</div>
+            <div class="subscription-mark">${escapeHtml(payment.user.charAt(0).toUpperCase())}</div>
             <div class="subscription-details">
-              <strong>${escapeHtml(subscription.name)}</strong>
-              <span>${cycleLabel} billing</span>
+              <strong>${escapeHtml(payment.user)}</strong>
+              <span>${escapeHtml(payment.plan)} · ${escapeHtml(dueDate)}</span>
             </div>
-            <div class="subscription-cost"><strong>${escapeHtml(cycleCost)}</strong></div>
-            <button class="icon-only ghost" type="button" data-subscription-action="remove" data-subscription-id="${escapeHtml(subscription.id)}" title="Remove ${escapeHtml(subscription.name)}">
-              <i data-lucide="trash-2"></i><span class="sr-only">Remove ${escapeHtml(subscription.name)}</span>
+            <div class="subscription-cost"><strong>${money(payment.amount)}</strong><span class="status-badge ${payment.status === "paid" ? "paid" : "unpaid"}">${statusText}</span></div>
+            <button class="icon-only ghost" type="button" data-payment-action="remove" data-payment-id="${escapeHtml(payment.id)}" title="Remove ${escapeHtml(payment.user)}'s payment">
+              <i data-lucide="trash-2"></i><span class="sr-only">Remove ${escapeHtml(payment.user)}'s payment</span>
             </button>
           </article>`;
       })
       .join("");
   }
 
-  function submitSubscription(event) {
+  function submitPayment(event) {
     event.preventDefault();
-    const name = els.subscriptionName.value.trim();
-    const price = roundMoney(els.subscriptionPrice.value);
-    if (!name || price <= 0) {
-      showToast("Add a service name and price.");
+    const user = els.paymentUser.value.trim();
+    const plan = els.paymentPlan.value.trim();
+    const amount = roundMoney(els.paymentAmount.value);
+    if (!user || !plan || amount <= 0) {
+      showToast("Add a user, plan, and amount.");
       return;
     }
 
-    state.plexSubscriptions.push({ id: uid(), name, price, cycle: els.subscriptionCycle.value === "yearly" ? "yearly" : "monthly" });
-    els.subscriptionForm.reset();
+    state.plexPayments.push({
+      id: uid(),
+      user,
+      plan,
+      amount,
+      status: els.paymentStatus.value === "paid" ? "paid" : "due",
+      dueDate: els.paymentDueDate.value,
+    });
+    els.paymentForm.reset();
     saveState();
-    renderPlexSubscriptions();
+    renderPlexPayments();
     refreshIcons();
-    showToast(`${name} added.`);
+    showToast(`Payment for ${user} saved.`);
   }
 
-  function handleSubscriptionAction(event) {
-    const button = event.target.closest("[data-subscription-action]");
-    if (!button || button.dataset.subscriptionAction !== "remove") return;
-    const subscription = state.plexSubscriptions.find((item) => item.id === button.dataset.subscriptionId);
-    if (!subscription) return;
-    state.plexSubscriptions = state.plexSubscriptions.filter((item) => item.id !== subscription.id);
+  function handlePaymentAction(event) {
+    const button = event.target.closest("[data-payment-action]");
+    if (!button || button.dataset.paymentAction !== "remove") return;
+    const payment = state.plexPayments.find((item) => item.id === button.dataset.paymentId);
+    if (!payment) return;
+    state.plexPayments = state.plexPayments.filter((item) => item.id !== payment.id);
     saveState();
-    renderPlexSubscriptions();
+    renderPlexPayments();
     refreshIcons();
-    showToast(`${subscription.name} removed.`);
+    showToast(`${payment.user}'s payment removed.`);
   }
 
   function renderAccount() {
@@ -2487,8 +2509,8 @@
 
   function bindEvents() {
     els.entryForm.addEventListener("submit", submitEntry);
-    els.subscriptionForm.addEventListener("submit", submitSubscription);
-    els.subscriptionList.addEventListener("click", handleSubscriptionAction);
+    els.paymentForm.addEventListener("submit", submitPayment);
+    els.paymentList.addEventListener("click", handlePaymentAction);
     els.chargeType.addEventListener("change", updateChargeTypeControls);
     els.cancelEdit.addEventListener("click", resetEntryForm);
     els.logList.addEventListener("click", handleLogAction);

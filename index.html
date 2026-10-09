@@ -253,38 +253,40 @@
         </section>
         </div>
 
-        <section class="plexpoint-content hidden" id="plexpointContent" aria-label="PlexPoint subscription manager">
+        <section class="plexpoint-content hidden" id="plexpointContent" aria-label="PlexPoint payment manager">
           <div class="plexpoint-dashboard-header">
             <div>
               <p class="eyebrow">Plex Billing</p>
-              <h2>Subscription manager</h2>
-              <p>Keep your recurring services in one simple place.</p>
+              <h2>Payment manager</h2>
+              <p>Keep track of what each PlexPoint user has paid or still owes.</p>
             </div>
           </div>
 
-          <section class="subscription-summary-grid" aria-label="Subscription summary">
-            <article class="metric-card"><span>Active subscriptions</span><strong id="subscriptionCount">0</strong></article>
-            <article class="metric-card accent"><span>Monthly cost</span><strong id="subscriptionMonthlyTotal">&pound;0.00</strong></article>
-            <article class="metric-card"><span>Yearly cost</span><strong id="subscriptionYearlyTotal">&pound;0.00</strong></article>
+          <section class="subscription-summary-grid" aria-label="Payment summary">
+            <article class="metric-card"><span>PlexPoint users</span><strong id="paymentUserCount">0</strong></article>
+            <article class="metric-card accent"><span>Payments received</span><strong id="paymentReceivedTotal">&pound;0.00</strong></article>
+            <article class="metric-card"><span>Outstanding</span><strong id="paymentOutstandingTotal">&pound;0.00</strong></article>
           </section>
 
           <section class="subscription-manager-grid">
             <section class="panel subscription-form-panel">
-              <div class="panel-heading"><div><h2>Add subscription</h2><p>Add the service and what it costs you.</p></div></div>
-              <form class="form-grid" id="subscriptionForm">
-                <label><span>Service name</span><input id="subscriptionName" type="text" placeholder="e.g. Netflix" autocomplete="off" required /></label>
+              <div class="panel-heading"><div><h2>Add payment</h2><p>Record a user's PlexPoint plan and payment.</p></div></div>
+              <form class="form-grid" id="paymentForm">
+                <label><span>User name</span><input id="paymentUser" type="text" placeholder="e.g. Alex Smith" autocomplete="off" required /></label>
+                <label><span>Plan</span><input id="paymentPlan" type="text" placeholder="e.g. PlexPass" autocomplete="off" required /></label>
                 <div class="two-column">
-                  <label><span>Price</span><span class="field-shell prefix-field"><span class="field-affix" data-currency-symbol>&pound;</span><input id="subscriptionPrice" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="9.99" required /></span></label>
-                  <label><span>Billing</span><select id="subscriptionCycle"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>
+                  <label><span>Amount</span><span class="field-shell prefix-field"><span class="field-affix" data-currency-symbol>&pound;</span><input id="paymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="9.99" required /></span></label>
+                  <label><span>Status</span><select id="paymentStatus"><option value="paid">Paid</option><option value="due">Due</option></select></label>
                 </div>
-                <button class="primary-button" type="submit"><i data-lucide="plus"></i><span>Add subscription</span></button>
+                <label><span>Due date <em>(optional)</em></span><input id="paymentDueDate" type="date" /></label>
+                <button class="primary-button" type="submit"><i data-lucide="plus"></i><span>Save payment</span></button>
               </form>
             </section>
 
             <section class="panel subscription-list-panel">
-              <div class="panel-heading"><div><h2>Your subscriptions</h2><p id="subscriptionListCount">0 saved</p></div></div>
-              <div class="subscription-list" id="subscriptionList"></div>
-              <div class="empty-state" id="emptySubscriptions"><i data-lucide="credit-card"></i><p>No subscriptions added yet.</p></div>
+              <div class="panel-heading"><div><h2>User payments</h2><p id="paymentListCount">0 saved</p></div></div>
+              <div class="subscription-list" id="paymentList"></div>
+              <div class="empty-state" id="emptyPayments"><i data-lucide="credit-card"></i><p>No PlexPoint payments recorded yet.</p></div>
             </section>
           </section>
         </section>
