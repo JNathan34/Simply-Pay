@@ -1434,26 +1434,36 @@
   };
   const plexInitial = (name) => String(name || "?").trim().charAt(0).toUpperCase() || "?";
 
-  function updatePlexPickerIcon(picker, iconClass, iconName) {
-    const currentIcon = picker.querySelector(`.${iconClass}`);
-    if (!currentIcon) return;
-    const icon = document.createElement("i");
-    icon.className = iconClass;
-    icon.setAttribute("data-lucide", iconName);
-    icon.setAttribute("aria-hidden", "true");
-    currentIcon.replaceWith(icon);
+  function plexPickerIcon(type, value) {
+    if (type === "tier") return "gem";
+    if (type === "access") return plexAccessIcons[value] || "shield";
+    return plexMethodIcons[value] || "wallet";
+  }
+
+  function renderPlexCustomPicker(picker, select) {
+    const type = picker.dataset.picker;
+    const selected = select.selectedOptions[0];
+    const trigger = picker.querySelector(".plex-picker-trigger");
+    const menu = picker.querySelector(".plex-picker-menu");
+    if (!selected || !trigger || !menu) return;
+    trigger.innerHTML = `<i class="plex-picker-icon" data-lucide="${plexPickerIcon(type, selected.value)}" aria-hidden="true"></i><span>${escapeHtml(selected.textContent)}</span><i class="plex-picker-chevron" data-lucide="chevron-down" aria-hidden="true"></i>`;
+    menu.innerHTML = Array.from(select.options).map((option) => `<button type="button" role="option" aria-selected="${option.selected}" data-picker-value="${escapeHtml(option.value)}"><i class="plex-picker-icon" data-lucide="${plexPickerIcon(type, option.value)}" aria-hidden="true"></i><span>${escapeHtml(option.textContent)}</span></button>`).join("");
+  }
+
+  function renderPlexCustomPickers() {
+    renderPlexCustomPicker(els.plexTierPicker, els.plexTier);
+    renderPlexCustomPicker(els.plexAccessPicker, els.plexAccess);
+    renderPlexCustomPicker(els.plexMethodPicker, els.plexMethod);
   }
 
   function updatePlexAccessPicker() {
-    const access = els.plexAccess.value;
-    els.plexAccessPicker.dataset.access = access;
-    updatePlexPickerIcon(els.plexAccessPicker, "plex-access-icon", plexAccessIcons[access] || "shield");
+    els.plexAccessPicker.dataset.access = els.plexAccess.value;
+    renderPlexCustomPicker(els.plexAccessPicker, els.plexAccess);
   }
 
   function updatePlexMethodPicker() {
-    const method = els.plexMethod.value;
-    els.plexMethodPicker.dataset.method = method;
-    updatePlexPickerIcon(els.plexMethodPicker, "plex-method-icon", plexMethodIcons[method] || "wallet");
+    els.plexMethodPicker.dataset.method = els.plexMethod.value;
+    renderPlexCustomPicker(els.plexMethodPicker, els.plexMethod);
   }
 
   function plexMessage(message = "", error = false) {
@@ -1543,6 +1553,7 @@
       const paymentTier = payment.tier || subscription?.tier || "Payment";
       return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="gem" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`;
     }).join("") : "<p>No payments recorded yet.</p>";
+    renderPlexCustomPickers();
     refreshIcons();
     renderPlexSummary();
   }
@@ -2769,6 +2780,8 @@
     });
     els.plexTier.addEventListener("change", () => {
       els.plexTierPicker.dataset.tier = els.plexTier.selectedOptions[0]?.dataset.tier || "none";
+      renderPlexCustomPicker(els.plexTierPicker, els.plexTier);
+      refreshIcons();
     });
     els.plexAccess.addEventListener("change", () => {
       updatePlexAccessPicker();
@@ -2777,6 +2790,29 @@
     els.plexMethod.addEventListener("change", () => {
       updatePlexMethodPicker();
       refreshIcons();
+    });
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest(".plex-picker-trigger");
+      const option = event.target.closest("[data-picker-value]");
+      if (option) {
+        const picker = option.closest(".plex-custom-picker");
+        const select = picker?.querySelector("select");
+        if (select) { select.value = option.dataset.pickerValue; select.dispatchEvent(new Event("change", { bubbles: true })); }
+        picker?.classList.remove("is-open");
+        picker?.querySelector(".plex-picker-trigger")?.setAttribute("aria-expanded", "false");
+        return;
+      }
+      if (trigger) {
+        const picker = trigger.closest(".plex-custom-picker");
+        const opening = !picker.classList.contains("is-open");
+        document.querySelectorAll(".plex-custom-picker.is-open").forEach((openPicker) => {
+          if (openPicker !== picker) { openPicker.classList.remove("is-open"); openPicker.querySelector(".plex-picker-trigger")?.setAttribute("aria-expanded", "false"); }
+        });
+        picker.classList.toggle("is-open", opening);
+        trigger.setAttribute("aria-expanded", String(opening));
+        return;
+      }
+      document.querySelectorAll(".plex-custom-picker.is-open").forEach((picker) => { picker.classList.remove("is-open"); picker.querySelector(".plex-picker-trigger")?.setAttribute("aria-expanded", "false"); });
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);

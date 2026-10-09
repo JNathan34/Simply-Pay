@@ -395,7 +395,6 @@ button:disabled {
 .plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
 .plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .plex-tier-picker { position: relative; display: block; }
-.plex-tier-picker .plex-tier-icon { position: absolute; z-index: 1; top: 50%; left: 13px; transform: translateY(-50%); pointer-events: none; }
 .plex-tier-picker select { padding-left: 42px; color: var(--ink); }
 .plex-access-picker { --access-color: #4ee1b7; position: relative; display: block; }
 .plex-access-picker[data-access="pending"] { --access-color: #ffec8a; }
@@ -410,6 +409,17 @@ button:disabled {
 .plex-method-picker[data-method="other"] { --method-color: #b8c7c2; }
 .plex-method-picker .plex-method-icon { position: absolute; z-index: 1; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: var(--method-color); pointer-events: none; }
 .plex-method-picker select { padding-left: 42px; color: var(--ink); }
+.plex-custom-picker select { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.plex-picker-trigger { display: flex; align-items: center; width: 100%; min-height: 44px; gap: 10px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-strong); color: var(--ink); font: inherit; font-weight: 750; text-align: left; }
+.plex-picker-trigger:hover { border-color: var(--teal); }
+.plex-picker-trigger span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plex-picker-icon { width: 17px; height: 17px; flex: 0 0 17px; color: var(--tier-color, var(--access-color, var(--method-color, var(--teal-light)))); }
+.plex-picker-chevron { width: 17px; height: 17px; margin-left: auto; color: var(--muted); }
+.plex-picker-menu { position: absolute; z-index: 12; top: calc(100% + 6px); left: 0; right: 0; display: none; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
+.plex-custom-picker.is-open .plex-picker-menu { display: grid; }
+.plex-picker-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 10px 13px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-weight: 700; text-align: left; }
+.plex-picker-menu button:first-child { border-top: 0; }
+.plex-picker-menu button:hover, .plex-picker-menu button[aria-selected="true"] { background: color-mix(in srgb, var(--teal) 14%, transparent); }
 .plex-save-membership { margin-top: 2px; }
 .plex-record-payment { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
