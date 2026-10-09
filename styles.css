@@ -361,6 +361,8 @@ button:disabled {
 .plexpoint-table-panel { gap: 8px; }
 .plexpoint-table-panel .panel-heading { margin-bottom: 0; }
 .plexpoint-detail-panel #plexEmptyDetail { min-height: 280px; text-align: center; }
+#plexDetail { display: grid; gap: 16px; }
+.plex-detail-card { min-width: 0; }
 .plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .plex-search, .plex-form input, .plex-form select { width: 100%; }
 .plex-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
@@ -388,7 +390,8 @@ button:disabled {
 .plex-tier-icon { width: 17px; height: 17px; flex: 0 0 17px; color: var(--tier-color); }
 .plex-tier-label { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-weight: 750; white-space: nowrap; }
 .plex-form { display: grid; gap: 15px; padding-top: 20px; border-top: 1px solid var(--line); }
-#plexPlanForm { padding-top: 0; border-top: 0; }
+.plex-detail-card.plex-form, #plexPlanForm { padding-top: 0; border-top: 0; }
+.plex-detail-card.plex-form { padding: 18px; }
 .plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
 .plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .plex-tier-picker { position: relative; display: block; }
@@ -410,6 +413,7 @@ button:disabled {
 .plex-save-membership { margin-top: 2px; }
 .plex-record-payment { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
+.plex-detail-card.plex-history { padding: 18px; border-top: 1px solid var(--line); }
 .plex-history-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
 .plex-history-row:first-child { border-top: 0; }
 .plex-history-row span { display: block; }
