@@ -320,6 +320,11 @@ button:disabled {
   padding-bottom: 34px;
 }
 
+#billingContent {
+  display: grid;
+  gap: 18px;
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
@@ -1337,6 +1342,10 @@ select:focus {
   .workspace {
     gap: 12px;
     padding: 12px;
+  }
+
+  #billingContent {
+    gap: 12px;
   }
 
   .summary-grid {
