@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=25" />
+    <link rel="stylesheet" href="styles.css?v=26" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -263,6 +263,10 @@
           </div>
 
           <p class="plexpoint-notice hidden" id="plexpointNotice" role="status"></p>
+          <section class="panel plexpoint-signin hidden" id="plexSigninPanel">
+            <div><p class="eyebrow">PlexPoint admin</p><h2>Sign in to manage payments</h2><p>Use your PlexPoint administrator account. Your details stay with PlexPoint and are not saved in Simply Pay.</p></div>
+            <form id="plexSigninForm" class="plex-signin-form"><label>Email<input id="plexSigninEmail" type="email" autocomplete="email" required /></label><label>Password<input id="plexSigninPassword" type="password" autocomplete="current-password" required /></label><button class="button" type="submit">Sign in to PlexPoint</button></form>
+          </section>
           <section class="plexpoint-metrics" aria-label="PlexPoint payment summary">
             <article class="metric-card"><span>Total users</span><strong id="plexUserTotal">—</strong></article>
             <article class="metric-card"><span>With a plan</span><strong id="plexSubscribedTotal">—</strong></article>

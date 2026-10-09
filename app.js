@@ -77,6 +77,7 @@
   let selectedCalendarDate = todayIso();
   let activeProduct = "simply-pay";
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
+  const PLEXPOINT_LOGIN_API = "https://plexpoint.uk/api/portal/auth/login";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false };
 
   const els = {
@@ -159,6 +160,10 @@
     nextInvoiceNumber: document.querySelector("#nextInvoiceNumber"),
     darkMode: document.querySelector("#darkMode"),
     plexpointNotice: document.querySelector("#plexpointNotice"),
+    plexSigninPanel: document.querySelector("#plexSigninPanel"),
+    plexSigninForm: document.querySelector("#plexSigninForm"),
+    plexSigninEmail: document.querySelector("#plexSigninEmail"),
+    plexSigninPassword: document.querySelector("#plexSigninPassword"),
     plexUserTotal: document.querySelector("#plexUserTotal"),
     plexSubscribedTotal: document.querySelector("#plexSubscribedTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
@@ -1432,6 +1437,17 @@
     return data;
   }
 
+  async function plexSignIn(email, password) {
+    const response = await fetch(PLEXPOINT_LOGIN_API, {
+      method: "POST", credentials: "include", cache: "no-store",
+      headers: { "Content-Type": "application/json", "X-PlexPoint-Request": "1" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || "Unable to sign in to PlexPoint.");
+    return data;
+  }
+
   function renderPlexSummary(summary = {}) {
     els.plexUserTotal.textContent = String(summary.total || 0);
     els.plexSubscribedTotal.textContent = String(summary.subscribed || 0);
@@ -1488,10 +1504,29 @@
     try {
       const data = await plexRequest("users");
       plexManager.users = data.users || []; plexManager.loaded = true;
+      els.plexSigninPanel.classList.add("hidden");
       renderPlexSummary(data.summary); renderPlexUsers(); renderPlexDetail(); plexMessage();
     } catch (error) {
-      if (error.status === 401 || error.status === 403) plexMessage("Sign in to your PlexPoint administrator account on plexpoint.uk, then refresh this manager.", true);
+      if (error.status === 401 || error.status === 403) {
+        els.plexSigninPanel.classList.remove("hidden");
+        plexMessage("Sign in with your PlexPoint administrator account to load the payment manager.", true);
+      }
       else plexMessage(error.message || "Could not load PlexPoint payments.", true);
+    }
+  }
+
+  async function submitPlexSignin(event) {
+    event.preventDefault();
+    const email = els.plexSigninEmail.value.trim();
+    const password = els.plexSigninPassword.value;
+    if (!email || !password) return;
+    plexMessage("Signing in to PlexPoint…");
+    try {
+      await plexSignIn(email, password);
+      els.plexSigninPassword.value = "";
+      await loadPlexManager();
+    } catch (error) {
+      plexMessage(error.message, true);
     }
   }
 
@@ -2660,6 +2695,7 @@
     els.companiesList.addEventListener("click", handleCompanyAction);
     els.companiesList.addEventListener("change", handleCompanyChange);
     els.plexRefresh.addEventListener("click", loadPlexManager);
+    els.plexSigninForm.addEventListener("submit", submitPlexSignin);
     els.plexSearch.addEventListener("input", renderPlexUsers);
     els.plexUserRows.addEventListener("click", (event) => {
       const id = event.target.closest("[data-plex-user-id]")?.dataset.plexUserId;
