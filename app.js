@@ -179,6 +179,7 @@
     plexCustomerEmail: document.querySelector("#plexCustomerEmail"),
     plexCustomerStatus: document.querySelector("#plexCustomerStatus"),
     plexCurrentPlanBox: document.querySelector("#plexCurrentPlanBox"),
+    plexTierPicker: document.querySelector("#plexTierPicker"),
     plexCurrentPlan: document.querySelector("#plexCurrentPlan"),
     plexCurrentDue: document.querySelector("#plexCurrentDue"),
     plexPlanForm: document.querySelector("#plexPlanForm"),
@@ -1495,13 +1496,12 @@
     els.plexCustomerStatus.textContent = period?.paymentStatus || subscription?.accessStatus || "No plan";
     els.plexCustomerStatus.className = `status-badge ${["paid", "enabled"].includes(period?.paymentStatus || subscription?.accessStatus) ? "paid" : ""}`;
     const tierSlug = (name) => String(name || "none").toLowerCase().replace(/\s+tier$/, "").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "") || "none";
-    const tierOptionStyle = (name) => ({ bronze: "#f59e0b", silver: "#e2e8f0", gold: "#fde047", diamond: "#67e8f9", ruby: "#fb7185", platinum: "#c4b5fd", vip: "#94a3b8" }[tierSlug(name)] || "#eaf2f0");
     const selectedTierName = subscription?.tier || "";
     els.plexCurrentPlanBox.dataset.tier = tierSlug(selectedTierName);
-    els.plexTier.dataset.tier = tierSlug(selectedTierName);
+    els.plexTierPicker.dataset.tier = tierSlug(selectedTierName);
     els.plexCurrentPlan.textContent = subscription ? `${subscription.tier} · ${plexMoney(subscription.monthlyPriceMinor, subscription.currency)} / month` : "Not assigned";
     els.plexCurrentDue.textContent = subscription?.endsAt ? `Due ${plexDate(subscription.endsAt)}` : "No payment date set";
-    els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(tierSlug(tier.name))}" style="color:${tierOptionStyle(tier.name)}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
+    els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(tierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
@@ -2733,7 +2733,7 @@
       if (id) selectPlexUser(id);
     });
     els.plexTier.addEventListener("change", () => {
-      els.plexTier.dataset.tier = els.plexTier.selectedOptions[0]?.dataset.tier || "none";
+      els.plexTierPicker.dataset.tier = els.plexTier.selectedOptions[0]?.dataset.tier || "none";
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
