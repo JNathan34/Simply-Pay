@@ -367,12 +367,21 @@ button:disabled {
 .plex-payment-table tr[data-plex-user-id]:hover, .plex-payment-table tr.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); }
 .plex-payment-table td:first-child strong, .plex-payment-table td:first-child span { display: block; }
 .plex-payment-table td:first-child span, .plex-history-row span { margin-top: 3px; color: var(--muted); font-size: 12px; }
-.plex-current-plan { display: grid; gap: 4px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); }
+.plex-current-plan { --tier-color: #94a3b8; display: grid; gap: 5px; padding: 15px; border: 1px solid color-mix(in srgb, var(--tier-color) 35%, var(--line)); border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--tier-color) 10%, var(--surface-strong)), var(--surface-strong)); }
+.plex-current-plan[data-tier="bronze"], .plex-form select[data-tier="bronze"] { --tier-color: #f59e0b; }
+.plex-current-plan[data-tier="silver"], .plex-form select[data-tier="silver"] { --tier-color: #e2e8f0; }
+.plex-current-plan[data-tier="gold"], .plex-form select[data-tier="gold"] { --tier-color: #fde047; }
+.plex-current-plan[data-tier="diamond"], .plex-form select[data-tier="diamond"] { --tier-color: #67e8f9; }
+.plex-current-plan[data-tier="ruby"], .plex-form select[data-tier="ruby"] { --tier-color: #fb7185; }
+.plex-current-plan[data-tier="platinum"], .plex-form select[data-tier="platinum"] { --tier-color: #c4b5fd; }
+.plex-current-plan[data-tier="vip"], .plex-form select[data-tier="vip"] { --tier-color: #94a3b8; }
 .plex-current-plan span { color: var(--muted); font-size: 13px; }
-.plex-current-plan strong { font-size: 16px; }
-.plex-form { display: grid; gap: 12px; padding-top: 15px; border-top: 1px solid var(--line); }
+.plex-current-plan strong { color: var(--tier-color); font-size: 16px; }
+.plex-form { display: grid; gap: 15px; padding-top: 20px; border-top: 1px solid var(--line); }
 .plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
 .plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.plex-form select[data-tier] { color: var(--tier-color); border-color: color-mix(in srgb, var(--tier-color) 40%, var(--line)); background-color: color-mix(in srgb, var(--tier-color) 7%, var(--surface-strong)); }
+.plex-save-membership { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
 .plex-history-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
 .plex-history-row:first-child { border-top: 0; }
