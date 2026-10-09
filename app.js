@@ -1477,7 +1477,7 @@
   }
 
   async function plexRequest(path, body) {
-    const managerSession = sessionStorage.getItem(PLEX_MANAGER_SESSION_KEY);
+    const managerSession = localStorage.getItem(PLEX_MANAGER_SESSION_KEY);
     const response = await fetch(`${PLEXPOINT_API}${path}`, {
       method: body ? "POST" : "GET", credentials: "include", cache: "no-store",
       headers: { ...(body ? { "Content-Type": "application/json", "X-PlexPoint-Request": "1" } : {}), ...(managerSession ? { "X-PlexPoint-Manager-Session": managerSession } : {}) },
@@ -1580,6 +1580,7 @@
       renderPlexSummary(); renderPlexUsers(); renderPlexDetail(); plexMessage();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
+        localStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
         els.plexSigninPanel.classList.remove("hidden");
         els.plexLiveContent.classList.add("hidden");
         plexMessage();
@@ -2894,7 +2895,7 @@
   selectProduct(activeProduct);
   const managerSession = new URLSearchParams(window.location.hash.slice(1)).get("manager_session");
   if (managerSession && /^[a-f0-9]{64}$/.test(managerSession)) {
-    sessionStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
+    localStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
     history.replaceState({}, "", window.location.pathname);
     selectProduct("plexpoint");
   } else if (new URLSearchParams(window.location.search).get("plex") === "return") {
