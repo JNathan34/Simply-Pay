@@ -121,18 +121,6 @@
     workspace: document.querySelector("#workspace"),
     billingContent: document.querySelector("#billingContent"),
     plexpointContent: document.querySelector("#plexpointContent"),
-    paymentForm: document.querySelector("#paymentForm"),
-    paymentUser: document.querySelector("#paymentUser"),
-    paymentPlan: document.querySelector("#paymentPlan"),
-    paymentAmount: document.querySelector("#paymentAmount"),
-    paymentStatus: document.querySelector("#paymentStatus"),
-    paymentDueDate: document.querySelector("#paymentDueDate"),
-    paymentUserCount: document.querySelector("#paymentUserCount"),
-    paymentReceivedTotal: document.querySelector("#paymentReceivedTotal"),
-    paymentOutstandingTotal: document.querySelector("#paymentOutstandingTotal"),
-    paymentListCount: document.querySelector("#paymentListCount"),
-    paymentList: document.querySelector("#paymentList"),
-    emptyPayments: document.querySelector("#emptyPayments"),
     productSwitcher: document.querySelector("#productSwitcher"),
     productMenu: document.querySelector("#productMenu"),
     brandMark: document.querySelector("#brandMark"),
@@ -1211,7 +1199,6 @@
     renderSummary();
     renderLog();
     renderHistory();
-    renderPlexPayments();
     renderCalendar();
     renderAccount();
     scheduleGoogleSignIn();
@@ -2509,8 +2496,6 @@
 
   function bindEvents() {
     els.entryForm.addEventListener("submit", submitEntry);
-    els.paymentForm.addEventListener("submit", submitPayment);
-    els.paymentList.addEventListener("click", handlePaymentAction);
     els.chargeType.addEventListener("change", updateChargeTypeControls);
     els.cancelEdit.addEventListener("click", resetEntryForm);
     els.logList.addEventListener("click", handleLogAction);

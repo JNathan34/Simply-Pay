@@ -341,6 +341,21 @@ button:disabled {
   color: var(--muted);
 }
 
+.plexpoint-launch {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.plexpoint-launch > svg { color: var(--teal); }
+
+.plexpoint-launch h2 { margin: 0; }
+
+.plexpoint-launch p { margin: 6px 0 0; color: var(--muted); }
+
+.plexpoint-launch .primary-button { width: auto; white-space: nowrap; }
+
 .main-grid {
   display: grid;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
@@ -1431,6 +1446,9 @@ select:focus {
   .plexpoint-content {
     gap: 12px;
   }
+
+  .plexpoint-launch { grid-template-columns: 32px minmax(0, 1fr); gap: 12px; }
+  .plexpoint-launch .primary-button { grid-column: 1 / -1; width: 100%; }
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

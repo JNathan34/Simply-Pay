@@ -262,32 +262,10 @@
             </div>
           </div>
 
-          <section class="subscription-summary-grid" aria-label="Payment summary">
-            <article class="metric-card"><span>PlexPoint users</span><strong id="paymentUserCount">0</strong></article>
-            <article class="metric-card accent"><span>Payments received</span><strong id="paymentReceivedTotal">&pound;0.00</strong></article>
-            <article class="metric-card"><span>Outstanding</span><strong id="paymentOutstandingTotal">&pound;0.00</strong></article>
-          </section>
-
-          <section class="subscription-manager-grid">
-            <section class="panel subscription-form-panel">
-              <div class="panel-heading"><div><h2>Add payment</h2><p>Record a user's PlexPoint plan and payment.</p></div></div>
-              <form class="form-grid" id="paymentForm">
-                <label><span>User name</span><input id="paymentUser" type="text" placeholder="e.g. Alex Smith" autocomplete="off" required /></label>
-                <label><span>Plan</span><input id="paymentPlan" type="text" placeholder="e.g. PlexPass" autocomplete="off" required /></label>
-                <div class="two-column">
-                  <label><span>Amount</span><span class="field-shell prefix-field"><span class="field-affix" data-currency-symbol>&pound;</span><input id="paymentAmount" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="9.99" required /></span></label>
-                  <label><span>Status</span><select id="paymentStatus"><option value="paid">Paid</option><option value="due">Due</option></select></label>
-                </div>
-                <label><span>Due date <em>(optional)</em></span><input id="paymentDueDate" type="date" /></label>
-                <button class="primary-button" type="submit"><i data-lucide="plus"></i><span>Save payment</span></button>
-              </form>
-            </section>
-
-            <section class="panel subscription-list-panel">
-              <div class="panel-heading"><div><h2>User payments</h2><p id="paymentListCount">0 saved</p></div></div>
-              <div class="subscription-list" id="paymentList"></div>
-              <div class="empty-state" id="emptyPayments"><i data-lucide="credit-card"></i><p>No PlexPoint payments recorded yet.</p></div>
-            </section>
+          <section class="panel plexpoint-launch">
+            <i data-lucide="landmark"></i>
+            <div><h2>Manage live PlexPoint payments</h2><p>Open the secured PlexPoint manager to view users, update memberships, and record payments. It uses the same live billing records as your PlexPoint account page.</p></div>
+            <a class="primary-button" href="https://plexpoint.uk/billing/">Open live manager <i data-lucide="arrow-up-right"></i></a>
           </section>
         </section>
       </main>
