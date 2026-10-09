@@ -357,9 +357,10 @@ button:disabled {
 .panel-heading h2, .plex-customer-heading h2 { margin: 0; font-size: 20px; }
 .panel-heading p, .plex-customer-heading p { margin: 5px 0 0; color: var(--muted); }
 .plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
+.plexpoint-table-panel { gap: 12px; }
 .plexpoint-detail-panel #plexEmptyDetail { min-height: 280px; text-align: center; }
-.plex-search-label, .plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
-.plex-search-label input, .plex-form input, .plex-form select { width: 100%; }
+.plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
+.plex-search, .plex-form input, .plex-form select { width: 100%; }
 .plex-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
 .plex-payment-table { width: 100%; border-collapse: collapse; min-width: 660px; font-size: 14px; }
 .plex-payment-table th { padding: 11px 14px; color: var(--muted); text-align: left; font-size: 12px; }
