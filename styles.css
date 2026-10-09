@@ -341,22 +341,38 @@ button:disabled {
   color: var(--muted);
 }
 
-.plexpoint-launch {
-  display: grid;
-  gap: 18px;
-}
-
-.plexpoint-live-heading { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:16px; }
-.plexpoint-live-heading > svg { color: var(--teal); }
-
-.plexpoint-launch h2 { margin: 0; }
-
-.plexpoint-launch p { margin: 6px 0 0; color: var(--muted); }
+.plexpoint-notice { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: var(--surface); }
+.plexpoint-notice.error { color: #ffc7bf; border-color: #7a443d; background: #291a18; }
+.plexpoint-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.plexpoint-manager-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .9fr); gap: 18px; align-items: start; }
+.panel-heading, .plex-customer-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.panel-heading h2, .plex-customer-heading h2 { margin: 0; font-size: 20px; }
+.panel-heading p, .plex-customer-heading p { margin: 5px 0 0; color: var(--muted); }
+.plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
+.plex-search-label, .plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
+.plex-search-label input, .plex-form input, .plex-form select { width: 100%; }
+.plex-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.plex-payment-table { width: 100%; border-collapse: collapse; min-width: 660px; font-size: 14px; }
+.plex-payment-table th { padding: 11px 14px; color: var(--muted); text-align: left; font-size: 12px; }
+.plex-payment-table td { padding: 13px 14px; border-top: 1px solid var(--line); color: var(--ink); }
+.plex-payment-table tr[data-plex-user-id] { cursor: pointer; }
+.plex-payment-table tr[data-plex-user-id]:hover, .plex-payment-table tr.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); }
+.plex-payment-table td:first-child strong, .plex-payment-table td:first-child span { display: block; }
+.plex-payment-table td:first-child span, .plex-history-row span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.plex-current-plan { display: grid; gap: 4px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-strong); }
+.plex-current-plan span { color: var(--muted); font-size: 13px; }
+.plex-current-plan strong { font-size: 16px; }
+.plex-form { display: grid; gap: 12px; padding-top: 15px; border-top: 1px solid var(--line); }
+.plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
+.plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
+.plex-history-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
+.plex-history-row:first-child { border-top: 0; }
+.plex-history-row span { display: block; }
 
 .secondary-button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:9px 13px; border:1px solid var(--line); border-radius:9px; color:var(--ink); background:var(--surface-strong); font-weight:800; text-decoration:none; white-space:nowrap; }
 .secondary-button:hover { background:var(--ghost-hover); border-color:var(--ghost-hover-border); }
 .secondary-button svg { width:16px; height:16px; }
-.plexpoint-live-manager { width:100%; min-height:760px; border:1px solid var(--line); border-radius:12px; background:#091614; }
 
 .main-grid {
   display: grid;
@@ -1394,6 +1410,10 @@ select:focus {
 }
 
 @media (max-width: 620px) {
+  .plexpoint-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plexpoint-manager-grid { grid-template-columns: 1fr; }
+  .panel-heading, .plex-customer-heading { flex-direction: column; }
+  .plex-form-grid { grid-template-columns: 1fr; }
   :root {
     --page-gutter: 23px;
   }

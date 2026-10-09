@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=23" />
+    <link rel="stylesheet" href="styles.css?v=24" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -262,9 +262,30 @@
             </div>
           </div>
 
-          <section class="panel plexpoint-launch">
-            <div class="plexpoint-live-heading"><i data-lucide="landmark"></i><div><h2>Manage live PlexPoint payments</h2><p>These are the same live payment records used by the PlexPoint account page.</p></div><a class="secondary-button" href="https://plexpoint.uk/billing/" target="_blank" rel="noopener">Open full page <i data-lucide="arrow-up-right"></i></a></div>
-            <iframe class="plexpoint-live-manager" title="PlexPoint payment manager" src="https://plexpoint.uk/billing/"></iframe>
+          <p class="plexpoint-notice hidden" id="plexpointNotice" role="status"></p>
+          <section class="plexpoint-metrics" aria-label="PlexPoint payment summary">
+            <article class="metric-card"><span>Total users</span><strong id="plexUserTotal">—</strong></article>
+            <article class="metric-card"><span>With a plan</span><strong id="plexSubscribedTotal">—</strong></article>
+            <article class="metric-card accent"><span>Overdue</span><strong id="plexOverdueTotal">—</strong></article>
+            <article class="metric-card"><span>Payments shown</span><strong id="plexPaymentTotal">—</strong></article>
+          </section>
+          <section class="plexpoint-manager-grid">
+            <section class="panel plexpoint-table-panel">
+              <div class="panel-heading"><div><h2>Customer payment log</h2><p>Live records from the PlexPoint database.</p></div><button class="secondary-button" id="plexRefresh" type="button"><i data-lucide="refresh-cw"></i> Refresh</button></div>
+              <label class="plex-search-label">Search users<input id="plexSearch" type="search" placeholder="Name, email, or Plex username" /></label>
+              <div class="plex-table-wrap"><table class="plex-payment-table"><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Next due</th><th>Outstanding</th></tr></thead><tbody id="plexUserRows"></tbody></table></div>
+              <div class="empty-state hidden" id="plexEmptyUsers"><i data-lucide="users"></i><p>No PlexPoint users found.</p></div>
+            </section>
+            <aside class="panel plexpoint-detail-panel">
+              <div id="plexEmptyDetail" class="empty-state"><i data-lucide="mouse-pointer-click"></i><p>Select a customer to manage their plan and payments.</p></div>
+              <div id="plexDetail" class="hidden">
+                <div class="plex-customer-heading"><div><p class="eyebrow">Customer</p><h2 id="plexCustomerName">—</h2><p id="plexCustomerEmail"></p></div><span class="status-badge" id="plexCustomerStatus">—</span></div>
+                <div class="plex-current-plan"><span>Current plan</span><strong id="plexCurrentPlan">Not assigned</strong><span id="plexCurrentDue">No payment date set</span></div>
+                <form class="plex-form" id="plexPlanForm"><h3>Membership</h3><label>Plan<select id="plexTier" required></select></label><label>Access<select id="plexAccess"><option value="enabled">Enabled</option><option value="pending">Pending</option><option value="suspended">Suspended</option><option value="cancelled">Cancelled</option></select></label><div class="plex-form-grid"><label>Plan starts<input id="plexStartsOn" type="date" required /></label><label>Next due<input id="plexNextDueOn" type="date" required /></label></div><button class="button" type="submit">Save membership</button></form>
+                <form class="plex-form" id="plexPaymentForm"><h3>Record payment</h3><div class="plex-form-grid"><label>Amount (£)<input id="plexAmount" type="number" min="0.01" step="0.01" required /></label><label>Months covered<select id="plexMonths"><option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><label>Method<select id="plexMethod"><option value="bank_transfer">Bank transfer</option><option value="cash">Cash</option><option value="card">Card</option><option value="paypal">PayPal</option><option value="other">Other</option></select></label><label>Date paid<input id="plexReceivedOn" type="date" required /></label></div><label>Reference <small>Optional</small><input id="plexReference" maxlength="80" /></label><button class="button" type="submit">Record payment</button></form>
+                <section class="plex-history"><h3>Recent payments</h3><div id="plexPaymentHistory"></div></section>
+              </div>
+            </aside>
           </section>
         </section>
       </main>

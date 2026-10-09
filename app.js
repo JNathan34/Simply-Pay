@@ -76,6 +76,8 @@
   let calendarMonthDate = startOfMonthDate(todayIso());
   let selectedCalendarDate = todayIso();
   let activeProduct = "simply-pay";
+  const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
+  const plexManager = { users: [], selectedId: null, detail: null, loaded: false };
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -156,6 +158,34 @@
     companiesList: document.querySelector("#companiesList"),
     nextInvoiceNumber: document.querySelector("#nextInvoiceNumber"),
     darkMode: document.querySelector("#darkMode"),
+    plexpointNotice: document.querySelector("#plexpointNotice"),
+    plexUserTotal: document.querySelector("#plexUserTotal"),
+    plexSubscribedTotal: document.querySelector("#plexSubscribedTotal"),
+    plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
+    plexPaymentTotal: document.querySelector("#plexPaymentTotal"),
+    plexRefresh: document.querySelector("#plexRefresh"),
+    plexSearch: document.querySelector("#plexSearch"),
+    plexUserRows: document.querySelector("#plexUserRows"),
+    plexEmptyUsers: document.querySelector("#plexEmptyUsers"),
+    plexEmptyDetail: document.querySelector("#plexEmptyDetail"),
+    plexDetail: document.querySelector("#plexDetail"),
+    plexCustomerName: document.querySelector("#plexCustomerName"),
+    plexCustomerEmail: document.querySelector("#plexCustomerEmail"),
+    plexCustomerStatus: document.querySelector("#plexCustomerStatus"),
+    plexCurrentPlan: document.querySelector("#plexCurrentPlan"),
+    plexCurrentDue: document.querySelector("#plexCurrentDue"),
+    plexPlanForm: document.querySelector("#plexPlanForm"),
+    plexTier: document.querySelector("#plexTier"),
+    plexAccess: document.querySelector("#plexAccess"),
+    plexStartsOn: document.querySelector("#plexStartsOn"),
+    plexNextDueOn: document.querySelector("#plexNextDueOn"),
+    plexPaymentForm: document.querySelector("#plexPaymentForm"),
+    plexAmount: document.querySelector("#plexAmount"),
+    plexMonths: document.querySelector("#plexMonths"),
+    plexMethod: document.querySelector("#plexMethod"),
+    plexReceivedOn: document.querySelector("#plexReceivedOn"),
+    plexReference: document.querySelector("#plexReference"),
+    plexPaymentHistory: document.querySelector("#plexPaymentHistory"),
     toast: document.querySelector("#toast"),
   };
 
@@ -1381,6 +1411,113 @@
     showToast(`${payment.user}'s payment removed.`);
   }
 
+  const plexToday = () => new Date().toISOString().slice(0, 10);
+  const plexMoney = (minor, currency = "GBP") => new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(minor || 0) / 100);
+  const plexDate = (value) => value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(value)) : "—";
+  const plexDateInput = (value) => value ? new Date(value).toISOString().slice(0, 10) : "";
+
+  function plexMessage(message = "", error = false) {
+    els.plexpointNotice.textContent = message;
+    els.plexpointNotice.classList.toggle("hidden", !message);
+    els.plexpointNotice.classList.toggle("error", error);
+  }
+
+  async function plexRequest(path, body) {
+    const response = await fetch(`${PLEXPOINT_API}${path}`, {
+      method: body ? "POST" : "GET", credentials: "include", cache: "no-store",
+      ...(body ? { headers: { "Content-Type": "application/json", "X-PlexPoint-Request": "1" }, body: JSON.stringify(body) } : {}),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw Object.assign(new Error(data.message || "PlexPoint billing is unavailable."), { status: response.status });
+    return data;
+  }
+
+  function renderPlexSummary(summary = {}) {
+    els.plexUserTotal.textContent = String(summary.total || 0);
+    els.plexSubscribedTotal.textContent = String(summary.subscribed || 0);
+    els.plexOverdueTotal.textContent = String(summary.overdue || 0);
+    els.plexPaymentTotal.textContent = String(plexManager.detail?.billing?.payments?.filter((payment) => payment.status !== "void").length || 0);
+  }
+
+  function renderPlexUsers() {
+    const filter = els.plexSearch.value.trim().toLowerCase();
+    const users = plexManager.users.filter((user) => [user.displayName, user.email, user.plexUsername].filter(Boolean)
+      .some((value) => value.toLowerCase().includes(filter)));
+    els.plexUserRows.innerHTML = users.map((user) => {
+      const billing = user.billing;
+      const status = billing?.status || user.subscription?.status || "No plan";
+      const statusClass = ["paid", "enabled"].includes(status) ? "paid" : ["overdue", "unpaid", "suspended"].includes(status) ? "unpaid" : "";
+      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></td><td>${escapeHtml(user.subscription?.tier || "No plan")}</td><td><span class="status-badge ${statusClass}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
+    }).join("");
+    els.plexEmptyUsers.classList.toggle("hidden", users.length > 0);
+  }
+
+  function renderPlexDetail() {
+    const detail = plexManager.detail;
+    els.plexEmptyDetail.classList.toggle("hidden", Boolean(detail));
+    els.plexDetail.classList.toggle("hidden", !detail);
+    if (!detail) { renderPlexSummary({ total: plexManager.users.length }); return; }
+    const { account, billing, tiers } = detail;
+    const subscription = billing.subscription;
+    const period = billing.currentPeriod;
+    els.plexCustomerName.textContent = account.displayName;
+    els.plexCustomerEmail.textContent = account.email;
+    els.plexCustomerStatus.textContent = period?.paymentStatus || subscription?.accessStatus || "No plan";
+    els.plexCustomerStatus.className = `status-badge ${["paid", "enabled"].includes(period?.paymentStatus || subscription?.accessStatus) ? "paid" : ""}`;
+    els.plexCurrentPlan.textContent = subscription ? `${subscription.tier} · ${plexMoney(subscription.monthlyPriceMinor, subscription.currency)} / month` : "Not assigned";
+    els.plexCurrentDue.textContent = subscription?.endsAt ? `Due ${plexDate(subscription.endsAt)}` : "No payment date set";
+    els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
+    els.plexAccess.value = subscription?.accessStatus || "enabled";
+    els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
+    els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
+    const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
+    els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => `<div class="plex-history-row"><div><strong>${escapeHtml(payment.tier || subscription?.tier || "Payment")}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
+    renderPlexSummary({ total: plexManager.users.length, subscribed: plexManager.users.filter((user) => user.subscription).length, overdue: plexManager.users.filter((user) => user.billing?.status === "overdue").length });
+  }
+
+  async function selectPlexUser(id) {
+    plexManager.selectedId = id;
+    plexManager.detail = null;
+    renderPlexUsers(); renderPlexDetail(); plexMessage("Loading customer billing…");
+    try { plexManager.detail = await plexRequest(`billing?userId=${encodeURIComponent(id)}`); plexMessage(); renderPlexDetail(); }
+    catch (error) { plexMessage(error.message, true); }
+  }
+
+  async function loadPlexManager() {
+    if (window.location.hostname !== "simply-pay.plexpoint.uk") {
+      plexMessage("Open Simply Pay at simply-pay.plexpoint.uk to use the live PlexPoint database.", true);
+      return;
+    }
+    plexMessage("Loading live PlexPoint payment data…");
+    try {
+      const data = await plexRequest("users");
+      plexManager.users = data.users || []; plexManager.loaded = true;
+      renderPlexSummary(data.summary); renderPlexUsers(); renderPlexDetail(); plexMessage();
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) plexMessage("Sign in to your PlexPoint administrator account on plexpoint.uk, then refresh this manager.", true);
+      else plexMessage(error.message || "Could not load PlexPoint payments.", true);
+    }
+  }
+
+  async function submitPlexPlan(event) {
+    event.preventDefault(); if (!plexManager.detail) return;
+    plexMessage("Saving membership…");
+    try {
+      plexManager.detail = await plexRequest("billing", { action: "save_plan", userId: plexManager.detail.account.id, tierId: els.plexTier.value, accessStatus: els.plexAccess.value, startsOn: els.plexStartsOn.value, nextDueOn: els.plexNextDueOn.value });
+      await loadPlexManager(); renderPlexDetail(); plexMessage("Membership saved.");
+    } catch (error) { plexMessage(error.message, true); }
+  }
+
+  async function submitPlexPayment(event) {
+    event.preventDefault(); if (!plexManager.detail) return;
+    plexMessage("Recording payment…");
+    try {
+      plexManager.detail = await plexRequest("billing", { action: "record_payment", userId: plexManager.detail.account.id, amountMinor: Math.round(Number(els.plexAmount.value) * 100), coverageMonths: Number(els.plexMonths.value), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() });
+      els.plexPaymentForm.reset(); els.plexReceivedOn.value = plexToday();
+      await loadPlexManager(); renderPlexDetail(); plexMessage("Payment recorded.");
+    } catch (error) { plexMessage(error.message, true); }
+  }
+
   function renderAccount() {
     const account = state.account;
     els.signOutGoogle.classList.toggle("hidden", !account);
@@ -2461,6 +2598,7 @@
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint);
     els.plexpointContent.classList.toggle("hidden", !isPlexPoint);
+    if (isPlexPoint && !plexManager.loaded) loadPlexManager();
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
       item.classList.toggle("active", selected);
@@ -2525,6 +2663,14 @@
     });
     els.companiesList.addEventListener("click", handleCompanyAction);
     els.companiesList.addEventListener("change", handleCompanyChange);
+    els.plexRefresh.addEventListener("click", loadPlexManager);
+    els.plexSearch.addEventListener("input", renderPlexUsers);
+    els.plexUserRows.addEventListener("click", (event) => {
+      const id = event.target.closest("[data-plex-user-id]")?.dataset.plexUserId;
+      if (id) selectPlexUser(id);
+    });
+    els.plexPlanForm.addEventListener("submit", submitPlexPlan);
+    els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
       const product = event.target.closest("[data-product]")?.dataset.product;
@@ -2551,6 +2697,7 @@
   }
 
   bindEvents();
+  els.plexReceivedOn.value = plexToday();
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
