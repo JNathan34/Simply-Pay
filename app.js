@@ -164,10 +164,10 @@
     plexSigninPanel: document.querySelector("#plexSigninPanel"),
     plexSigninButton: document.querySelector("#plexSigninButton"),
     plexLiveContent: document.querySelector("#plexLiveContent"),
-    plexUserTotal: document.querySelector("#plexUserTotal"),
-    plexSubscribedTotal: document.querySelector("#plexSubscribedTotal"),
+    plexMonthlyRevenue: document.querySelector("#plexMonthlyRevenue"),
+    plexActiveCustomers: document.querySelector("#plexActiveCustomers"),
+    plexDueSoonTotal: document.querySelector("#plexDueSoonTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
-    plexPaymentTotal: document.querySelector("#plexPaymentTotal"),
     plexRefresh: document.querySelector("#plexRefresh"),
     plexSearch: document.querySelector("#plexSearch"),
     plexUserRows: document.querySelector("#plexUserRows"),
@@ -1450,11 +1450,21 @@
     return data;
   }
 
-  function renderPlexSummary(summary = {}) {
-    els.plexUserTotal.textContent = String(summary.total || 0);
-    els.plexSubscribedTotal.textContent = String(summary.subscribed || 0);
-    els.plexOverdueTotal.textContent = String(summary.overdue || 0);
-    els.plexPaymentTotal.textContent = String(plexManager.detail?.billing?.payments?.filter((payment) => payment.status !== "void").length || 0);
+  function renderPlexSummary() {
+    const now = Date.now();
+    const soon = now + (7 * 24 * 60 * 60 * 1000);
+    const active = plexManager.users.filter((user) => user.accountStatus === "enabled" && user.subscription?.status === "enabled");
+    const dueSoon = active.filter((user) => {
+      const due = Date.parse(user.billing?.nextDueAt || "");
+      return Number.isFinite(due) && due >= now && due <= soon;
+    });
+    const overdue = plexManager.users.filter((user) => user.billing?.status === "overdue");
+    const revenueMinor = active.reduce((total, user) => total + Number(user.subscription?.monthlyPriceMinor || 0), 0);
+    const currency = active.find((user) => user.subscription?.currency)?.subscription?.currency || "GBP";
+    els.plexMonthlyRevenue.textContent = plexMoney(revenueMinor, currency);
+    els.plexActiveCustomers.textContent = String(active.length);
+    els.plexDueSoonTotal.textContent = String(dueSoon.length);
+    els.plexOverdueTotal.textContent = String(overdue.length);
   }
 
   function renderPlexUsers() {
@@ -1474,7 +1484,7 @@
     const detail = plexManager.detail;
     els.plexEmptyDetail.classList.toggle("hidden", Boolean(detail));
     els.plexDetail.classList.toggle("hidden", !detail);
-    if (!detail) { renderPlexSummary({ total: plexManager.users.length }); return; }
+    if (!detail) { renderPlexSummary(); return; }
     const { account, billing, tiers } = detail;
     const subscription = billing.subscription;
     const period = billing.currentPeriod;
@@ -1490,7 +1500,7 @@
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
     els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => `<div class="plex-history-row"><div><strong>${escapeHtml(payment.tier || subscription?.tier || "Payment")}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
-    renderPlexSummary({ total: plexManager.users.length, subscribed: plexManager.users.filter((user) => user.subscription).length, overdue: plexManager.users.filter((user) => user.billing?.status === "overdue").length });
+    renderPlexSummary();
   }
 
   async function selectPlexUser(id) {
@@ -1508,7 +1518,7 @@
       plexManager.users = data.users || []; plexManager.loaded = true;
       els.plexSigninPanel.classList.add("hidden");
       els.plexLiveContent.classList.remove("hidden");
-      renderPlexSummary(data.summary); renderPlexUsers(); renderPlexDetail(); plexMessage();
+      renderPlexSummary(); renderPlexUsers(); renderPlexDetail(); plexMessage();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         els.plexSigninPanel.classList.remove("hidden");
