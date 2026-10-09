@@ -353,6 +353,7 @@ button:disabled {
 .plexpoint-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .plexpoint-manager-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .9fr); gap: 18px; align-items: start; }
 .panel-heading, .plex-customer-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.plex-customer-heading { margin-bottom: 16px; }
 .panel-heading h2, .plex-customer-heading h2 { margin: 0; font-size: 20px; }
 .panel-heading p, .plex-customer-heading p { margin: 5px 0 0; color: var(--muted); }
 .plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
@@ -367,7 +368,7 @@ button:disabled {
 .plex-payment-table tr[data-plex-user-id]:hover, .plex-payment-table tr.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); }
 .plex-payment-table td:first-child strong, .plex-payment-table td:first-child span { display: block; }
 .plex-payment-table td:first-child span, .plex-history-row span { margin-top: 3px; color: var(--muted); font-size: 12px; }
-.plex-current-plan { --tier-color: #94a3b8; display: grid; gap: 5px; padding: 15px; border: 1px solid color-mix(in srgb, var(--tier-color) 35%, var(--line)); border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--tier-color) 10%, var(--surface-strong)), var(--surface-strong)); }
+.plex-current-plan { --tier-color: #94a3b8; display: grid; gap: 5px; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-strong); }
 .plex-current-plan[data-tier="bronze"], .plex-form select[data-tier="bronze"] { --tier-color: #f59e0b; }
 .plex-current-plan[data-tier="silver"], .plex-form select[data-tier="silver"] { --tier-color: #e2e8f0; }
 .plex-current-plan[data-tier="gold"], .plex-form select[data-tier="gold"] { --tier-color: #fde047; }
@@ -380,7 +381,7 @@ button:disabled {
 .plex-form { display: grid; gap: 15px; padding-top: 20px; border-top: 1px solid var(--line); }
 .plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
 .plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.plex-form select[data-tier] { color: var(--tier-color); border-color: color-mix(in srgb, var(--tier-color) 40%, var(--line)); background-color: color-mix(in srgb, var(--tier-color) 7%, var(--surface-strong)); }
+.plex-form select[data-tier] { color: var(--tier-color); }
 .plex-save-membership { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
 .plex-history-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
