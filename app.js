@@ -120,6 +120,7 @@
     billingContent: document.querySelector("#billingContent"),
     productSwitcher: document.querySelector("#productSwitcher"),
     productMenu: document.querySelector("#productMenu"),
+    brandMark: document.querySelector("#brandMark"),
     productTitle: document.querySelector("#productTitle"),
     productEyebrow: document.querySelector("#productEyebrow"),
     openSettings: document.querySelector("#openSettings"),
@@ -2334,7 +2335,9 @@
   function selectProduct(product) {
     const isPlexPoint = product === "plexpoint";
     els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
-    els.productEyebrow.textContent = isPlexPoint ? "Coming soon" : "Work billing";
+    els.productEyebrow.classList.toggle("hidden", isPlexPoint);
+    els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
+    els.brandMark.alt = isPlexPoint ? "PlexPoint" : "";
     document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint);
