@@ -80,7 +80,7 @@
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
-  const plexManager = { users: [], selectedId: null, detail: null, loaded: false };
+  const plexManager = { users: [], selectedId: null, detail: null, loaded: false, editingPaymentId: null };
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -185,6 +185,9 @@
     plexStartsOn: document.querySelector("#plexStartsOn"),
     plexNextDueOn: document.querySelector("#plexNextDueOn"),
     plexPaymentForm: document.querySelector("#plexPaymentForm"),
+    plexPaymentFormTitle: document.querySelector("#plexPaymentFormTitle"),
+    plexPaymentSubmitText: document.querySelector("#plexPaymentSubmitText"),
+    plexCancelPaymentEdit: document.querySelector("#plexCancelPaymentEdit"),
     plexAmount: document.querySelector("#plexAmount"),
     plexMonths: document.querySelector("#plexMonths"),
     plexMethodPicker: document.querySelector("#plexMethodPicker"),
@@ -1552,7 +1555,7 @@
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
     els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => {
       const paymentTier = payment.tier || subscription?.tier || "Payment";
-      return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", paymentTier)}" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`;
+      return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", paymentTier)}" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><div class="plex-payment-actions"><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong><button class="icon-only ghost" type="button" data-plex-payment-action="edit" data-payment-id="${escapeHtml(payment.id)}" title="Edit payment"><i data-lucide="pencil"></i></button><button class="icon-only ghost danger" type="button" data-plex-payment-action="remove" data-payment-id="${escapeHtml(payment.id)}" title="Remove payment"><i data-lucide="trash-2"></i></button></div></div>`;
     }).join("") : "<p>No payments recorded yet.</p>";
     renderPlexCustomPickers();
     refreshIcons();
@@ -1621,9 +1624,47 @@
     event.preventDefault(); if (!plexManager.detail) return;
     plexMessage("Recording payment…");
     try {
-      plexManager.detail = await plexRequest("billing", { action: "record_payment", userId: plexManager.detail.account.id, amountMinor: Math.round(Number(els.plexAmount.value) * 100), coverageMonths: Number(els.plexMonths.value), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() });
-      els.plexPaymentForm.reset(); updatePlexMethodPicker(); els.plexReceivedOn.value = plexToday();
-      await loadPlexManager(); renderPlexDetail(); plexMessage("Payment recorded.");
+      const editing = plexManager.editingPaymentId;
+      plexManager.detail = await plexRequest("billing", editing ? { action: "update_payment", userId: plexManager.detail.account.id, paymentId: editing, amountMinor: Math.round(Number(els.plexAmount.value) * 100), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() } : { action: "record_payment", userId: plexManager.detail.account.id, amountMinor: Math.round(Number(els.plexAmount.value) * 100), coverageMonths: Number(els.plexMonths.value), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() });
+      plexManager.editingPaymentId = null; els.plexPaymentForm.reset(); updatePlexMethodPicker(); els.plexReceivedOn.value = plexToday();
+      await loadPlexManager(); renderPlexDetail(); plexMessage(editing ? "Payment updated." : "Payment recorded.");
+    } catch (error) { plexMessage(error.message, true); }
+  }
+
+  function resetPlexPaymentEditor() {
+    plexManager.editingPaymentId = null;
+    els.plexPaymentForm.reset();
+    els.plexReceivedOn.value = plexToday();
+    updatePlexMethodPicker();
+    els.plexPaymentFormTitle.textContent = "Record payment";
+    els.plexPaymentSubmitText.textContent = "Record payment";
+    els.plexCancelPaymentEdit.classList.add("hidden");
+  }
+
+  async function handlePlexPaymentAction(event) {
+    const button = event.target.closest("[data-plex-payment-action]");
+    if (!button || !plexManager.detail) return;
+    const payment = plexManager.detail.billing.payments.find((item) => item.id === button.dataset.paymentId);
+    if (!payment) return;
+    if (button.dataset.plexPaymentAction === "edit") {
+      plexManager.editingPaymentId = payment.id;
+      els.plexAmount.value = (Number(payment.amountMinor) / 100).toFixed(2);
+      els.plexMethod.value = payment.method || "bank_transfer";
+      els.plexReceivedOn.value = plexDateInput(payment.receivedAt);
+      els.plexReference.value = payment.reference || "";
+      updatePlexMethodPicker();
+      els.plexPaymentFormTitle.textContent = "Edit payment";
+      els.plexPaymentSubmitText.textContent = "Save payment";
+      els.plexCancelPaymentEdit.classList.remove("hidden");
+      els.plexPaymentForm.scrollIntoView({ behavior: "smooth", block: "start" });
+      refreshIcons();
+      return;
+    }
+    if (!window.confirm("Remove this payment? This will void it and recalculate the customer's balance.")) return;
+    plexMessage("Removing payment…");
+    try {
+      plexManager.detail = await plexRequest("billing", { action: "void_payment", userId: plexManager.detail.account.id, paymentId: payment.id });
+      await loadPlexManager(); renderPlexDetail(); plexMessage("Payment removed.");
     } catch (error) { plexMessage(error.message, true); }
   }
 
@@ -2817,6 +2858,8 @@
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
+    els.plexPaymentHistory.addEventListener("click", handlePlexPaymentAction);
+    els.plexCancelPaymentEdit.addEventListener("click", resetPlexPaymentEditor);
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
       const product = event.target.closest("[data-product]")?.dataset.product;
