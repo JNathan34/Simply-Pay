@@ -1451,7 +1451,7 @@
     const menu = picker.querySelector(".plex-picker-menu");
     if (!selected || !trigger || !menu) return;
     trigger.innerHTML = `<i class="plex-picker-icon" data-lucide="${plexPickerIcon(type, selected.value)}" aria-hidden="true"></i><span>${escapeHtml(selected.textContent)}</span><i class="plex-picker-chevron" data-lucide="chevron-down" aria-hidden="true"></i>`;
-    menu.innerHTML = Array.from(select.options).map((option) => `<button type="button" role="option" aria-selected="${option.selected}" data-picker-value="${escapeHtml(option.value)}"><i class="plex-picker-icon" data-lucide="${plexPickerIcon(type, option.value)}" aria-hidden="true"></i><span>${escapeHtml(option.textContent)}</span></button>`).join("");
+    menu.innerHTML = Array.from(select.options).map((option) => `<button type="button" role="option" aria-selected="${option.selected}" data-picker-type="${type}" data-picker-value="${escapeHtml(option.value)}" data-tier="${type === "tier" ? escapeHtml(plexTierSlug(option.value)) : ""}"><i class="plex-picker-icon" data-lucide="${plexPickerIcon(type, option.value)}" aria-hidden="true"></i><span>${escapeHtml(option.textContent)}</span></button>`).join("");
   }
 
   function renderPlexCustomPickers() {

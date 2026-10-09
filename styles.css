@@ -420,6 +420,22 @@ button:disabled {
 .plex-picker-menu button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 42px; padding: 10px 13px; border: 0; border-top: 1px solid var(--line); background: transparent; color: var(--ink); font: inherit; font-weight: 700; text-align: left; }
 .plex-picker-menu button:first-child { border-top: 0; }
 .plex-picker-menu button:hover, .plex-picker-menu button[aria-selected="true"] { background: color-mix(in srgb, var(--teal) 14%, transparent); }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="bronze"] .plex-picker-icon { color: #f59e0b; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="silver"] .plex-picker-icon { color: #e2e8f0; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="gold"] .plex-picker-icon { color: #fde047; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="diamond"] .plex-picker-icon { color: #67e8f9; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="ruby"] .plex-picker-icon { color: #fb7185; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="platinum"] .plex-picker-icon { color: #c4b5fd; }
+.plex-picker-menu button[data-picker-type="tier"][data-tier="vip"] .plex-picker-icon { color: #94a3b8; }
+.plex-picker-menu button[data-picker-type="access"][data-picker-value="enabled"] .plex-picker-icon { color: #4ee1b7; }
+.plex-picker-menu button[data-picker-type="access"][data-picker-value="pending"] .plex-picker-icon { color: #ffec8a; }
+.plex-picker-menu button[data-picker-type="access"][data-picker-value="suspended"] .plex-picker-icon { color: #ff6b78; }
+.plex-picker-menu button[data-picker-type="access"][data-picker-value="cancelled"] .plex-picker-icon { color: #b8c7c2; }
+.plex-picker-menu button[data-picker-type="method"][data-picker-value="bank_transfer"] .plex-picker-icon { color: #84c5ff; }
+.plex-picker-menu button[data-picker-type="method"][data-picker-value="cash"] .plex-picker-icon { color: #a7f3c8; }
+.plex-picker-menu button[data-picker-type="method"][data-picker-value="card"] .plex-picker-icon { color: #d6cbff; }
+.plex-picker-menu button[data-picker-type="method"][data-picker-value="paypal"] .plex-picker-icon { color: #84d8ff; }
+.plex-picker-menu button[data-picker-type="method"][data-picker-value="other"] .plex-picker-icon { color: #b8c7c2; }
 .plex-save-membership { margin-top: 2px; }
 .plex-record-payment { margin-top: 2px; }
 .plex-payment-submit, .plex-payment-actions { display: flex; align-items: center; gap: 8px; }
