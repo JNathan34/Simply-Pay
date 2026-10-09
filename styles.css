@@ -1136,7 +1136,7 @@ select:focus {
 }
 
 .status-badge.pending { background: #2e2850; color: #d6cbff; }
-.status-badge.due, .status-badge.unpaid { background: #5a390f; color: #ffd28a; }
+.status-badge.due, .status-badge.unpaid { background: #55450d; color: #ffec8a; }
 .status-badge.overdue { background: #5a1f2a; color: #ffc1ca; }
 .status-badge.neutral { background: #263532; color: #c1d0cc; }
 
