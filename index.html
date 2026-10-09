@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=31" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -283,8 +283,7 @@
             <aside class="panel plexpoint-detail-panel">
               <div id="plexEmptyDetail" class="empty-state"><i data-lucide="mouse-pointer-click"></i><p>Select a customer to manage their plan and payments.</p></div>
               <div id="plexDetail" class="hidden">
-                <div class="plex-customer-heading"><div><p class="eyebrow">Customer</p><h2 id="plexCustomerName">—</h2><p id="plexCustomerEmail"></p></div><span class="status-badge" id="plexCustomerStatus">—</span></div>
-                <div class="plex-current-plan" id="plexCurrentPlanBox"><span>Current plan</span><strong><i class="plex-tier-icon" id="plexCurrentTierIcon" data-lucide="gem" aria-hidden="true"></i><span id="plexCurrentPlan">Not assigned</span></strong><span id="plexCurrentDue">No payment date set</span></div>
+                <div class="plex-customer-heading"><div><p class="eyebrow">Customer</p><h2 id="plexCustomerName">—</h2><p id="plexCustomerEmail"></p></div><div class="plex-customer-meta"><span class="status-badge" id="plexCustomerStatus">—</span><p id="plexCurrentDue">No payment date set</p></div></div>
                 <form class="plex-form" id="plexPlanForm"><h3>Membership</h3><label>Plan<span class="plex-tier-picker" id="plexTierPicker"><i class="plex-tier-icon" id="plexTierIcon" data-lucide="gem" aria-hidden="true"></i><select id="plexTier" required></select></span></label><label>Access<select id="plexAccess"><option value="enabled">Enabled</option><option value="pending">Pending</option><option value="suspended">Suspended</option><option value="cancelled">Cancelled</option></select></label><div class="plex-form-grid"><label>Plan starts<input id="plexStartsOn" type="date" required /></label><label>Next due<input id="plexNextDueOn" type="date" required /></label></div><button class="primary-button plex-save-membership" type="submit"><i data-lucide="save"></i> Save membership</button></form>
                 <form class="plex-form" id="plexPaymentForm"><h3>Record payment</h3><div class="plex-form-grid"><label>Amount (£)<input id="plexAmount" type="number" min="0.01" step="0.01" required /></label><label>Months covered<select id="plexMonths"><option value="1">1 month</option><option value="2">2 months</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></label><label>Method<select id="plexMethod"><option value="bank_transfer">Bank transfer</option><option value="cash">Cash</option><option value="card">Card</option><option value="paypal">PayPal</option><option value="other">Other</option></select></label><label>Date paid<input id="plexReceivedOn" type="date" required /></label></div><label>Reference <small>Optional</small><input id="plexReference" maxlength="80" /></label><button class="button" type="submit">Record payment</button></form>
                 <section class="plex-history"><h3>Recent payments</h3><div id="plexPaymentHistory"></div></section>

@@ -356,6 +356,8 @@ button:disabled {
 .plex-customer-heading { margin-bottom: 16px; }
 .panel-heading h2, .plex-customer-heading h2 { margin: 0; font-size: 20px; }
 .panel-heading p, .plex-customer-heading p { margin: 5px 0 0; color: var(--muted); }
+.plex-customer-meta { display: grid; justify-items: end; gap: 7px; text-align: right; }
+.plex-customer-meta p { font-size: 13px; font-weight: 750; }
 .plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
 .plexpoint-table-panel { gap: 12px; }
 .plexpoint-detail-panel #plexEmptyDetail { min-height: 280px; text-align: center; }
@@ -1443,6 +1445,7 @@ select:focus {
   .plexpoint-manager-grid { grid-template-columns: 1fr; }
   .plexpoint-signin { grid-template-columns: 1fr; justify-items: start; padding: 22px; }
   .panel-heading, .plex-customer-heading { flex-direction: column; }
+  .plex-customer-meta { justify-items: start; text-align: left; }
   .plex-form-grid { grid-template-columns: 1fr; }
   :root {
     --page-gutter: 23px;

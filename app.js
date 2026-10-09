@@ -177,9 +177,7 @@
     plexCustomerName: document.querySelector("#plexCustomerName"),
     plexCustomerEmail: document.querySelector("#plexCustomerEmail"),
     plexCustomerStatus: document.querySelector("#plexCustomerStatus"),
-    plexCurrentPlanBox: document.querySelector("#plexCurrentPlanBox"),
     plexTierPicker: document.querySelector("#plexTierPicker"),
-    plexCurrentPlan: document.querySelector("#plexCurrentPlan"),
     plexCurrentDue: document.querySelector("#plexCurrentDue"),
     plexPlanForm: document.querySelector("#plexPlanForm"),
     plexTier: document.querySelector("#plexTier"),
@@ -1509,9 +1507,7 @@
     els.plexCustomerStatus.textContent = period?.paymentStatus || subscription?.accessStatus || "No plan";
     els.plexCustomerStatus.className = `status-badge ${plexStatusClass(period?.paymentStatus || subscription?.accessStatus)}`;
     const selectedTierName = subscription?.tier || "";
-    els.plexCurrentPlanBox.dataset.tier = plexTierSlug(selectedTierName);
     els.plexTierPicker.dataset.tier = plexTierSlug(selectedTierName);
-    els.plexCurrentPlan.textContent = subscription ? `${subscription.tier} · ${plexMoney(subscription.monthlyPriceMinor, subscription.currency)} / month` : "Not assigned";
     els.plexCurrentDue.textContent = subscription?.endsAt ? `Due ${plexDate(subscription.endsAt)}` : "No payment date set";
     els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(plexTierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
