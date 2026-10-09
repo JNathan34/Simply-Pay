@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "hoursLogApp.v1";
   const OLD_STORAGE_KEY = "simpleInvoiceApp.v1";
+  const PRODUCT_MODE_KEY = "simplyPay.activeProduct";
   const GOOGLE_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";
   const GOOGLE_SAVE_FILE_NAME = "hours-log-save.json";
   const DEFAULT_GOOGLE_CLIENT_ID = "664652124946-e7abvmled21k144u686pfbie60pu5giu.apps.googleusercontent.com";
@@ -75,7 +76,7 @@
   let lastGoogleSyncAt = "";
   let calendarMonthDate = startOfMonthDate(todayIso());
   let selectedCalendarDate = todayIso();
-  let activeProduct = "simply-pay";
+  let activeProduct = localStorage.getItem(PRODUCT_MODE_KEY) === "plexpoint" ? "plexpoint" : "simply-pay";
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
@@ -2642,6 +2643,7 @@
   function selectProduct(product) {
     const isPlexPoint = product === "plexpoint";
     activeProduct = product;
+    localStorage.setItem(PRODUCT_MODE_KEY, activeProduct);
     els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
@@ -2755,6 +2757,7 @@
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
+  selectProduct(activeProduct);
   const managerSession = new URLSearchParams(window.location.hash.slice(1)).get("manager_session");
   if (managerSession && /^[a-f0-9]{64}$/.test(managerSession)) {
     sessionStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
