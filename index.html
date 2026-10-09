@@ -264,16 +264,17 @@
 
           <p class="plexpoint-notice hidden" id="plexpointNotice" role="status"></p>
           <section class="panel plexpoint-signin hidden" id="plexSigninPanel">
-            <div><p class="eyebrow">PlexPoint admin</p><h2>Sign in to manage payments</h2><p>Continue securely with your Plex account. You will return here automatically after Plex approves the sign-in.</p></div>
-            <button class="button plex-signin-button" id="plexSigninButton" type="button"><i data-lucide="log-in"></i> Sign in with Plex</button>
+            <div class="plexpoint-signin-mark" aria-hidden="true"><img src="icons/plexpoint-pay-logo.png" alt="" /></div>
+            <div class="plexpoint-signin-copy"><p class="eyebrow">PlexPoint admin</p><h2>Your payment manager is ready</h2><p>Sign in with Plex to view customers, record payments, and manage plans from one place.</p><button class="primary-button plex-signin-button" id="plexSigninButton" type="button"><i data-lucide="log-in"></i> Continue with Plex</button></div>
           </section>
-          <section class="plexpoint-metrics" aria-label="PlexPoint payment summary">
-            <article class="metric-card"><span>Total users</span><strong id="plexUserTotal">—</strong></article>
-            <article class="metric-card"><span>With a plan</span><strong id="plexSubscribedTotal">—</strong></article>
-            <article class="metric-card accent"><span>Overdue</span><strong id="plexOverdueTotal">—</strong></article>
-            <article class="metric-card"><span>Payments shown</span><strong id="plexPaymentTotal">—</strong></article>
-          </section>
-          <section class="plexpoint-manager-grid">
+          <div class="plexpoint-live-content hidden" id="plexLiveContent">
+            <section class="plexpoint-metrics" aria-label="PlexPoint payment summary">
+              <article class="metric-card"><span>Total users</span><strong id="plexUserTotal">—</strong></article>
+              <article class="metric-card"><span>With a plan</span><strong id="plexSubscribedTotal">—</strong></article>
+              <article class="metric-card accent"><span>Overdue</span><strong id="plexOverdueTotal">—</strong></article>
+              <article class="metric-card"><span>Payments shown</span><strong id="plexPaymentTotal">—</strong></article>
+            </section>
+            <section class="plexpoint-manager-grid">
             <section class="panel plexpoint-table-panel">
               <div class="panel-heading"><div><h2>Customer payment log</h2><p>Live records from the PlexPoint database.</p></div><button class="secondary-button" id="plexRefresh" type="button"><i data-lucide="refresh-cw"></i> Refresh</button></div>
               <label class="plex-search-label">Search users<input id="plexSearch" type="search" placeholder="Name, email, or Plex username" /></label>
@@ -290,7 +291,8 @@
                 <section class="plex-history"><h3>Recent payments</h3><div id="plexPaymentHistory"></div></section>
               </div>
             </aside>
-          </section>
+            </section>
+          </div>
         </section>
       </main>
     </div>

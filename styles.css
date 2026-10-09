@@ -343,10 +343,13 @@ button:disabled {
 
 .plexpoint-notice { margin: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; color: var(--muted); background: var(--surface); }
 .plexpoint-notice.error { color: #ffc7bf; border-color: #7a443d; background: #291a18; }
-.plexpoint-signin { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 22px; align-items: end; }
-.plexpoint-signin h2 { margin: 3px 0 0; }
-.plexpoint-signin p:not(.eyebrow) { margin: 7px 0 0; color: var(--muted); }
-.plex-signin-button { white-space: nowrap; }
+.plexpoint-signin { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 22px; align-items: start; max-width: 720px; margin: 22px auto 12px; padding: 28px; }
+.plexpoint-signin-mark { display: grid; width: 76px; height: 76px; place-items: center; border-radius: 22px; background: color-mix(in srgb, #ff8b16 12%, var(--surface-strong)); }
+.plexpoint-signin-mark img { width: 62px; height: 62px; object-fit: contain; }
+.plexpoint-signin h2 { margin: 3px 0 0; font-size: clamp(23px, 3vw, 29px); }
+.plexpoint-signin p:not(.eyebrow) { max-width: 550px; margin: 8px 0 0; color: var(--muted); line-height: 1.55; }
+.plex-signin-button { width: auto; margin-top: 20px; padding-inline: 18px; }
+.plexpoint-live-content { display: grid; gap: 18px; }
 .plexpoint-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .plexpoint-manager-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(360px, .9fr); gap: 18px; align-items: start; }
 .panel-heading, .plex-customer-heading { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
@@ -1418,7 +1421,7 @@ select:focus {
 @media (max-width: 620px) {
   .plexpoint-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .plexpoint-manager-grid { grid-template-columns: 1fr; }
-  .plexpoint-signin { grid-template-columns: 1fr; }
+  .plexpoint-signin { grid-template-columns: 1fr; justify-items: start; padding: 22px; }
   .panel-heading, .plex-customer-heading { flex-direction: column; }
   .plex-form-grid { grid-template-columns: 1fr; }
   :root {

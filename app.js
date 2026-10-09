@@ -162,6 +162,7 @@
     plexpointNotice: document.querySelector("#plexpointNotice"),
     plexSigninPanel: document.querySelector("#plexSigninPanel"),
     plexSigninButton: document.querySelector("#plexSigninButton"),
+    plexLiveContent: document.querySelector("#plexLiveContent"),
     plexUserTotal: document.querySelector("#plexUserTotal"),
     plexSubscribedTotal: document.querySelector("#plexSubscribedTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
@@ -1503,11 +1504,13 @@
       const data = await plexRequest("users");
       plexManager.users = data.users || []; plexManager.loaded = true;
       els.plexSigninPanel.classList.add("hidden");
+      els.plexLiveContent.classList.remove("hidden");
       renderPlexSummary(data.summary); renderPlexUsers(); renderPlexDetail(); plexMessage();
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         els.plexSigninPanel.classList.remove("hidden");
-        plexMessage("Sign in with your PlexPoint administrator account to load the payment manager.", true);
+        els.plexLiveContent.classList.add("hidden");
+        plexMessage();
       }
       else plexMessage(error.message || "Could not load PlexPoint payments.", true);
     }
