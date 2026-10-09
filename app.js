@@ -1422,6 +1422,16 @@
   const plexMoney = (minor, currency = "GBP") => new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(Number(minor || 0) / 100);
   const plexDate = (value) => value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(value)) : "—";
   const plexDateInput = (value) => value ? new Date(value).toISOString().slice(0, 10) : "";
+  const plexTierSlug = (name) => String(name || "none").toLowerCase().replace(/\s+tier$/, "").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "") || "none";
+  const plexStatusClass = (status) => {
+    const normalized = String(status || "").toLowerCase().replace(/\s+/g, "_");
+    if (["paid", "enabled"].includes(normalized)) return "paid";
+    if (["pending", "awaiting_payment"].includes(normalized)) return "pending";
+    if (["due", "due_soon", "unpaid"].includes(normalized)) return "due";
+    if (["overdue", "suspended", "cancelled", "disabled"].includes(normalized)) return "overdue";
+    return "neutral";
+  };
+  const plexInitial = (name) => String(name || "?").trim().charAt(0).toUpperCase() || "?";
 
   function plexMessage(message = "", error = false) {
     els.plexpointNotice.textContent = message;
@@ -1476,10 +1486,14 @@
     els.plexUserRows.innerHTML = users.map((user) => {
       const billing = user.billing;
       const status = billing?.status || user.subscription?.status || "No plan";
-      const statusClass = ["paid", "enabled"].includes(status) ? "paid" : ["overdue", "unpaid", "suspended"].includes(status) ? "unpaid" : "";
-      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></td><td>${escapeHtml(user.subscription?.tier || "No plan")}</td><td><span class="status-badge ${statusClass}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
+      const tier = user.subscription?.tier || "No plan";
+      const avatar = user.plexProfileAvatarUrl
+        ? `<img class="plex-avatar" src="${escapeHtml(user.plexProfileAvatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<span class="plex-avatar plex-avatar-fallback" aria-hidden="true">${escapeHtml(plexInitial(user.displayName))}</span>`;
+      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><div class="plex-customer-cell">${avatar}<div><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></div></div></td><td><span class="plex-tier-label" data-tier="${escapeHtml(plexTierSlug(tier))}"><i class="plex-tier-icon" data-lucide="gem"></i>${escapeHtml(tier)}</span></td><td><span class="status-badge ${plexStatusClass(status)}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
     }).join("");
     els.plexEmptyUsers.classList.toggle("hidden", users.length > 0);
+    refreshIcons();
   }
 
   function renderPlexDetail() {
@@ -1493,14 +1507,13 @@
     els.plexCustomerName.textContent = account.displayName;
     els.plexCustomerEmail.textContent = account.email;
     els.plexCustomerStatus.textContent = period?.paymentStatus || subscription?.accessStatus || "No plan";
-    els.plexCustomerStatus.className = `status-badge ${["paid", "enabled"].includes(period?.paymentStatus || subscription?.accessStatus) ? "paid" : ""}`;
-    const tierSlug = (name) => String(name || "none").toLowerCase().replace(/\s+tier$/, "").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "") || "none";
+    els.plexCustomerStatus.className = `status-badge ${plexStatusClass(period?.paymentStatus || subscription?.accessStatus)}`;
     const selectedTierName = subscription?.tier || "";
-    els.plexCurrentPlanBox.dataset.tier = tierSlug(selectedTierName);
-    els.plexTierPicker.dataset.tier = tierSlug(selectedTierName);
+    els.plexCurrentPlanBox.dataset.tier = plexTierSlug(selectedTierName);
+    els.plexTierPicker.dataset.tier = plexTierSlug(selectedTierName);
     els.plexCurrentPlan.textContent = subscription ? `${subscription.tier} · ${plexMoney(subscription.monthlyPriceMinor, subscription.currency)} / month` : "Not assigned";
     els.plexCurrentDue.textContent = subscription?.endsAt ? `Due ${plexDate(subscription.endsAt)}` : "No payment date set";
-    els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(tierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
+    els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(plexTierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();

@@ -367,20 +367,24 @@ button:disabled {
 .plex-payment-table td { padding: 13px 14px; border-top: 1px solid var(--line); color: var(--ink); }
 .plex-payment-table tr[data-plex-user-id] { cursor: pointer; }
 .plex-payment-table tr[data-plex-user-id]:hover, .plex-payment-table tr.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); }
+.plex-customer-cell { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 10px; }
+.plex-avatar { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-strong); object-fit: cover; }
+.plex-avatar-fallback { display: grid; place-items: center; color: var(--teal-light); font-size: 13px; font-weight: 900; }
 .plex-payment-table td:first-child strong, .plex-payment-table td:first-child span { display: block; }
 .plex-payment-table td:first-child span, .plex-history-row span { margin-top: 3px; color: var(--muted); font-size: 12px; }
-.plex-current-plan, .plex-tier-picker { --tier-color: #94a3b8; }
-.plex-current-plan[data-tier="bronze"], .plex-tier-picker[data-tier="bronze"] { --tier-color: #f59e0b; }
-.plex-current-plan[data-tier="silver"], .plex-tier-picker[data-tier="silver"] { --tier-color: #e2e8f0; }
-.plex-current-plan[data-tier="gold"], .plex-tier-picker[data-tier="gold"] { --tier-color: #fde047; }
-.plex-current-plan[data-tier="diamond"], .plex-tier-picker[data-tier="diamond"] { --tier-color: #67e8f9; }
-.plex-current-plan[data-tier="ruby"], .plex-tier-picker[data-tier="ruby"] { --tier-color: #fb7185; }
-.plex-current-plan[data-tier="platinum"], .plex-tier-picker[data-tier="platinum"] { --tier-color: #c4b5fd; }
-.plex-current-plan[data-tier="vip"], .plex-tier-picker[data-tier="vip"] { --tier-color: #94a3b8; }
+.plex-current-plan, .plex-tier-picker, .plex-tier-label { --tier-color: #94a3b8; }
+.plex-current-plan[data-tier="bronze"], .plex-tier-picker[data-tier="bronze"], .plex-tier-label[data-tier="bronze"] { --tier-color: #f59e0b; }
+.plex-current-plan[data-tier="silver"], .plex-tier-picker[data-tier="silver"], .plex-tier-label[data-tier="silver"] { --tier-color: #e2e8f0; }
+.plex-current-plan[data-tier="gold"], .plex-tier-picker[data-tier="gold"], .plex-tier-label[data-tier="gold"] { --tier-color: #fde047; }
+.plex-current-plan[data-tier="diamond"], .plex-tier-picker[data-tier="diamond"], .plex-tier-label[data-tier="diamond"] { --tier-color: #67e8f9; }
+.plex-current-plan[data-tier="ruby"], .plex-tier-picker[data-tier="ruby"], .plex-tier-label[data-tier="ruby"] { --tier-color: #fb7185; }
+.plex-current-plan[data-tier="platinum"], .plex-tier-picker[data-tier="platinum"], .plex-tier-label[data-tier="platinum"] { --tier-color: #c4b5fd; }
+.plex-current-plan[data-tier="vip"], .plex-tier-picker[data-tier="vip"], .plex-tier-label[data-tier="vip"] { --tier-color: #94a3b8; }
 .plex-current-plan { display: grid; gap: 4px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-strong); }
 .plex-current-plan span { color: var(--muted); font-size: 13px; }
 .plex-current-plan strong { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-size: 16px; }
 .plex-tier-icon { width: 17px; height: 17px; flex: 0 0 17px; color: var(--tier-color); }
+.plex-tier-label { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-weight: 750; white-space: nowrap; }
 .plex-form { display: grid; gap: 15px; padding-top: 20px; border-top: 1px solid var(--line); }
 .plex-form h3, .plex-history h3 { margin: 0; font-size: 16px; }
 .plex-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -1128,10 +1132,10 @@ select:focus {
   color: var(--teal-dark);
 }
 
-.status-badge.unpaid {
-  background: var(--gold-soft);
-  color: var(--gold);
-}
+.status-badge.pending { background: #2e2850; color: #d6cbff; }
+.status-badge.due, .status-badge.unpaid { background: #4b3612; color: #ffd47d; }
+.status-badge.overdue { background: #4b1f27; color: #ffbac3; }
+.status-badge.neutral { background: #263532; color: #c1d0cc; }
 
 .empty-state {
   display: grid;
