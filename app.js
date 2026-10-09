@@ -1422,6 +1422,7 @@
   const plexDate = (value) => value ? new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" }).format(new Date(value)) : "—";
   const plexDateInput = (value) => value ? new Date(value).toISOString().slice(0, 10) : "";
   const plexTierSlug = (name) => String(name || "none").toLowerCase().replace(/\s+tier$/, "").replace(/[^a-z]+/g, "-").replace(/^-|-$/g, "") || "none";
+  const plexTierIcons = { bronze: "user-round", silver: "shield-check", gold: "crown", diamond: "gem", ruby: "gem", platinum: "zap", vip: "star", none: "gem" };
   const plexAccessIcons = { enabled: "shield-check", pending: "clock-3", suspended: "shield-alert", cancelled: "shield-x" };
   const plexMethodIcons = { bank_transfer: "landmark", cash: "banknote", card: "credit-card", paypal: "wallet-cards", other: "ellipsis" };
   const plexStatusClass = (status) => {
@@ -1435,7 +1436,7 @@
   const plexInitial = (name) => String(name || "?").trim().charAt(0).toUpperCase() || "?";
 
   function plexPickerIcon(type, value) {
-    if (type === "tier") return "gem";
+    if (type === "tier") return plexTierIcons[plexTierSlug(value)] || "gem";
     if (type === "access") return plexAccessIcons[value] || "shield";
     return plexMethodIcons[value] || "wallet";
   }
@@ -1523,7 +1524,7 @@
       const avatar = user.plexProfileAvatarUrl
         ? `<img class="plex-avatar" src="${escapeHtml(user.plexProfileAvatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
         : `<span class="plex-avatar plex-avatar-fallback" aria-hidden="true">${escapeHtml(plexInitial(user.displayName))}</span>`;
-      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><div class="plex-customer-cell">${avatar}<div><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></div></div></td><td><span class="plex-tier-label" data-tier="${escapeHtml(plexTierSlug(tier))}"><i class="plex-tier-icon" data-lucide="gem"></i>${escapeHtml(tier)}</span></td><td><span class="status-badge ${plexStatusClass(status)}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
+      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><div class="plex-customer-cell">${avatar}<div><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></div></div></td><td><span class="plex-tier-label" data-tier="${escapeHtml(plexTierSlug(tier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", tier)}"></i>${escapeHtml(tier)}</span></td><td><span class="status-badge ${plexStatusClass(status)}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
     }).join("");
     els.plexEmptyUsers.classList.toggle("hidden", users.length > 0);
     refreshIcons();
@@ -1551,7 +1552,7 @@
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
     els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => {
       const paymentTier = payment.tier || subscription?.tier || "Payment";
-      return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="gem" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`;
+      return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", paymentTier)}" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`;
     }).join("") : "<p>No payments recorded yet.</p>";
     renderPlexCustomPickers();
     refreshIcons();
