@@ -162,10 +162,6 @@ button:disabled {
   text-align: left;
 }
 
-.brand-lockup:hover {
-  background: var(--ghost-hover);
-}
-
 .brand-lockup:focus-visible {
   outline: 3px solid var(--focus-ring);
   outline-offset: 3px;
@@ -208,7 +204,9 @@ button:disabled {
 
 .product-menu-item {
   display: grid;
-  gap: 2px;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
   width: 100%;
   padding: 11px 12px;
   color: var(--ink);
@@ -231,8 +229,8 @@ button:disabled {
 
 .product-menu-item.active::after {
   content: "Current";
-  grid-column: 2;
-  grid-row: 1 / span 2;
+  grid-column: 3;
+  grid-row: 1;
   align-self: center;
   color: var(--teal-dark);
   font-size: 11px;
@@ -243,9 +241,11 @@ button:disabled {
   font-weight: 800;
 }
 
-.product-menu-item small {
-  color: var(--muted);
-  font-size: 12px;
+.product-menu-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  object-fit: cover;
 }
 
 .workspace.plexpoint-workspace {
