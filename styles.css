@@ -317,7 +317,17 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
   gap: 18px;
-  align-items: start;
+  align-items: stretch;
+}
+
+.log-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-panel .empty-state {
+  flex: 1;
+  min-height: 0;
 }
 
 .panel,
