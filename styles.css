@@ -359,7 +359,8 @@ button:disabled {
 .plex-customer-meta { display: grid; justify-items: end; gap: 7px; text-align: right; }
 .plex-customer-meta p { font-size: 13px; font-weight: 750; }
 .plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
-.plexpoint-table-panel { gap: 12px; }
+.plexpoint-table-panel { gap: 8px; }
+.plexpoint-table-panel .panel-heading { margin-bottom: 0; }
 .plexpoint-detail-panel #plexEmptyDetail { min-height: 280px; text-align: center; }
 .plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .plex-search, .plex-form input, .plex-form select { width: 100%; }
