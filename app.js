@@ -2334,6 +2334,10 @@
 
   function toggleProductMenu() {
     const willOpen = els.productMenu.classList.contains("hidden");
+    if (willOpen) {
+      const selectedProduct = els.productMenu.querySelector(`[data-product="${activeProduct}"]`);
+      if (selectedProduct) els.productMenu.prepend(selectedProduct);
+    }
     els.productMenu.classList.toggle("hidden", !willOpen);
     els.productSwitcher.setAttribute("aria-expanded", String(willOpen));
   }
