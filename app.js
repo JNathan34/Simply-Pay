@@ -2338,6 +2338,7 @@
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
     els.brandMark.alt = isPlexPoint ? "PlexPoint" : "";
+    els.brandMark.classList.toggle("is-plexpoint", isPlexPoint);
     document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint);

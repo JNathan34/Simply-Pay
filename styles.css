@@ -259,6 +259,13 @@ button:disabled {
   box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
 }
 
+.brand-mark.is-plexpoint {
+  width: 52px;
+  height: 52px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .brand-title,
 .panel h2,
 .settings-header h2 {
@@ -1284,6 +1291,12 @@ select:focus {
     width: 42px;
     height: 42px;
     border-radius: 10px;
+  }
+
+  .brand-mark.is-plexpoint {
+    width: 46px;
+    height: 46px;
+    border-radius: 0;
   }
 
   .topbar-actions {
