@@ -1515,7 +1515,10 @@
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
-    els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => `<div class="plex-history-row"><div><strong>${escapeHtml(payment.tier || subscription?.tier || "Payment")}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
+    els.plexPaymentHistory.innerHTML = payments.length ? payments.map((payment) => {
+      const paymentTier = payment.tier || subscription?.tier || "Payment";
+      return `<div class="plex-history-row"><div><strong class="plex-payment-tier plex-tier-label" data-tier="${escapeHtml(plexTierSlug(paymentTier))}"><i class="plex-tier-icon" data-lucide="gem" aria-hidden="true"></i>${escapeHtml(paymentTier)}</strong><span>${escapeHtml(plexDate(payment.receivedAt))} · ${escapeHtml(payment.method || "manual")}${payment.reference ? ` · ${escapeHtml(payment.reference)}` : ""}</span></div><strong>${escapeHtml(plexMoney(payment.amountMinor, payment.currency))}</strong></div>`;
+    }).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
     renderPlexSummary();
   }
