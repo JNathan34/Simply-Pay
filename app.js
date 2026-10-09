@@ -116,6 +116,12 @@
     calendarPrev: document.querySelector("#calendarPrev"),
     calendarToday: document.querySelector("#calendarToday"),
     calendarNext: document.querySelector("#calendarNext"),
+    workspace: document.querySelector("#workspace"),
+    billingContent: document.querySelector("#billingContent"),
+    productSwitcher: document.querySelector("#productSwitcher"),
+    productMenu: document.querySelector("#productMenu"),
+    productTitle: document.querySelector("#productTitle"),
+    productEyebrow: document.querySelector("#productEyebrow"),
     openSettings: document.querySelector("#openSettings"),
     closeSettings: document.querySelector("#closeSettings"),
     settingsDone: document.querySelector("#settingsDone"),
@@ -2314,6 +2320,32 @@
     document.body.classList.remove("settings-open");
   }
 
+  function toggleProductMenu() {
+    const willOpen = els.productMenu.classList.contains("hidden");
+    els.productMenu.classList.toggle("hidden", !willOpen);
+    els.productSwitcher.setAttribute("aria-expanded", String(willOpen));
+  }
+
+  function closeProductMenu() {
+    els.productMenu.classList.add("hidden");
+    els.productSwitcher.setAttribute("aria-expanded", "false");
+  }
+
+  function selectProduct(product) {
+    const isPlexPoint = product === "plexpoint";
+    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
+    els.productEyebrow.textContent = isPlexPoint ? "Coming soon" : "Work billing";
+    document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
+    els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
+    els.billingContent.classList.toggle("hidden", isPlexPoint);
+    els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
+      const selected = item.dataset.product === product;
+      item.classList.toggle("active", selected);
+      item.toggleAttribute("aria-current", selected);
+    });
+    closeProductMenu();
+  }
+
   function showToast(message) {
     window.clearTimeout(toastTimer);
     els.toast.textContent = message;
@@ -2370,16 +2402,26 @@
     });
     els.companiesList.addEventListener("click", handleCompanyAction);
     els.companiesList.addEventListener("change", handleCompanyChange);
+    els.productSwitcher.addEventListener("click", toggleProductMenu);
+    els.productMenu.addEventListener("click", (event) => {
+      const product = event.target.closest("[data-product]")?.dataset.product;
+      if (product) selectProduct(product);
+    });
     els.openSettings.addEventListener("click", openSettings);
     els.closeSettings.addEventListener("click", closeSettings);
     els.settingsDone.addEventListener("click", closeSettings);
     els.settingsOverlay.addEventListener("click", (event) => {
       if (event.target === els.settingsOverlay) closeSettings();
     });
+    document.addEventListener("click", (event) => {
+      if (!els.productMenu.classList.contains("hidden") && !event.target.closest(".product-switcher")) closeProductMenu();
+    });
     els.signOutGoogle.addEventListener("click", signOutGoogle);
     els.syncNowGoogle.addEventListener("click", () => connectGoogleDriveSync(true));
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !els.settingsOverlay.classList.contains("hidden")) closeSettings();
+      if (event.key !== "Escape") return;
+      if (!els.settingsOverlay.classList.contains("hidden")) closeSettings();
+      closeProductMenu();
     });
     window.addEventListener("load", scheduleGoogleSignIn);
   }

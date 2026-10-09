@@ -154,6 +154,102 @@ button:disabled {
   align-items: center;
   gap: 14px;
   min-width: 0;
+  padding: 6px;
+  margin: -6px;
+  color: inherit;
+  background: transparent;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.brand-lockup:hover {
+  background: var(--ghost-hover);
+}
+
+.brand-lockup:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.brand-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.product-switcher {
+  position: relative;
+}
+
+.brand-chevron {
+  width: 18px;
+  height: 18px;
+  margin-left: -4px;
+  color: var(--muted);
+  transition: transform 160ms ease;
+}
+
+.brand-lockup[aria-expanded="true"] .brand-chevron {
+  transform: rotate(180deg);
+}
+
+.product-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 14px);
+  left: 0;
+  display: grid;
+  min-width: 238px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 18px 40px rgba(13, 24, 21, 0.18);
+}
+
+.product-menu-item {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--ink);
+  background: transparent;
+  border-radius: 8px;
+  text-decoration: none;
+  text-align: left;
+}
+
+.product-menu-item:hover,
+.product-menu-item:focus-visible {
+  background: var(--ghost-hover);
+  outline: none;
+}
+
+.product-menu-item.active {
+  color: var(--teal-dark);
+  background: var(--mint);
+}
+
+.product-menu-item.active::after {
+  content: "Current";
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.product-menu-item span {
+  font-weight: 800;
+}
+
+.product-menu-item small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.workspace.plexpoint-workspace {
+  min-height: calc(100vh - 140px);
 }
 
 .brand-mark {
@@ -163,15 +259,17 @@ button:disabled {
   box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
 }
 
-.topbar h1,
+.brand-title,
 .panel h2,
 .settings-header h2 {
   margin: 0;
   letter-spacing: 0;
 }
 
-.topbar h1 {
+.brand-title {
+  display: block;
   font-size: clamp(30px, 4vw, 46px);
+  font-weight: 700;
   line-height: 1;
 }
 
@@ -193,6 +291,10 @@ button:disabled {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.brand-copy .eyebrow {
+  display: block;
 }
 
 .topbar-actions,
@@ -1164,7 +1266,7 @@ select:focus {
     padding-bottom: 14px;
   }
 
-  .topbar h1 {
+  .brand-title {
     font-size: 32px;
   }
 

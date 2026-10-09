@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=21" />
+    <link rel="stylesheet" href="styles.css?v=22" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -23,11 +23,31 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="topbar-content">
-          <div class="brand-lockup">
-            <img class="brand-mark" src="icons/simply-pay-logo.svg" alt="" />
-            <div>
-              <p class="eyebrow">Work billing</p>
-              <h1>Simply Pay</h1>
+          <div class="product-switcher">
+            <button
+              class="brand-lockup"
+              id="productSwitcher"
+              type="button"
+              aria-expanded="false"
+              aria-controls="productMenu"
+              title="Choose a PlexPoint product"
+            >
+              <img class="brand-mark" src="icons/simply-pay-logo.svg" alt="" />
+              <span class="brand-copy">
+                <span class="eyebrow" id="productEyebrow">Work billing</span>
+                <span class="brand-title" id="productTitle">Simply Pay</span>
+              </span>
+              <i class="brand-chevron" data-lucide="chevron-down" aria-hidden="true"></i>
+            </button>
+            <div class="product-menu hidden" id="productMenu" role="menu" aria-label="Choose a product">
+              <button class="product-menu-item" type="button" role="menuitem" data-product="plexpoint">
+                <span>PlexPoint</span>
+                <small>Media and services</small>
+              </button>
+              <button class="product-menu-item active" type="button" role="menuitem" data-product="simply-pay" aria-current="page">
+                <span>Simply Pay</span>
+                <small>Work billing</small>
+              </button>
             </div>
           </div>
           <div class="topbar-actions">
@@ -39,7 +59,8 @@
         </div>
       </header>
 
-      <main class="workspace">
+      <main class="workspace" id="workspace">
+        <div id="billingContent">
         <section class="summary-grid" aria-label="Current work summary">
           <article class="metric-card">
             <span>Unbilled hours</span>
@@ -230,6 +251,7 @@
             </div>
           </section>
         </section>
+        </div>
       </main>
     </div>
 
