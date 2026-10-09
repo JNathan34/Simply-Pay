@@ -1484,10 +1484,6 @@
   }
 
   async function loadPlexManager() {
-    if (window.location.hostname !== "simply-pay.plexpoint.uk") {
-      plexMessage("Open Simply Pay at simply-pay.plexpoint.uk to use the live PlexPoint database.", true);
-      return;
-    }
     plexMessage("Loading live PlexPoint payment data…");
     try {
       const data = await plexRequest("users");
