@@ -178,6 +178,7 @@
     plexCustomerEmail: document.querySelector("#plexCustomerEmail"),
     plexCustomerStatus: document.querySelector("#plexCustomerStatus"),
     plexTierPicker: document.querySelector("#plexTierPicker"),
+    plexAccessPicker: document.querySelector("#plexAccessPicker"),
     plexPlanForm: document.querySelector("#plexPlanForm"),
     plexTier: document.querySelector("#plexTier"),
     plexAccess: document.querySelector("#plexAccess"),
@@ -1509,6 +1510,7 @@
     els.plexTierPicker.dataset.tier = plexTierSlug(selectedTierName);
     els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(plexTierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
+    els.plexAccessPicker.dataset.access = els.plexAccess.value;
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
     els.plexNextDueOn.value = plexDateInput(subscription?.endsAt) || plexToday();
     const payments = (billing.payments || []).filter((payment) => payment.status !== "void").slice(0, 8);
@@ -2739,6 +2741,9 @@
     });
     els.plexTier.addEventListener("change", () => {
       els.plexTierPicker.dataset.tier = els.plexTier.selectedOptions[0]?.dataset.tier || "none";
+    });
+    els.plexAccess.addEventListener("change", () => {
+      els.plexAccessPicker.dataset.access = els.plexAccess.value;
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
