@@ -1658,7 +1658,7 @@
       els.plexReference.value = payment.reference || "";
       updatePlexMethodPicker();
       els.plexPaymentFormTitle.textContent = "Edit payment";
-      els.plexPaymentSubmitText.textContent = "Save payment";
+      els.plexPaymentSubmitText.textContent = "Save changes";
       els.plexCancelPaymentEdit.classList.remove("hidden");
       els.plexPaymentForm.scrollIntoView({ behavior: "smooth", block: "start" });
       refreshIcons();

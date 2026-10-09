@@ -438,8 +438,9 @@ button:disabled {
 .plex-picker-menu button[data-picker-type="method"][data-picker-value="other"] .plex-picker-icon { color: #b8c7c2; }
 .plex-save-membership { margin-top: 2px; }
 .plex-record-payment { margin-top: 2px; }
-.plex-payment-submit, .plex-payment-actions { display: flex; align-items: center; gap: 8px; }
-.plex-payment-submit .primary-button { flex: 1; }
+.plex-payment-submit, .plex-payment-actions { display: flex; align-items: center; gap: 10px; }
+.plex-payment-submit > button { flex: 1; min-width: 0; white-space: nowrap; }
+.plex-payment-submit .primary-button { justify-content: center; }
 .plex-payment-actions { justify-content: flex-end; }
 .plex-payment-actions .icon-only { width: 34px; height: 34px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
