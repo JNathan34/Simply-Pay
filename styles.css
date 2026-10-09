@@ -378,6 +378,7 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
   gap: 18px;
+  margin-top: 8px;
   align-items: stretch;
 }
 
@@ -1402,6 +1403,7 @@ select:focus {
 
   .main-grid {
     grid-template-columns: 1fr;
+    margin-top: 4px;
   }
 
   .subscription-manager-grid {
