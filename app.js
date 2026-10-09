@@ -1477,7 +1477,8 @@
   }
 
   async function plexRequest(path, body) {
-    const managerSession = localStorage.getItem(PLEX_MANAGER_SESSION_KEY);
+    const managerSession = localStorage.getItem(PLEX_MANAGER_SESSION_KEY) || sessionStorage.getItem(PLEX_MANAGER_SESSION_KEY);
+    if (managerSession && !localStorage.getItem(PLEX_MANAGER_SESSION_KEY)) localStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
     const response = await fetch(`${PLEXPOINT_API}${path}`, {
       method: body ? "POST" : "GET", credentials: "include", cache: "no-store",
       headers: { ...(body ? { "Content-Type": "application/json", "X-PlexPoint-Request": "1" } : {}), ...(managerSession ? { "X-PlexPoint-Manager-Session": managerSession } : {}) },
@@ -1581,6 +1582,8 @@
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         localStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
+        sessionStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
+        plexManager.users = []; plexManager.detail = null; plexManager.loaded = false;
         els.plexSigninPanel.classList.remove("hidden");
         els.plexLiveContent.classList.add("hidden");
         plexMessage();
