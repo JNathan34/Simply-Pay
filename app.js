@@ -187,6 +187,7 @@
     plexPaymentForm: document.querySelector("#plexPaymentForm"),
     plexAmount: document.querySelector("#plexAmount"),
     plexMonths: document.querySelector("#plexMonths"),
+    plexMethodPicker: document.querySelector("#plexMethodPicker"),
     plexMethod: document.querySelector("#plexMethod"),
     plexReceivedOn: document.querySelector("#plexReceivedOn"),
     plexReference: document.querySelector("#plexReference"),
@@ -1582,7 +1583,7 @@
     plexMessage("Recording payment…");
     try {
       plexManager.detail = await plexRequest("billing", { action: "record_payment", userId: plexManager.detail.account.id, amountMinor: Math.round(Number(els.plexAmount.value) * 100), coverageMonths: Number(els.plexMonths.value), method: els.plexMethod.value, receivedOn: els.plexReceivedOn.value, reference: els.plexReference.value.trim() });
-      els.plexPaymentForm.reset(); els.plexReceivedOn.value = plexToday();
+      els.plexPaymentForm.reset(); els.plexMethodPicker.dataset.method = els.plexMethod.value; els.plexReceivedOn.value = plexToday();
       await loadPlexManager(); renderPlexDetail(); plexMessage("Payment recorded.");
     } catch (error) { plexMessage(error.message, true); }
   }
@@ -2744,6 +2745,9 @@
     });
     els.plexAccess.addEventListener("change", () => {
       els.plexAccessPicker.dataset.access = els.plexAccess.value;
+    });
+    els.plexMethod.addEventListener("change", () => {
+      els.plexMethodPicker.dataset.method = els.plexMethod.value;
     });
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);

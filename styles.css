@@ -400,6 +400,13 @@ button:disabled {
 .plex-access-picker[data-access="cancelled"] { --access-color: #b8c7c2; }
 .plex-access-picker .plex-access-icon { position: absolute; z-index: 1; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: var(--access-color); pointer-events: none; }
 .plex-access-picker select { padding-left: 42px; color: var(--ink); }
+.plex-method-picker { --method-color: #84c5ff; position: relative; display: block; }
+.plex-method-picker[data-method="cash"] { --method-color: #a7f3c8; }
+.plex-method-picker[data-method="card"] { --method-color: #d6cbff; }
+.plex-method-picker[data-method="paypal"] { --method-color: #84d8ff; }
+.plex-method-picker[data-method="other"] { --method-color: #b8c7c2; }
+.plex-method-picker .plex-method-icon { position: absolute; z-index: 1; top: 50%; left: 13px; width: 17px; height: 17px; transform: translateY(-50%); color: var(--method-color); pointer-events: none; }
+.plex-method-picker select { padding-left: 42px; color: var(--ink); }
 .plex-save-membership { margin-top: 2px; }
 .plex-record-payment { margin-top: 2px; }
 .plex-history { display: grid; gap: 10px; padding-top: 15px; border-top: 1px solid var(--line); }
