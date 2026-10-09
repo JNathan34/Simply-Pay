@@ -178,7 +178,6 @@
     plexCustomerEmail: document.querySelector("#plexCustomerEmail"),
     plexCustomerStatus: document.querySelector("#plexCustomerStatus"),
     plexTierPicker: document.querySelector("#plexTierPicker"),
-    plexCurrentDue: document.querySelector("#plexCurrentDue"),
     plexPlanForm: document.querySelector("#plexPlanForm"),
     plexTier: document.querySelector("#plexTier"),
     plexAccess: document.querySelector("#plexAccess"),
@@ -1508,7 +1507,6 @@
     els.plexCustomerStatus.className = `status-badge ${plexStatusClass(period?.paymentStatus || subscription?.accessStatus)}`;
     const selectedTierName = subscription?.tier || "";
     els.plexTierPicker.dataset.tier = plexTierSlug(selectedTierName);
-    els.plexCurrentDue.textContent = subscription?.endsAt ? `Due ${plexDate(subscription.endsAt)}` : "No payment date set";
     els.plexTier.innerHTML = (tiers || []).map((tier) => `<option value="${escapeHtml(tier.id)}" data-tier="${escapeHtml(plexTierSlug(tier.name))}" ${tier.id === subscription?.tierId ? "selected" : ""}>${escapeHtml(tier.name)} — ${escapeHtml(plexMoney(tier.monthlyPriceMinor, tier.currency))} / month</option>`).join("");
     els.plexAccess.value = subscription?.accessStatus || "enabled";
     els.plexStartsOn.value = plexDateInput(subscription?.startsAt) || plexToday();
