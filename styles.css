@@ -1038,6 +1038,31 @@ select:focus {
   padding-bottom: 20px;
 }
 
+.plexpoint-settings-empty {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  align-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.plexpoint-settings-empty h3,
+.plexpoint-settings-empty p {
+  margin: 0;
+}
+
+.plexpoint-settings-empty p {
+  margin-top: 6px;
+  color: var(--muted);
+}
+
+.plexpoint-settings-mark {
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+}
+
 .settings-section {
   border: 1px solid var(--line);
   border-radius: var(--radius);

@@ -259,8 +259,8 @@
       <aside class="settings-menu" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="settings-header">
           <div>
-            <p class="eyebrow">Simply Pay</p>
-            <h2 id="settingsTitle">Menu</h2>
+            <p class="eyebrow" id="settingsEyebrow">Simply Pay</p>
+            <h2 id="settingsTitle">Settings</h2>
           </div>
           <button class="icon-only ghost" id="closeSettings" type="button" title="Close settings">
             <i data-lucide="x"></i>
@@ -389,6 +389,20 @@
             <span>Done</span>
           </button>
         </form>
+
+        <div class="settings-form hidden" id="plexpointSettings" aria-hidden="true">
+          <section class="settings-section plexpoint-settings-empty">
+            <img class="plexpoint-settings-mark" src="icons/plexpoint-pay-logo.png" alt="" />
+            <div>
+              <h3>Plex Billing</h3>
+              <p>PlexPoint payment settings will live here.</p>
+            </div>
+          </section>
+          <button class="primary-button" id="plexpointSettingsDone" type="button">
+            <i data-lucide="check"></i>
+            <span>Done</span>
+          </button>
+        </div>
       </aside>
     </div>
 

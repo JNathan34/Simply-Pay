@@ -74,6 +74,7 @@
   let lastGoogleSyncAt = "";
   let calendarMonthDate = startOfMonthDate(todayIso());
   let selectedCalendarDate = todayIso();
+  let activeProduct = "simply-pay";
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -127,6 +128,10 @@
     closeSettings: document.querySelector("#closeSettings"),
     settingsDone: document.querySelector("#settingsDone"),
     settingsOverlay: document.querySelector("#settingsOverlay"),
+    settingsEyebrow: document.querySelector("#settingsEyebrow"),
+    settingsTitle: document.querySelector("#settingsTitle"),
+    plexpointSettings: document.querySelector("#plexpointSettings"),
+    plexpointSettingsDone: document.querySelector("#plexpointSettingsDone"),
     accountName: document.querySelector("#accountName"),
     accountEmail: document.querySelector("#accountEmail"),
     accountAvatar: document.querySelector("#accountAvatar"),
@@ -2308,10 +2313,16 @@
   }
 
   function openSettings() {
+    const isPlexPoint = activeProduct === "plexpoint";
+    els.settingsForm.classList.toggle("hidden", isPlexPoint);
+    els.plexpointSettings.classList.toggle("hidden", !isPlexPoint);
+    els.plexpointSettings.setAttribute("aria-hidden", String(!isPlexPoint));
+    els.settingsEyebrow.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
+    els.settingsTitle.textContent = "Settings";
     els.settingsOverlay.classList.remove("hidden");
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
-    scheduleGoogleSignIn();
+    if (!isPlexPoint) scheduleGoogleSignIn();
     refreshIcons();
   }
 
@@ -2334,6 +2345,7 @@
 
   function selectProduct(product) {
     const isPlexPoint = product === "plexpoint";
+    activeProduct = product;
     els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
@@ -2414,6 +2426,7 @@
     els.openSettings.addEventListener("click", openSettings);
     els.closeSettings.addEventListener("click", closeSettings);
     els.settingsDone.addEventListener("click", closeSettings);
+    els.plexpointSettingsDone.addEventListener("click", closeSettings);
     els.settingsOverlay.addEventListener("click", (event) => {
       if (event.target === els.settingsOverlay) closeSettings();
     });
