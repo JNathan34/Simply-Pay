@@ -2335,7 +2335,7 @@
   function selectProduct(product) {
     const isPlexPoint = product === "plexpoint";
     els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
-    els.productEyebrow.classList.toggle("hidden", isPlexPoint);
+    els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
     els.brandMark.alt = isPlexPoint ? "PlexPoint" : "";
     document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
