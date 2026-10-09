@@ -31,6 +31,7 @@
   const defaultState = {
     entries: [],
     invoices: [],
+    plexSubscriptions: [],
     invoiceDraft: {
       invoiceDate: todayIso(),
       billNote: "Thank you for your business",
@@ -119,6 +120,17 @@
     calendarNext: document.querySelector("#calendarNext"),
     workspace: document.querySelector("#workspace"),
     billingContent: document.querySelector("#billingContent"),
+    plexpointContent: document.querySelector("#plexpointContent"),
+    subscriptionForm: document.querySelector("#subscriptionForm"),
+    subscriptionName: document.querySelector("#subscriptionName"),
+    subscriptionPrice: document.querySelector("#subscriptionPrice"),
+    subscriptionCycle: document.querySelector("#subscriptionCycle"),
+    subscriptionCount: document.querySelector("#subscriptionCount"),
+    subscriptionMonthlyTotal: document.querySelector("#subscriptionMonthlyTotal"),
+    subscriptionYearlyTotal: document.querySelector("#subscriptionYearlyTotal"),
+    subscriptionListCount: document.querySelector("#subscriptionListCount"),
+    subscriptionList: document.querySelector("#subscriptionList"),
+    emptySubscriptions: document.querySelector("#emptySubscriptions"),
     productSwitcher: document.querySelector("#productSwitcher"),
     productMenu: document.querySelector("#productMenu"),
     brandMark: document.querySelector("#brandMark"),
@@ -183,6 +195,9 @@
     const settings = normalizeSettings(stored.settings || {});
     const entries = Array.isArray(stored.entries) ? stored.entries.map((entry) => normalizeEntry(entry, settings)) : [];
     const invoices = Array.isArray(stored.invoices) ? stored.invoices.map((invoice) => normalizeInvoice(invoice, settings)) : [];
+    const plexSubscriptions = Array.isArray(stored.plexSubscriptions)
+      ? stored.plexSubscriptions.map(normalizePlexSubscription).filter(Boolean)
+      : [];
     const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
     invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
 
@@ -191,6 +206,7 @@
       ...stored,
       entries,
       invoices,
+      plexSubscriptions,
       invoiceDraft,
       settings,
       account: stored.account || null,
@@ -222,6 +238,19 @@
       company: normalizeCompanyName(source.company) || invoiceCompanyNameFromEntries(entries, settings),
       status: source.status || (paidAt ? "paid" : "unpaid"),
       paidAt,
+    };
+  }
+
+  function normalizePlexSubscription(subscription) {
+    const source = subscription && typeof subscription === "object" ? subscription : {};
+    const name = String(source.name || "").trim();
+    const price = roundMoney(source.price);
+    if (!name || price <= 0) return null;
+    return {
+      id: String(source.id || uid()),
+      name,
+      price,
+      cycle: source.cycle === "yearly" ? "yearly" : "monthly",
     };
   }
 
@@ -1164,6 +1193,7 @@
     renderSummary();
     renderLog();
     renderHistory();
+    renderPlexSubscriptions();
     renderCalendar();
     renderAccount();
     scheduleGoogleSignIn();
@@ -1277,6 +1307,69 @@
         `;
       })
       .join("");
+  }
+
+  function subscriptionMonthlyCost(subscription) {
+    return subscription.cycle === "yearly" ? subscription.price / 12 : subscription.price;
+  }
+
+  function renderPlexSubscriptions() {
+    const subscriptions = [...state.plexSubscriptions].sort((left, right) => left.name.localeCompare(right.name));
+    const monthlyTotal = subscriptions.reduce((total, subscription) => total + subscriptionMonthlyCost(subscription), 0);
+    const yearlyTotal = monthlyTotal * 12;
+
+    els.subscriptionCount.textContent = String(subscriptions.length);
+    els.subscriptionMonthlyTotal.textContent = money(monthlyTotal);
+    els.subscriptionYearlyTotal.textContent = money(yearlyTotal);
+    els.subscriptionListCount.textContent = `${subscriptions.length} saved`;
+    els.emptySubscriptions.classList.toggle("hidden", subscriptions.length > 0);
+    els.subscriptionList.innerHTML = subscriptions
+      .map((subscription) => {
+        const cycleLabel = subscription.cycle === "yearly" ? "Yearly" : "Monthly";
+        const cycleCost = subscription.cycle === "yearly" ? `${money(subscription.price)} / year` : `${money(subscription.price)} / month`;
+        return `
+          <article class="subscription-row">
+            <div class="subscription-mark">${escapeHtml(subscription.name.charAt(0).toUpperCase())}</div>
+            <div class="subscription-details">
+              <strong>${escapeHtml(subscription.name)}</strong>
+              <span>${cycleLabel} billing</span>
+            </div>
+            <div class="subscription-cost"><strong>${escapeHtml(cycleCost)}</strong></div>
+            <button class="icon-only ghost" type="button" data-subscription-action="remove" data-subscription-id="${escapeHtml(subscription.id)}" title="Remove ${escapeHtml(subscription.name)}">
+              <i data-lucide="trash-2"></i><span class="sr-only">Remove ${escapeHtml(subscription.name)}</span>
+            </button>
+          </article>`;
+      })
+      .join("");
+  }
+
+  function submitSubscription(event) {
+    event.preventDefault();
+    const name = els.subscriptionName.value.trim();
+    const price = roundMoney(els.subscriptionPrice.value);
+    if (!name || price <= 0) {
+      showToast("Add a service name and price.");
+      return;
+    }
+
+    state.plexSubscriptions.push({ id: uid(), name, price, cycle: els.subscriptionCycle.value === "yearly" ? "yearly" : "monthly" });
+    els.subscriptionForm.reset();
+    saveState();
+    renderPlexSubscriptions();
+    refreshIcons();
+    showToast(`${name} added.`);
+  }
+
+  function handleSubscriptionAction(event) {
+    const button = event.target.closest("[data-subscription-action]");
+    if (!button || button.dataset.subscriptionAction !== "remove") return;
+    const subscription = state.plexSubscriptions.find((item) => item.id === button.dataset.subscriptionId);
+    if (!subscription) return;
+    state.plexSubscriptions = state.plexSubscriptions.filter((item) => item.id !== subscription.id);
+    saveState();
+    renderPlexSubscriptions();
+    refreshIcons();
+    showToast(`${subscription.name} removed.`);
   }
 
   function renderAccount() {
@@ -2358,6 +2451,7 @@
     document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint);
+    els.plexpointContent.classList.toggle("hidden", !isPlexPoint);
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
       item.classList.toggle("active", selected);
@@ -2393,6 +2487,8 @@
 
   function bindEvents() {
     els.entryForm.addEventListener("submit", submitEntry);
+    els.subscriptionForm.addEventListener("submit", submitSubscription);
+    els.subscriptionList.addEventListener("click", handleSubscriptionAction);
     els.chargeType.addEventListener("change", updateChargeTypeControls);
     els.cancelEdit.addEventListener("click", resetEntryForm);
     els.logList.addEventListener("click", handleLogAction);

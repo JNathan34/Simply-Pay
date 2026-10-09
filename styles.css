@@ -325,6 +325,22 @@ button:disabled {
   gap: 18px;
 }
 
+.plexpoint-content {
+  display: grid;
+  gap: 18px;
+}
+
+.plexpoint-dashboard-header h2 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 38px);
+  line-height: 1.1;
+}
+
+.plexpoint-dashboard-header p:not(.eyebrow) {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
@@ -379,6 +395,66 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}
+
+.subscription-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.subscription-manager-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.subscription-list {
+  display: grid;
+  gap: 10px;
+}
+
+.subscription-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto 38px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.subscription-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--teal-dark);
+  font-weight: 800;
+}
+
+.subscription-details {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.subscription-details span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.subscription-cost {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.subscription-list-panel .empty-state {
+  min-height: 280px;
 }
 
 .summary-grid > *,
@@ -1294,6 +1370,10 @@ select:focus {
   .main-grid {
     grid-template-columns: 1fr;
   }
+
+  .subscription-manager-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 620px) {
@@ -1348,9 +1428,38 @@ select:focus {
     gap: 12px;
   }
 
+  .plexpoint-content {
+    gap: 12px;
+  }
+
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+  }
+
+  .subscription-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .subscription-row {
+    grid-template-columns: 40px minmax(0, 1fr) 38px;
+    gap: 10px;
+  }
+
+  .subscription-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .subscription-cost {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .subscription-row .icon-only {
+    grid-column: 3;
+    grid-row: 1 / span 2;
   }
 
   .metric-card {

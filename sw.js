@@ -1,4 +1,4 @@
-const CACHE_NAME = "simply-pay-v29";
+const CACHE_NAME = "simply-pay-v30";
 const APP_SHELL = [
   "./",
   "./index.html",
