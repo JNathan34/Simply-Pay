@@ -78,6 +78,7 @@
   let activeProduct = "simply-pay";
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
+  const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false };
 
   const els = {
@@ -1427,9 +1428,11 @@
   }
 
   async function plexRequest(path, body) {
+    const managerSession = sessionStorage.getItem(PLEX_MANAGER_SESSION_KEY);
     const response = await fetch(`${PLEXPOINT_API}${path}`, {
       method: body ? "POST" : "GET", credentials: "include", cache: "no-store",
-      ...(body ? { headers: { "Content-Type": "application/json", "X-PlexPoint-Request": "1" }, body: JSON.stringify(body) } : {}),
+      headers: { ...(body ? { "Content-Type": "application/json", "X-PlexPoint-Request": "1" } : {}), ...(managerSession ? { "X-PlexPoint-Manager-Session": managerSession } : {}) },
+      ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(data.message || "PlexPoint billing is unavailable."), { status: response.status });
@@ -1519,12 +1522,8 @@
   async function startPlexSignin() {
     plexMessage("Opening Plex sign-in…");
     try {
-      const data = await plexAuth("start", { returnTo: `${window.location.origin}${window.location.pathname}` });
-      const authorizationUrl = new URL(data.authorizationUrl);
-      if (authorizationUrl.origin !== "https://app.plex.tv" || authorizationUrl.pathname !== "/auth" || authorizationUrl.username || authorizationUrl.password) {
-        throw new Error("Plex returned an unexpected sign-in address.");
-      }
-      window.location.assign(authorizationUrl.href);
+      const returnTo = `${window.location.origin}${window.location.pathname}`;
+      window.location.assign(`${PLEXPOINT_PLEX_API}start?returnTo=${encodeURIComponent(returnTo)}`);
     } catch (error) {
       plexMessage(error.message, true);
     }
@@ -2746,7 +2745,12 @@
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
-  if (new URLSearchParams(window.location.search).get("plex") === "return") {
+  const managerSession = new URLSearchParams(window.location.hash.slice(1)).get("manager_session");
+  if (managerSession && /^[a-f0-9]{64}$/.test(managerSession)) {
+    sessionStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
+    history.replaceState({}, "", window.location.pathname);
+    selectProduct("plexpoint");
+  } else if (new URLSearchParams(window.location.search).get("plex") === "return") {
     history.replaceState({}, "", window.location.pathname);
     void finishPlexSignin();
   }
