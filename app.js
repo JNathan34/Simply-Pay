@@ -1691,7 +1691,27 @@
     plexManager.selectedId = id;
     plexManager.detail = null;
     renderPlexUsers(); renderPlexDetail(); plexMessage("Loading customer billing…");
-    try { plexManager.detail = await plexRequest(`billing?userId=${encodeURIComponent(id)}`); plexMessage(); renderPlexDetail(); }
+    try {
+      plexManager.detail = await plexRequest(`billing?userId=${encodeURIComponent(id)}`);
+      const period = plexManager.detail.billing?.currentPeriod;
+      const userIndex = plexManager.users.findIndex((user) => user.id === id);
+      if (userIndex >= 0 && period) {
+        const user = plexManager.users[userIndex];
+        plexManager.users[userIndex] = {
+          ...user,
+          billing: {
+            ...user.billing,
+            status: period.paymentStatus,
+            nextDueAt: period.endsAt,
+            amountDueMinor: period.amountDueMinor,
+            outstandingMinor: period.outstandingMinor,
+            monthsDue: period.monthsDue,
+            currency: period.currency,
+          },
+        };
+      }
+      plexMessage(); renderPlexUsers(); renderPlexDetail();
+    }
     catch (error) { plexMessage(error.message, true); }
   }
 
