@@ -1638,7 +1638,12 @@
       const avatar = user.plexProfileAvatarUrl
         ? `<img class="plex-avatar" src="${escapeHtml(user.plexProfileAvatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
         : `<span class="plex-avatar plex-avatar-fallback" aria-hidden="true">${escapeHtml(plexInitial(user.displayName))}</span>`;
-      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><div class="plex-customer-cell">${avatar}<div><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></div></div></td><td><span class="plex-tier-label" data-tier="${escapeHtml(plexTierSlug(tier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", tier)}"></i>${escapeHtml(tier)}</span></td><td><span class="status-badge ${plexStatusClass(status)}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td>${billing ? escapeHtml(plexMoney(billing.outstandingMinor, billing.currency)) : "—"}</td></tr>`;
+      const outstanding = billing ? plexMoney(billing.outstandingMinor, billing.currency) : "—";
+      const monthsDue = Number(billing?.monthsDue || 0);
+      const outstandingLabel = monthsDue > 1 && Number(billing?.outstandingMinor || 0) > 0
+        ? `<strong>${escapeHtml(outstanding)}</strong><small>${monthsDue} months unpaid</small>`
+        : `<strong>${escapeHtml(outstanding)}</strong>`;
+      return `<tr class="${user.id === plexManager.selectedId ? "selected" : ""}" data-plex-user-id="${escapeHtml(user.id)}"><td><div class="plex-customer-cell">${avatar}<div><strong>${escapeHtml(user.displayName)}</strong><span>${escapeHtml(user.plexUsername || user.email)}</span></div></div></td><td><span class="plex-tier-label" data-tier="${escapeHtml(plexTierSlug(tier))}"><i class="plex-tier-icon" data-lucide="${plexPickerIcon("tier", tier)}"></i>${escapeHtml(tier)}</span></td><td><span class="status-badge ${plexStatusClass(status)}">${escapeHtml(status.replaceAll("_", " "))}</span></td><td>${billing?.nextDueAt ? escapeHtml(plexDate(billing.nextDueAt)) : "—"}</td><td class="plex-outstanding-cell">${outstandingLabel}</td></tr>`;
     }).join("");
     els.plexEmptyUsers.classList.toggle("hidden", users.length > 0);
     refreshIcons();
