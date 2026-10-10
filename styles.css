@@ -389,6 +389,8 @@ button:disabled {
 .money-owed-form label, .money-payment-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .money-owed-form input, .money-payment-form input { width: 100%; }
 .money-owed-list-panel, .money-owed-detail { min-width: 0; }
+.money-owed-detail .empty-state { text-align: center; }
+.money-owed-detail .empty-state p { max-width: 290px; }
 .money-owed-list { display: grid; gap: 8px; }
 .money-owed-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); text-align: left; }
 .money-owed-row:hover, .money-owed-row.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); border-color: var(--teal); }
