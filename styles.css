@@ -357,6 +357,7 @@ button:disabled {
 .panel-heading h2, .plex-customer-heading h2 { margin: 0; font-size: 20px; }
 .panel-heading p, .plex-customer-heading p { margin: 5px 0 0; color: var(--muted); }
 .plex-customer-meta { display: grid; justify-items: end; text-align: right; }
+.plex-arrears { margin: -6px 0 16px; color: #ffbf57; font-weight: 700; font-size: 14px; }
 .plexpoint-table-panel, .plexpoint-detail-panel { display: grid; gap: 16px; }
 .plexpoint-table-panel { gap: 8px; }
 .plexpoint-table-panel .panel-heading { margin-bottom: 0; }
