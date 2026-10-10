@@ -260,10 +260,19 @@ button:disabled {
 }
 
 .brand-mark.is-plexpoint {
-  width: 52px;
-  height: 52px;
-  border-radius: 0;
-  box-shadow: none;
+  width: 48px;
+  height: 48px;
+  padding: 5px;
+  border-radius: 12px;
+  background: #1d2b28;
+  box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
+  object-fit: contain;
+}
+
+.product-menu-item[data-product="plexpoint"] .product-menu-icon {
+  padding: 4px;
+  background: #1d2b28;
+  object-fit: contain;
 }
 
 .brand-title,
