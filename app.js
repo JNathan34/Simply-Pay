@@ -33,6 +33,7 @@
     entries: [],
     invoices: [],
     plexPayments: [],
+    moneyOwed: [],
     invoiceDraft: {
       invoiceDate: todayIso(),
       billNote: "Thank you for your business",
@@ -76,7 +77,8 @@
   let lastGoogleSyncAt = "";
   let calendarMonthDate = startOfMonthDate(todayIso());
   let selectedCalendarDate = todayIso();
-  let activeProduct = localStorage.getItem(PRODUCT_MODE_KEY) === "plexpoint" ? "plexpoint" : "simply-pay";
+  let activeProduct = ["plexpoint", "money-owed"].includes(localStorage.getItem(PRODUCT_MODE_KEY)) ? localStorage.getItem(PRODUCT_MODE_KEY) : "simply-pay";
+  let selectedOwedId = null;
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
@@ -127,6 +129,30 @@
     workspace: document.querySelector("#workspace"),
     billingContent: document.querySelector("#billingContent"),
     plexpointContent: document.querySelector("#plexpointContent"),
+    moneyOwedContent: document.querySelector("#moneyOwedContent"),
+    moneyOwedForm: document.querySelector("#moneyOwedForm"),
+    owedPerson: document.querySelector("#owedPerson"),
+    owedAmount: document.querySelector("#owedAmount"),
+    owedDueDate: document.querySelector("#owedDueDate"),
+    owedReason: document.querySelector("#owedReason"),
+    owedTotal: document.querySelector("#owedTotal"),
+    owedPeople: document.querySelector("#owedPeople"),
+    owedDueSoon: document.querySelector("#owedDueSoon"),
+    owedOverdue: document.querySelector("#owedOverdue"),
+    owedCount: document.querySelector("#owedCount"),
+    moneyOwedList: document.querySelector("#moneyOwedList"),
+    moneyOwedEmpty: document.querySelector("#moneyOwedEmpty"),
+    owedDetailEmpty: document.querySelector("#owedDetailEmpty"),
+    owedDetailContent: document.querySelector("#owedDetailContent"),
+    owedDetailName: document.querySelector("#owedDetailName"),
+    owedDetailReason: document.querySelector("#owedDetailReason"),
+    owedDetailStatus: document.querySelector("#owedDetailStatus"),
+    owedDetailBalance: document.querySelector("#owedDetailBalance"),
+    moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
+    owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
+    owedPaymentDate: document.querySelector("#owedPaymentDate"),
+    owedPaymentHistory: document.querySelector("#owedPaymentHistory"),
+    deleteOwedDebt: document.querySelector("#deleteOwedDebt"),
     productSwitcher: document.querySelector("#productSwitcher"),
     productMenu: document.querySelector("#productMenu"),
     brandMark: document.querySelector("#brandMark"),
@@ -239,6 +265,7 @@
       : Array.isArray(stored.plexSubscriptions)
         ? stored.plexSubscriptions.map(subscriptionToPayment).filter(Boolean)
       : [];
+    const moneyOwed = Array.isArray(stored.moneyOwed) ? stored.moneyOwed.map(normalizeMoneyOwed).filter(Boolean) : [];
     const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
     invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
 
@@ -248,6 +275,7 @@
       entries,
       invoices,
       plexPayments,
+      moneyOwed,
       invoiceDraft,
       settings,
       account: stored.account || null,
@@ -295,6 +323,21 @@
       amount,
       status: source.status === "paid" ? "paid" : "due",
       dueDate: String(source.dueDate || "").slice(0, 10),
+    };
+  }
+
+  function normalizeMoneyOwed(item) {
+    const source = item && typeof item === "object" ? item : {};
+    const person = String(source.person || "").trim();
+    const amount = roundMoney(source.amount);
+    if (!person || amount <= 0) return null;
+    return {
+      id: String(source.id || uid()), person, amount,
+      dueDate: String(source.dueDate || "").slice(0, 10),
+      reason: String(source.reason || "").trim().slice(0, 160),
+      payments: Array.isArray(source.payments) ? source.payments.map((payment) => ({
+        id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
+      })).filter((payment) => payment.amount > 0) : [],
     };
   }
 
@@ -1250,8 +1293,82 @@
     renderHistory();
     renderCalendar();
     renderAccount();
+    renderMoneyOwed();
     scheduleGoogleSignIn();
     refreshIcons();
+  }
+
+  function owedBalance(item) {
+    return roundMoney(item.amount - item.payments.reduce((total, payment) => total + payment.amount, 0));
+  }
+
+  function owedStatus(item) {
+    const balance = owedBalance(item);
+    if (balance <= 0) return "settled";
+    if (!item.dueDate) return "owed";
+    const today = todayIso();
+    if (item.dueDate < today) return "overdue";
+    const soon = new Date(`${today}T00:00:00`); soon.setDate(soon.getDate() + 7);
+    return item.dueDate <= toIsoDate(soon) ? "due soon" : "owed";
+  }
+
+  function owedStatusClass(status) {
+    return status === "settled" ? "paid" : status === "overdue" ? "overdue" : status === "due soon" ? "due" : "unpaid";
+  }
+
+  function renderMoneyOwed() {
+    const debts = state.moneyOwed || [];
+    const open = debts.filter((item) => owedBalance(item) > 0);
+    const total = open.reduce((sum, item) => sum + owedBalance(item), 0);
+    const statuses = open.map((item) => owedStatus(item));
+    els.owedTotal.textContent = money(total);
+    els.owedPeople.textContent = String(open.length);
+    els.owedDueSoon.textContent = String(statuses.filter((status) => status === "due soon").length);
+    els.owedOverdue.textContent = String(statuses.filter((status) => status === "overdue").length);
+    els.owedCount.textContent = `${debts.length} ${debts.length === 1 ? "person" : "people"}`;
+    els.moneyOwedEmpty.classList.toggle("hidden", debts.length > 0);
+    els.moneyOwedList.innerHTML = debts.slice().sort((a, b) => owedBalance(b) - owedBalance(a)).map((item) => {
+      const status = owedStatus(item);
+      return `<button class="money-owed-row ${item.id === selectedOwedId ? "selected" : ""}" type="button" data-owed-id="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.person)}</strong><small>${escapeHtml(item.reason || "No reason added")}</small></span><span><strong>${escapeHtml(money(owedBalance(item)))}</strong><em class="status-badge ${owedStatusClass(status)}">${escapeHtml(status)}</em></span></button>`;
+    }).join("");
+    const debt = debts.find((item) => item.id === selectedOwedId);
+    els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
+    els.owedDetailContent.classList.toggle("hidden", !debt);
+    if (!debt) { refreshIcons(); return; }
+    const status = owedStatus(debt);
+    els.owedDetailName.textContent = debt.person;
+    els.owedDetailReason.textContent = debt.reason || (debt.dueDate ? `Due ${formatShortDate(debt.dueDate)}` : "No due date set");
+    els.owedDetailStatus.textContent = status;
+    els.owedDetailStatus.className = `status-badge ${owedStatusClass(status)}`;
+    els.owedDetailBalance.textContent = `${money(owedBalance(debt))} remaining`;
+    els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(money(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
+    refreshIcons();
+  }
+
+  function addMoneyOwed(event) {
+    event.preventDefault();
+    const person = els.owedPerson.value.trim();
+    const amount = roundMoney(els.owedAmount.value);
+    if (!person || amount <= 0) return;
+    const debt = { id: uid(), person, amount, dueDate: els.owedDueDate.value, reason: els.owedReason.value.trim(), payments: [] };
+    state.moneyOwed.push(debt); selectedOwedId = debt.id;
+    els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast("Debt added.");
+  }
+
+  function recordOwedPayment(event) {
+    event.preventDefault();
+    const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
+    const amount = roundMoney(els.owedPaymentAmount.value);
+    if (!debt || amount <= 0) return;
+    debt.payments.push({ id: uid(), amount, date: els.owedPaymentDate.value || todayIso() });
+    els.moneyPaymentForm.reset(); els.owedPaymentDate.value = todayIso(); saveState(); renderMoneyOwed(); showToast("Payment recorded.");
+  }
+
+  function removeMoneyOwed() {
+    const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
+    if (!debt || !window.confirm(`Remove ${debt.person}'s debt record?`)) return;
+    state.moneyOwed = state.moneyOwed.filter((item) => item.id !== debt.id); selectedOwedId = null;
+    saveState(); renderMoneyOwed(); showToast("Debt removed.");
   }
 
   function renderCurrencySymbols() {
@@ -2884,18 +3001,21 @@
 
   function selectProduct(product) {
     const isPlexPoint = product === "plexpoint";
+    const isMoneyOwed = product === "money-owed";
     activeProduct = product;
     localStorage.setItem(PRODUCT_MODE_KEY, activeProduct);
-    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
-    els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : "Work Billing";
-    els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : "icons/simply-pay-logo.svg";
-    els.brandMark.alt = isPlexPoint ? "PlexPoint" : "";
+    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
+    els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : isMoneyOwed ? "Personal tracker" : "Work Billing";
+    els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : isMoneyOwed ? "icons/money-owed-logo.svg" : "icons/simply-pay-logo.svg";
+    els.brandMark.alt = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "";
     els.brandMark.classList.toggle("is-plexpoint", isPlexPoint);
-    document.title = isPlexPoint ? "PlexPoint" : "Simply Pay";
+    document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
-    els.billingContent.classList.toggle("hidden", isPlexPoint);
+    els.billingContent.classList.toggle("hidden", isPlexPoint || isMoneyOwed);
     els.plexpointContent.classList.toggle("hidden", !isPlexPoint);
+    els.moneyOwedContent.classList.toggle("hidden", !isMoneyOwed);
     if (isPlexPoint && !plexManager.loaded) loadPlexManager();
+    if (isMoneyOwed) { els.owedPaymentDate.value = todayIso(); renderMoneyOwed(); }
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
       item.classList.toggle("active", selected);
@@ -3005,6 +3125,10 @@
     els.plexPlanForm.addEventListener("submit", submitPlexPlan);
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
     els.plexPaymentHistory.addEventListener("click", handlePlexPaymentAction);
+    els.moneyOwedForm.addEventListener("submit", addMoneyOwed);
+    els.moneyOwedList.addEventListener("click", (event) => { const id = event.target.closest("[data-owed-id]")?.dataset.owedId; if (id) { selectedOwedId = id; renderMoneyOwed(); } });
+    els.moneyPaymentForm.addEventListener("submit", recordOwedPayment);
+    els.deleteOwedDebt.addEventListener("click", removeMoneyOwed);
     els.plexCancelPaymentEdit.addEventListener("click", resetPlexPaymentEditor);
     els.plexImportLoad.addEventListener("click", () => void loadPlexImportUsers());
     els.plexImportSave.addEventListener("click", () => void importPlexUsers());

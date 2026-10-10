@@ -12,12 +12,12 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=50" />
+    <link rel="stylesheet" href="styles.css?v=51" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script defer src="app.js?v=15"></script>
+    <script defer src="app.js?v=16"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -43,6 +43,10 @@
               <button class="product-menu-item" type="button" role="menuitem" data-product="plexpoint">
                 <img class="product-menu-icon" src="icons/plexpoint-pay-logo.png" alt="" />
                 <span>PlexPoint</span>
+              </button>
+              <button class="product-menu-item" type="button" role="menuitem" data-product="money-owed">
+                <img class="product-menu-icon" src="icons/money-owed-logo.svg" alt="" />
+                <span>Money Owed</span>
               </button>
               <button class="product-menu-item active" type="button" role="menuitem" data-product="simply-pay" aria-current="page">
                 <img class="product-menu-icon" src="icons/simply-pay-logo.svg" alt="" />
@@ -283,6 +287,41 @@
             </aside>
             </section>
           </div>
+        </section>
+
+        <section class="money-owed-content hidden" id="moneyOwedContent" aria-label="Money owed tracker">
+          <section class="money-owed-intro"><p class="eyebrow">Personal tracker</p><h1>Money owed</h1><p>Keep a simple record of money people owe you and every payment they make.</p></section>
+          <section class="money-owed-metrics" aria-label="Money owed summary">
+            <article class="metric-card accent"><span>Total owed</span><strong id="owedTotal">£0.00</strong></article>
+            <article class="metric-card"><span>People owing</span><strong id="owedPeople">0</strong></article>
+            <article class="metric-card"><span>Due soon</span><strong id="owedDueSoon">0</strong></article>
+            <article class="metric-card"><span>Overdue</span><strong id="owedOverdue">0</strong></article>
+          </section>
+          <section class="money-owed-grid">
+            <form class="panel money-owed-form" id="moneyOwedForm">
+              <div class="panel-heading"><h2>Add money owed</h2></div>
+              <label>Person<input id="owedPerson" type="text" maxlength="80" placeholder="Their name" required /></label>
+              <label>Amount (£)<input id="owedAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
+              <label>Due date<input id="owedDueDate" type="date" /></label>
+              <label>Reason <small>Optional</small><input id="owedReason" type="text" maxlength="160" placeholder="What the money is for" /></label>
+              <button class="primary-button" type="submit"><i data-lucide="plus"></i>Add debt</button>
+            </form>
+            <section class="panel money-owed-list-panel">
+              <div class="panel-heading"><div><h2>People who owe you</h2><p id="owedCount">0 people</p></div></div>
+              <div class="money-owed-list" id="moneyOwedList"></div>
+              <div class="empty-state" id="moneyOwedEmpty"><i data-lucide="hand-coins"></i><p>No money owed yet.</p></div>
+            </section>
+            <aside class="panel money-owed-detail" id="moneyOwedDetail">
+              <div class="empty-state" id="owedDetailEmpty"><i data-lucide="mouse-pointer-click"></i><p>Select a person to record a payment or update their debt.</p></div>
+              <div class="hidden" id="owedDetailContent">
+                <div class="money-owed-detail-header"><div><p class="eyebrow">Person</p><h2 id="owedDetailName">—</h2><p id="owedDetailReason"></p></div><span class="status-badge" id="owedDetailStatus">—</span></div>
+                <p class="owed-detail-balance" id="owedDetailBalance">£0.00 remaining</p>
+                <form class="money-payment-form" id="moneyPaymentForm"><h3>Record payment</h3><label>Amount (£)<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
+                <div class="money-payment-history"><h3>Payment history</h3><div id="owedPaymentHistory"></div></div>
+                <button class="secondary-button danger-text" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button>
+              </div>
+            </aside>
+          </section>
         </section>
       </main>
     </div>
