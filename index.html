@@ -12,12 +12,12 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=48" />
+    <link rel="stylesheet" href="styles.css?v=49" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script defer src="app.js?v=10"></script>
+    <script defer src="app.js?v=11"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -435,6 +435,11 @@
             <p class="settings-note" id="plexImportStatus" role="status"></p>
             <div class="plexpoint-import-list hidden" id="plexImportList"></div>
             <div class="plexpoint-import-footer hidden" id="plexImportFooter"><label><input id="plexImportAll" type="checkbox" /> Select all available</label><button class="primary-button" id="plexImportSave" type="button"><i data-lucide="user-plus"></i> Import selected</button></div>
+          </section>
+          <section class="settings-section plexpoint-user-settings">
+            <div><h3>Manage payment users</h3><p>Rename a customer or remove them from the active payment manager.</p></div>
+            <button class="secondary-button plexpoint-import-load" id="plexUsersLoad" type="button"><i data-lucide="refresh-cw"></i> Refresh users</button>
+            <div class="plexpoint-managed-users" id="plexManagedUsers"></div>
           </section>
           <button class="primary-button" id="plexpointSettingsDone" type="button">
             <i data-lucide="check"></i>

@@ -1276,6 +1276,15 @@ select:focus {
 .plexpoint-import-user small { margin-top: 3px; color: var(--muted); font-size: 11px; }
 .plexpoint-import-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .plexpoint-import-footer label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
+.plexpoint-user-settings { display: grid; gap: 13px; margin-top: 12px; }
+.plexpoint-user-settings h3, .plexpoint-user-settings p { margin: 0; }
+.plexpoint-user-settings p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.plexpoint-managed-users { display: grid; gap: 8px; max-height: 350px; overflow: auto; }
+.plexpoint-managed-user { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-bg); }
+.plexpoint-managed-user strong, .plexpoint-managed-user small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plexpoint-managed-user strong { color: var(--ink); font-size: 13px; }
+.plexpoint-managed-user small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.plexpoint-managed-user > div { display: flex; gap: 5px; }
 
 .settings-section {
   border: 1px solid var(--line);

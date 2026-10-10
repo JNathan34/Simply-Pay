@@ -146,6 +146,8 @@
     plexImportFooter: document.querySelector("#plexImportFooter"),
     plexImportAll: document.querySelector("#plexImportAll"),
     plexImportSave: document.querySelector("#plexImportSave"),
+    plexUsersLoad: document.querySelector("#plexUsersLoad"),
+    plexManagedUsers: document.querySelector("#plexManagedUsers"),
     accountName: document.querySelector("#accountName"),
     accountEmail: document.querySelector("#accountEmail"),
     accountAvatar: document.querySelector("#accountAvatar"),
@@ -1514,6 +1516,49 @@
     els.plexImportAll.checked = false;
   }
 
+  function renderManagedPlexUsers() {
+    const users = plexManager.users.filter((user) => user.accountStatus !== "disabled");
+    els.plexManagedUsers.innerHTML = users.length ? users.map((user) => {
+      const avatar = user.plexProfileAvatarUrl
+        ? `<img src="${escapeHtml(user.plexProfileAvatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<span>${escapeHtml(plexInitial(user.displayName))}</span>`;
+      return `<article class="plexpoint-managed-user"><span class="plexpoint-import-avatar">${avatar}</span><span><strong>${escapeHtml(user.displayName)}</strong><small>${escapeHtml(user.plexUsername || user.email)}</small></span><div><button class="icon-only ghost" type="button" data-plex-user-action="rename" data-plex-user-id="${escapeHtml(user.id)}" title="Rename ${escapeHtml(user.displayName)}"><i data-lucide="pencil"></i></button><button class="icon-only ghost danger" type="button" data-plex-user-action="remove" data-plex-user-id="${escapeHtml(user.id)}" title="Remove ${escapeHtml(user.displayName)}"><i data-lucide="trash-2"></i></button></div></article>`;
+    }).join("") : "<p class=\"settings-note\">No active payment users loaded yet.</p>";
+    refreshIcons();
+  }
+
+  async function loadManagedPlexUsers() {
+    plexImportMessage("Loading payment users…");
+    try { await loadPlexManager(); renderManagedPlexUsers(); plexImportMessage(""); }
+    catch (error) { plexImportMessage(error.message || "Could not load payment users.", true); }
+  }
+
+  async function managePlexUser(event) {
+    const button = event.target.closest("[data-plex-user-action]");
+    if (!button || plexImport.busy) return;
+    const user = plexManager.users.find((item) => item.id === button.dataset.plexUserId);
+    if (!user) return;
+    if (button.dataset.plexUserAction === "rename") {
+      const displayName = window.prompt("Customer name", user.displayName);
+      if (displayName === null || displayName.trim() === user.displayName) return;
+      setPlexImportBusy(true); plexImportMessage("Saving name…");
+      try {
+        await plexRequest("billing", { action: "rename_user", userId: user.id, displayName: displayName.trim() });
+        await loadPlexManager(); renderManagedPlexUsers(); plexImportMessage("Customer renamed.");
+      } catch (error) { plexImportMessage(error.message || "Could not rename this customer.", true); }
+      finally { setPlexImportBusy(false); }
+      return;
+    }
+    if (!window.confirm(`Remove ${user.displayName} from the payment manager? Their payment history will be kept.`)) return;
+    setPlexImportBusy(true); plexImportMessage("Removing customer…");
+    try {
+      await plexRequest("billing", { action: "remove_user", userId: user.id });
+      if (plexManager.selectedId === user.id) { plexManager.selectedId = null; plexManager.detail = null; }
+      await loadPlexManager(); renderManagedPlexUsers(); plexImportMessage("Customer removed from the payment manager.");
+    } catch (error) { plexImportMessage(error.message || "Could not remove this customer.", true); }
+    finally { setPlexImportBusy(false); }
+  }
+
   function setPlexImportBusy(busy) {
     plexImport.busy = busy;
     for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave]) control.disabled = busy;
@@ -1639,7 +1684,7 @@
     plexMessage("Loading live PlexPoint payment data…");
     try {
       const data = await plexRequest("users");
-      plexManager.users = data.users || []; plexManager.loaded = true;
+      plexManager.users = (data.users || []).filter((user) => user.accountStatus !== "disabled"); plexManager.loaded = true;
       els.plexSigninPanel.classList.add("hidden");
       els.plexLiveContent.classList.remove("hidden");
       renderPlexSummary(); renderPlexUsers(); renderPlexDetail(); plexMessage();
@@ -2780,6 +2825,7 @@
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
     if (!isPlexPoint) scheduleGoogleSignIn();
+    else { renderManagedPlexUsers(); if (!plexManager.loaded) void loadManagedPlexUsers(); }
     refreshIcons();
   }
 
@@ -2933,6 +2979,8 @@
     els.plexImportAll.addEventListener("change", (event) => {
       els.plexImportList.querySelectorAll("input[data-plex-import-user]").forEach((input) => { input.checked = event.target.checked; });
     });
+    els.plexUsersLoad.addEventListener("click", () => void loadManagedPlexUsers());
+    els.plexManagedUsers.addEventListener("click", (event) => void managePlexUser(event));
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
       const product = event.target.closest("[data-product]")?.dataset.product;
