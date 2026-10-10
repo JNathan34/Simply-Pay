@@ -81,6 +81,7 @@
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false, editingPaymentId: null };
+  const plexImport = { busy: false, users: [] };
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -139,6 +140,12 @@
     settingsTitle: document.querySelector("#settingsTitle"),
     plexpointSettings: document.querySelector("#plexpointSettings"),
     plexpointSettingsDone: document.querySelector("#plexpointSettingsDone"),
+    plexImportLoad: document.querySelector("#plexImportLoad"),
+    plexImportStatus: document.querySelector("#plexImportStatus"),
+    plexImportList: document.querySelector("#plexImportList"),
+    plexImportFooter: document.querySelector("#plexImportFooter"),
+    plexImportAll: document.querySelector("#plexImportAll"),
+    plexImportSave: document.querySelector("#plexImportSave"),
     accountName: document.querySelector("#accountName"),
     accountEmail: document.querySelector("#accountEmail"),
     accountAvatar: document.querySelector("#accountAvatar"),
@@ -1487,6 +1494,63 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(data.message || "PlexPoint billing is unavailable."), { status: response.status });
     return data;
+  }
+
+  function plexImportMessage(message = "", error = false) {
+    els.plexImportStatus.textContent = message;
+    els.plexImportStatus.classList.toggle("error", error);
+  }
+
+  function renderPlexImportUsers() {
+    const available = plexImport.users.filter((user) => user.status === "available");
+    els.plexImportList.innerHTML = available.map((user) => {
+      const avatar = user.avatarUrl
+        ? `<img src="${escapeHtml(user.avatarUrl)}" alt="" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<span>${escapeHtml(plexInitial(user.displayName))}</span>`;
+      return `<label class="plexpoint-import-user"><input type="checkbox" value="${escapeHtml(user.overseerrId)}" data-plex-import-user /><span class="plexpoint-import-avatar">${avatar}</span><span><strong>${escapeHtml(user.displayName)}</strong><small>${escapeHtml(user.username)} · ${escapeHtml(user.email)}</small></span></label>`;
+    }).join("");
+    els.plexImportList.classList.toggle("hidden", available.length === 0);
+    els.plexImportFooter.classList.toggle("hidden", available.length === 0);
+    els.plexImportAll.checked = false;
+  }
+
+  function setPlexImportBusy(busy) {
+    plexImport.busy = busy;
+    for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave]) control.disabled = busy;
+    for (const control of els.plexImportList.querySelectorAll("input")) control.disabled = busy;
+  }
+
+  async function loadPlexImportUsers() {
+    if (plexImport.busy) return;
+    setPlexImportBusy(true);
+    plexImportMessage("Loading Overseerr users…");
+    try {
+      const data = await plexRequest("overseerr-users");
+      if (!Array.isArray(data.users)) throw new Error("Overseerr returned an unexpected user list.");
+      plexImport.users = data.users;
+      renderPlexImportUsers();
+      const count = data.users.filter((user) => user.status === "available").length;
+      plexImportMessage(count ? `Choose from ${count} user${count === 1 ? "" : "s"} ready to import.` : "Every usable Overseerr user is already in the payment manager.");
+    } catch (error) { plexImportMessage(error.message || "Could not load Overseerr users.", true); }
+    finally { setPlexImportBusy(false); refreshIcons(); }
+  }
+
+  async function importPlexUsers() {
+    if (plexImport.busy) return;
+    const userIds = [...els.plexImportList.querySelectorAll("input[data-plex-import-user]:checked")].map((input) => Number(input.value));
+    if (!userIds.length) { plexImportMessage("Choose at least one user to import.", true); return; }
+    setPlexImportBusy(true);
+    plexImportMessage("Importing selected users…");
+    try {
+      const result = await plexRequest("overseerr-users", { action: "import_users", userIds });
+      const imported = Array.isArray(result.imported) ? result.imported.length : 0;
+      plexImportMessage(imported ? `${imported} user${imported === 1 ? "" : "s"} imported into the payment manager.` : "No new users were imported.");
+      const importedIds = new Set((result.imported || []).map((user) => user.overseerrId));
+      plexImport.users = plexImport.users.map((user) => importedIds.has(user.overseerrId) ? { ...user, status: "imported" } : user);
+      renderPlexImportUsers();
+      await loadPlexManager();
+    } catch (error) { plexImportMessage(error.message || "Could not import those users.", true); }
+    finally { setPlexImportBusy(false); }
   }
 
   async function plexAuth(action, body = {}) {
@@ -2864,6 +2928,11 @@
     els.plexPaymentForm.addEventListener("submit", submitPlexPayment);
     els.plexPaymentHistory.addEventListener("click", handlePlexPaymentAction);
     els.plexCancelPaymentEdit.addEventListener("click", resetPlexPaymentEditor);
+    els.plexImportLoad.addEventListener("click", () => void loadPlexImportUsers());
+    els.plexImportSave.addEventListener("click", () => void importPlexUsers());
+    els.plexImportAll.addEventListener("change", (event) => {
+      els.plexImportList.querySelectorAll("input[data-plex-import-user]").forEach((input) => { input.checked = event.target.checked; });
+    });
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
       const product = event.target.closest("[data-product]")?.dataset.product;

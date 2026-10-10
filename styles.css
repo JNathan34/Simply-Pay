@@ -1258,6 +1258,25 @@ select:focus {
   object-fit: contain;
 }
 
+.plexpoint-import-settings { display: grid; gap: 14px; }
+.plexpoint-settings-heading { display: grid; grid-template-columns: 50px minmax(0, 1fr); align-items: center; gap: 12px; }
+.plexpoint-settings-heading .plexpoint-settings-mark { width: 50px; height: 50px; }
+.plexpoint-settings-heading h3, .plexpoint-settings-heading p { margin: 0; }
+.plexpoint-settings-heading p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+.plexpoint-import-load { justify-content: center; }
+#plexImportStatus:empty { display: none; }
+#plexImportStatus.error { color: #d85f6f; }
+.plexpoint-import-list { display: grid; gap: 8px; max-height: 360px; overflow: auto; }
+.plexpoint-import-user { display: grid; grid-template-columns: auto 36px minmax(0, 1fr); align-items: center; gap: 10px; padding: 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--card-bg); cursor: pointer; }
+.plexpoint-import-user input, .plexpoint-import-footer input { width: 17px; height: 17px; accent-color: var(--teal); }
+.plexpoint-import-avatar { display: grid; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: 50%; background: color-mix(in srgb, var(--teal) 16%, transparent); color: var(--teal); font-size: 13px; font-weight: 800; }
+.plexpoint-import-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.plexpoint-import-user strong, .plexpoint-import-user small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plexpoint-import-user strong { color: var(--ink); font-size: 13px; }
+.plexpoint-import-user small { margin-top: 3px; color: var(--muted); font-size: 11px; }
+.plexpoint-import-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.plexpoint-import-footer label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; font-weight: 700; }
+
 .settings-section {
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1763,6 +1782,9 @@ select:focus {
   .company-add-row {
     grid-template-columns: 1fr;
   }
+
+  .plexpoint-import-footer { align-items: stretch; flex-direction: column; }
+  .plexpoint-import-footer .primary-button { width: 100%; }
 
   .company-add-row .icon-button {
     width: 100%;

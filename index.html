@@ -12,12 +12,12 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=47" />
+    <link rel="stylesheet" href="styles.css?v=48" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script defer src="app.js?v=9"></script>
+    <script defer src="app.js?v=10"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -423,12 +423,18 @@
         </form>
 
         <div class="settings-form hidden" id="plexpointSettings" aria-hidden="true">
-          <section class="settings-section plexpoint-settings-empty">
-            <img class="plexpoint-settings-mark" src="icons/plexpoint-pay-logo.png" alt="" />
-            <div>
-              <h3>Plex Billing</h3>
-              <p>PlexPoint payment settings will live here.</p>
+          <section class="settings-section plexpoint-import-settings">
+            <div class="plexpoint-settings-heading">
+              <img class="plexpoint-settings-mark" src="icons/plexpoint-pay-logo.png" alt="" />
+              <div>
+                <h3>Import from Overseerr</h3>
+                <p>Choose exactly which Overseerr users to add to the PlexPoint payment manager.</p>
+              </div>
             </div>
+            <button class="secondary-button plexpoint-import-load" id="plexImportLoad" type="button"><i data-lucide="refresh-cw"></i> Load users</button>
+            <p class="settings-note" id="plexImportStatus" role="status"></p>
+            <div class="plexpoint-import-list hidden" id="plexImportList"></div>
+            <div class="plexpoint-import-footer hidden" id="plexImportFooter"><label><input id="plexImportAll" type="checkbox" /> Select all available</label><button class="primary-button" id="plexImportSave" type="button"><i data-lucide="user-plus"></i> Import selected</button></div>
           </section>
           <button class="primary-button" id="plexpointSettingsDone" type="button">
             <i data-lucide="check"></i>
