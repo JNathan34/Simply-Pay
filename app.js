@@ -3006,9 +3006,10 @@
     localStorage.setItem(PRODUCT_MODE_KEY, activeProduct);
     els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : isMoneyOwed ? "Personal tracker" : "Work Billing";
-    els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : isMoneyOwed ? "icons/money-owed-logo.svg" : "icons/simply-pay-logo.svg";
+    els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png" : isMoneyOwed ? "icons/money-owed-logo.png" : "icons/simply-pay-logo.svg";
     els.brandMark.alt = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "";
     els.brandMark.classList.toggle("is-plexpoint", isPlexPoint);
+    els.brandMark.classList.toggle("is-money-owed", isMoneyOwed);
     document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint || isMoneyOwed);

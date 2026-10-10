@@ -259,7 +259,8 @@ button:disabled {
   box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
 }
 
-.brand-mark.is-plexpoint {
+.brand-mark.is-plexpoint,
+.brand-mark.is-money-owed {
   width: 48px;
   height: 48px;
   padding: 2px;
@@ -269,7 +270,8 @@ button:disabled {
   object-fit: contain;
 }
 
-.product-menu-item[data-product="plexpoint"] .product-menu-icon {
+.product-menu-item[data-product="plexpoint"] .product-menu-icon,
+.product-menu-item[data-product="money-owed"] .product-menu-icon {
   padding: 2px;
   background: #363a3a;
   object-fit: contain;
