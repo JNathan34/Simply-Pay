@@ -2698,7 +2698,7 @@
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: handleGoogleCredential,
-        auto_select: false,
+        auto_select: true,
       });
       window.google.accounts.id.renderButton(els.googleButton, {
         theme: "outline",
@@ -2833,7 +2833,7 @@
 
     try {
       updateGoogleStatus("Connecting Google Drive sync...");
-      await requestGoogleDriveAccess(interactive ? "consent" : "");
+      await requestGoogleDriveAccess(interactive ? "consent" : "none");
       await pullThenPushGoogleSave();
       updateGoogleStatus();
     } catch (error) {
@@ -2868,7 +2868,7 @@
     }
 
     if (!cloudReconnectPromise) {
-      cloudReconnectPromise = requestGoogleDriveAccess("")
+      cloudReconnectPromise = requestGoogleDriveAccess("none")
         .then(() => Boolean(googleAccessToken))
         .catch(() => {
           updateGoogleStatus("Google needs Drive permission again. Click Sync now.");
