@@ -2731,7 +2731,7 @@
   }
 
   function refreshGoogleDataOnArrival() {
-    if (activeProduct !== "simply-pay" || !state.account || arrivalGoogleRefreshRequested) return;
+    if (activeProduct === "plexpoint" || !state.account || arrivalGoogleRefreshRequested) return;
     if (!window.google?.accounts?.oauth2) {
       window.setTimeout(refreshGoogleDataOnArrival, 250);
       return;
@@ -3164,8 +3164,8 @@
     if (isMoneyOwed) { els.owedPaymentDate.value = todayIso(); renderMoneyOwed(); }
     if (product === "simply-pay") {
       scheduleGoogleSignIn();
-      refreshGoogleDataOnArrival();
     }
+    if (!isPlexPoint) refreshGoogleDataOnArrival();
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
       item.classList.toggle("active", selected);
