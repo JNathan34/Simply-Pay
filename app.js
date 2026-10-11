@@ -75,6 +75,7 @@
   let cloudReconnectPromise = null;
   let applyingCloudState = false;
   let lastGoogleSyncAt = "";
+  let arrivalGoogleRefreshRequested = false;
   let calendarMonthDate = startOfMonthDate(todayIso());
   let selectedCalendarDate = todayIso();
   let activeProduct = ["plexpoint", "money-owed"].includes(localStorage.getItem(PRODUCT_MODE_KEY)) ? localStorage.getItem(PRODUCT_MODE_KEY) : "simply-pay";
@@ -2660,11 +2661,13 @@
     if (signedIn) {
       els.googleButton.innerHTML = "";
       updateGoogleStatus();
+      refreshGoogleDataOnArrival();
       return;
     }
 
     if (lastRenderedGoogleClientId === clientId && els.googleButton.children.length) {
       updateGoogleStatus();
+      refreshGoogleDataOnArrival();
       return;
     }
 
@@ -2689,6 +2692,17 @@
       lastRenderedGoogleClientId = "";
       els.googleStatus.textContent = "Google sign-in could not start with that Client ID.";
     }
+  }
+
+  function refreshGoogleDataOnArrival() {
+    if (activeProduct !== "simply-pay" || !state.account || arrivalGoogleRefreshRequested) return;
+    if (!window.google?.accounts?.oauth2) {
+      window.setTimeout(refreshGoogleDataOnArrival, 250);
+      return;
+    }
+
+    arrivalGoogleRefreshRequested = true;
+    void connectGoogleDriveSync(false);
   }
 
   function updateGoogleStatus(message) {
@@ -3114,6 +3128,10 @@
     els.moneyOwedContent.classList.toggle("hidden", !isMoneyOwed);
     if (isPlexPoint && !plexManager.loaded) loadPlexManager();
     if (isMoneyOwed) { els.owedPaymentDate.value = todayIso(); renderMoneyOwed(); }
+    if (product === "simply-pay") {
+      scheduleGoogleSignIn();
+      refreshGoogleDataOnArrival();
+    }
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
       item.classList.toggle("active", selected);
