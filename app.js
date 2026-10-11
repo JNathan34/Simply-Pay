@@ -1846,7 +1846,7 @@
       const active = button.dataset.plexSort === plexSort.column;
       const direction = active ? plexSort.direction : "none";
       button.parentElement.setAttribute("aria-sort", direction === "none" ? "none" : direction === "asc" ? "ascending" : "descending");
-      button.querySelector("span").textContent = active ? (direction === "asc" ? "↑" : "↓") : "↕";
+      button.querySelector("span").textContent = active ? (direction === "asc" ? "↑" : "↓") : "";
     });
   }
 
