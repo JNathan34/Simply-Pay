@@ -1251,6 +1251,7 @@ select:focus {
   padding: 4px 9px;
   font-size: 12px;
   font-weight: 800;
+  font-style: normal;
 }
 
 .status-badge svg {
