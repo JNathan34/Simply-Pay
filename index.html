@@ -312,12 +312,14 @@
             <aside class="panel money-owed-detail" id="moneyOwedDetail">
               <div class="empty-state" id="owedDetailEmpty"><i data-lucide="mouse-pointer-click"></i><p>Select a person to record a payment or update their debt.</p></div>
               <div class="hidden" id="owedDetailContent">
-                <div class="money-owed-detail-header"><div><p class="eyebrow">Person</p><h2 id="owedDetailName">—</h2><p id="owedDetailReason"></p></div><span class="status-badge" id="owedDetailStatus">—</span></div>
-                <p class="owed-detail-balance" id="owedDetailBalance">£0.00 remaining</p>
+                <section class="owed-detail-summary">
+                  <div class="money-owed-detail-header"><div><p class="eyebrow">Person</p><h2 id="owedDetailName">—</h2><p id="owedDetailReason"></p></div><span class="status-badge" id="owedDetailStatus">—</span></div>
+                  <p class="owed-detail-balance" id="owedDetailBalance">£0.00 remaining</p>
+                  <div class="money-payment-history"><h3>Payment history</h3><div id="owedPaymentHistory"></div></div>
+                  <button class="secondary-button danger-text" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button>
+                </section>
                 <form class="money-payment-form" id="owedAddToTabForm"><h3>Add to this debt</h3><label>Amount (£)<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this extra amount is for" /></label><label>Due date <small>Optional</small><input id="owedAddToTabDueDate" type="date" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add to debt</button></form>
                 <form class="money-payment-form" id="moneyPaymentForm"><h3>Record payment</h3><label>Amount (£)<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
-                <div class="money-payment-history"><h3>Payment history</h3><div id="owedPaymentHistory"></div></div>
-                <button class="secondary-button danger-text" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button>
               </div>
             </aside>
           </section>
