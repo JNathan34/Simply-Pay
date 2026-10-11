@@ -3029,7 +3029,10 @@
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
     if (!isPlexPoint) scheduleGoogleSignIn();
-    else { renderManagedPlexUsers(); if (!plexManager.loaded) void loadManagedPlexUsers(); void loadPlexDemoStatus(); }
+    else {
+      renderManagedPlexUsers();
+      void (async () => { await loadPlexDemoStatus(); await loadManagedPlexUsers(); })();
+    }
     refreshIcons();
   }
 
