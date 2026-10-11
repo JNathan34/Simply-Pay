@@ -135,6 +135,7 @@
     moneyOwedContent: document.querySelector("#moneyOwedContent"),
     moneyOwedForm: document.querySelector("#moneyOwedForm"),
     owedPerson: document.querySelector("#owedPerson"),
+    owedPeopleOptions: document.querySelector("#owedPeopleOptions"),
     owedAmount: document.querySelector("#owedAmount"),
     owedDueDate: document.querySelector("#owedDueDate"),
     owedReason: document.querySelector("#owedReason"),
@@ -1322,6 +1323,10 @@
     return status === "settled" ? "paid" : status === "overdue" ? "overdue" : status === "due soon" ? "due" : "unpaid";
   }
 
+  function owedPersonKey(person) {
+    return String(person || "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  }
+
   function renderMoneyOwed() {
     const debts = state.moneyOwed || [];
     const open = debts.filter((item) => owedBalance(item) > 0);
@@ -1332,6 +1337,11 @@
     els.owedDueSoon.textContent = String(statuses.filter((status) => status === "due soon").length);
     els.owedOverdue.textContent = String(statuses.filter((status) => status === "overdue").length);
     els.owedCount.textContent = `${debts.length} ${debts.length === 1 ? "person" : "people"}`;
+    els.owedPeopleOptions.innerHTML = debts
+      .slice()
+      .sort((left, right) => left.person.localeCompare(right.person))
+      .map((item) => `<option value="${escapeHtml(item.person)}"></option>`)
+      .join("");
     els.moneyOwedEmpty.classList.toggle("hidden", debts.length > 0);
     els.moneyOwedList.innerHTML = debts.slice().sort((a, b) => owedBalance(b) - owedBalance(a)).map((item) => {
       const status = owedStatus(item);
@@ -1356,7 +1366,19 @@
     const person = els.owedPerson.value.trim();
     const amount = roundMoney(els.owedAmount.value);
     if (!person || amount <= 0) return;
-    const debt = { id: uid(), person, amount, dueDate: els.owedDueDate.value, reason: els.owedReason.value.trim(), payments: [] };
+    const dueDate = els.owedDueDate.value;
+    const reason = els.owedReason.value.trim();
+    const existing = state.moneyOwed.find((item) => owedPersonKey(item.person) === owedPersonKey(person));
+    if (existing) {
+      existing.amount = roundMoney(existing.amount + amount);
+      if (dueDate) existing.dueDate = dueDate;
+      if (reason) existing.reason = reason;
+      selectedOwedId = existing.id;
+      els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${money(amount)} to ${existing.person}'s tab.`);
+      return;
+    }
+
+    const debt = { id: uid(), person, amount, dueDate, reason, payments: [] };
     state.moneyOwed.push(debt); selectedOwedId = debt.id;
     els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast("Debt added.");
   }

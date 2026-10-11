@@ -300,7 +300,8 @@
           <section class="money-owed-grid">
             <form class="panel money-owed-form" id="moneyOwedForm">
               <div class="panel-heading"><h2>Add money owed</h2></div>
-              <label>Person<input id="owedPerson" type="text" maxlength="80" placeholder="Their name" required /></label>
+              <label>Person<input id="owedPerson" type="text" maxlength="80" list="owedPeopleOptions" placeholder="Their name" required /></label>
+              <datalist id="owedPeopleOptions"></datalist>
               <label>Amount (£)<input id="owedAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
               <label>Due date<input id="owedDueDate" type="date" /></label>
               <label>Reason <small>Optional</small><input id="owedReason" type="text" maxlength="160" placeholder="What the money is for" /></label>
