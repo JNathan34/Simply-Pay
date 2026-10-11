@@ -3016,7 +3016,7 @@
     return syncAccountSave();
   }
 
-  async function syncAccountSave() {
+  async function syncAccountSave(forceCredential = false) {
     if (!state.account || applyingCloudState) return false;
     if (accountSyncing) {
       accountSyncPending = true;
@@ -3026,13 +3026,23 @@
     accountSyncing = true;
     try {
       const headers = { "Content-Type": "application/json" };
-      if (googleIdCredential) headers.Authorization = `Bearer ${googleIdCredential}`;
-      const response = await fetch("/api/sync", {
+      if (googleIdCredential && (forceCredential || !accountSyncReady)) headers.Authorization = `Bearer ${googleIdCredential}`;
+      const body = JSON.stringify({ state, updatedAt: state.updatedAt });
+      let response = await fetch("/api/sync", {
         method: "POST",
         credentials: "same-origin",
         headers,
-        body: JSON.stringify({ state, updatedAt: state.updatedAt }),
+        body,
       });
+
+      if (response.status === 401 && !forceCredential && googleIdCredential) {
+        response = await fetch("/api/sync", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${googleIdCredential}` },
+          body,
+        });
+      }
 
       if (response.status === 401) {
         accountSyncReady = false;
@@ -3046,7 +3056,6 @@
       const remoteState = normalizeRemoteState(data.state || {});
       if (shouldUseRemoteState(remoteState)) applyRemoteState(remoteState);
       accountSyncReady = true;
-      googleIdCredential = "";
       lastGoogleSyncAt = new Date().toISOString();
       updateGoogleStatus();
       return true;
@@ -3067,7 +3076,7 @@
     if (!state.account || applyingCloudState) return false;
     try {
       const headers = {};
-      if (googleIdCredential) headers.Authorization = `Bearer ${googleIdCredential}`;
+      if (googleIdCredential && !accountSyncReady) headers.Authorization = `Bearer ${googleIdCredential}`;
       const response = await fetch("/api/sync", {
         method: "GET",
         credentials: "same-origin",
@@ -3084,7 +3093,6 @@
 
       const data = await response.json();
       accountSyncReady = true;
-      googleIdCredential = "";
       if (!data.state) {
         updateGoogleStatus();
         return null;
