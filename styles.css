@@ -259,29 +259,10 @@ button:disabled {
   box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
 }
 
-.brand-mark.is-plexpoint,
-.brand-mark.is-money-owed {
-  width: 48px;
-  height: 48px;
-  padding: 2px;
-  border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
-  object-fit: contain;
-  clip-path: inset(0 round 12px);
+.brand-mark,
+.product-menu-icon {
+  object-fit: cover;
 }
-
-.brand-mark.is-plexpoint { background: #61320e; }
-.brand-mark.is-money-owed { background: #17385a; }
-
-.product-menu-item[data-product="plexpoint"] .product-menu-icon,
-.product-menu-item[data-product="money-owed"] .product-menu-icon {
-  padding: 2px;
-  object-fit: contain;
-  clip-path: inset(0 round 9px);
-}
-
-.product-menu-item[data-product="plexpoint"] .product-menu-icon { background: #61320e; }
-.product-menu-item[data-product="money-owed"] .product-menu-icon { background: #17385a; }
 
 .brand-title,
 .panel h2,
@@ -1610,12 +1591,6 @@ select:focus {
     width: 42px;
     height: 42px;
     border-radius: 10px;
-  }
-
-  .brand-mark.is-plexpoint {
-    width: 46px;
-    height: 46px;
-    border-radius: 0;
   }
 
   .topbar-actions {
