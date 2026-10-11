@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=62" />
+    <link rel="stylesheet" href="styles.css?v=63" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -305,8 +305,10 @@
             </form>
             <section class="panel money-owed-list-panel">
               <div class="panel-heading"><div><h2>People who owe you</h2><p id="owedCount">0 people</p></div></div>
-              <div class="money-owed-list" id="moneyOwedList"></div>
-              <div class="empty-state" id="moneyOwedEmpty"><i data-lucide="hand-coins"></i><p>No money owed yet.</p></div>
+              <div class="money-owed-scroll">
+                <div class="money-owed-list" id="moneyOwedList"></div>
+                <div class="empty-state" id="moneyOwedEmpty"><i data-lucide="hand-coins"></i><p>No money owed yet.</p></div>
+              </div>
             </section>
             <aside class="panel money-owed-detail" id="moneyOwedDetail">
               <div class="empty-state" id="owedDetailEmpty"><i data-lucide="mouse-pointer-click"></i><p>Select a person to record a payment or update their debt.</p></div>

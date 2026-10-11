@@ -405,6 +405,10 @@ button:disabled {
 .money-owed-form label, .money-payment-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .money-owed-form input, .money-payment-form input { width: 100%; }
 .money-owed-list-panel, .money-owed-detail { min-width: 0; }
+.money-owed-list-panel { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 380px; }
+.money-owed-list-panel .panel-heading { margin-bottom: 14px; }
+.money-owed-scroll { min-height: 0; overflow-y: auto; padding-right: 5px; scrollbar-color: color-mix(in srgb, var(--teal) 45%, var(--surface-strong)) transparent; scrollbar-width: thin; }
+.money-owed-scroll .empty-state { min-height: 100%; }
 .money-owed-detail { grid-column: 1 / -1; padding: 22px; }
 .money-owed-detail .empty-state { text-align: center; }
 .money-owed-detail .empty-state p { max-width: 290px; }
@@ -444,6 +448,7 @@ button:disabled {
   .money-owed-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .money-owed-grid, .owed-detail-actions { grid-template-columns: 1fr; }
   .money-owed-detail { grid-column: auto; }
+  .money-owed-list-panel { height: 330px; }
   .money-owed-detail { padding: 16px; }
   #owedDetailContent:not(.hidden) { gap: 16px; }
   #owedDetailContent .money-payment-form.owed-action-card { padding: 18px; gap: 14px; }
