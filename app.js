@@ -1304,7 +1304,7 @@
     renderCalendar();
     renderAccount();
     renderMoneyOwed();
-    if (activeProduct === "simply-pay") scheduleGoogleSignIn();
+    if (shouldPrepareGoogleSignIn()) scheduleGoogleSignIn();
     refreshIcons();
   }
 
@@ -2665,8 +2665,12 @@
     URL.revokeObjectURL(url);
   }
 
+  function shouldPrepareGoogleSignIn() {
+    return activeProduct === "simply-pay" || (activeProduct === "money-owed" && !state.account);
+  }
+
   function scheduleGoogleSignIn() {
-    if (activeProduct !== "simply-pay") return;
+    if (!shouldPrepareGoogleSignIn()) return;
     window.clearTimeout(googleRenderTimer);
     googleRenderTimer = window.setTimeout(renderGoogleSignIn, 80);
   }
@@ -3110,8 +3114,9 @@
   function openSettings() {
     const isPlexPoint = activeProduct === "plexpoint";
     const isWorkBilling = activeProduct === "simply-pay";
+    const isDebtTracker = activeProduct === "money-owed";
     els.settingsForm.classList.toggle("hidden", isPlexPoint);
-    els.googleAccountSection.classList.toggle("hidden", !isWorkBilling);
+    els.googleAccountSection.classList.toggle("hidden", !(isWorkBilling || (isDebtTracker && !state.account)));
     els.plexpointSettings.classList.toggle("hidden", !isPlexPoint);
     els.plexpointSettings.setAttribute("aria-hidden", String(!isPlexPoint));
     els.settingsEyebrow.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
@@ -3119,7 +3124,7 @@
     els.settingsOverlay.classList.remove("hidden");
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
-    if (isWorkBilling) scheduleGoogleSignIn();
+    if (shouldPrepareGoogleSignIn()) scheduleGoogleSignIn();
     if (isPlexPoint) {
       renderManagedPlexUsers();
       void (async () => { await loadPlexDemoStatus(); await loadManagedPlexUsers(); })();
@@ -3165,6 +3170,7 @@
     if (product === "simply-pay") {
       scheduleGoogleSignIn();
     }
+    if (product === "money-owed" && !state.account) scheduleGoogleSignIn();
     if (!isPlexPoint) refreshGoogleDataOnArrival();
     els.productMenu.querySelectorAll("[data-product]").forEach((item) => {
       const selected = item.dataset.product === product;
