@@ -154,6 +154,7 @@
     owedAddToTabAmount: document.querySelector("#owedAddToTabAmount"),
     owedAddToTabReason: document.querySelector("#owedAddToTabReason"),
     moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
+    owedPaymentItem: document.querySelector("#owedPaymentItem"),
     owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
     owedPaymentDate: document.querySelector("#owedPaymentDate"),
     owedItemBreakdown: document.querySelector("#owedItemBreakdown"),
@@ -280,6 +281,17 @@
     const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
     invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
 
+    const payments = Array.isArray(source.payments) ? source.payments.map((payment) => ({
+      id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
+      itemId: String(payment?.itemId || ""),
+    })).filter((payment) => payment.amount > 0) : [];
+    const remainingByItem = new Map(items.map((entry) => [entry.id, entry.amount]));
+    payments.forEach((payment) => {
+      if (!remainingByItem.has(payment.itemId)) {
+        payment.itemId = items.find((entry) => (remainingByItem.get(entry.id) || 0) > 0)?.id || items[0].id;
+      }
+      remainingByItem.set(payment.itemId, roundMoney((remainingByItem.get(payment.itemId) || 0) - payment.amount));
+    });
     return {
       ...structuredClone(defaultState),
       ...stored,
@@ -356,9 +368,7 @@
       amount: roundMoney(items.reduce((total, entry) => total + entry.amount, 0)),
       reason: fallbackReason,
       items,
-      payments: Array.isArray(source.payments) ? source.payments.map((payment) => ({
-        id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
-      })).filter((payment) => payment.amount > 0) : [],
+      payments,
     };
   }
 
@@ -1331,6 +1341,12 @@
     return roundMoney(item.amount - item.payments.reduce((total, payment) => total + payment.amount, 0));
   }
 
+  function owedItemBalance(debt, itemId) {
+    const item = debt.items.find((entry) => entry.id === itemId);
+    if (!item) return 0;
+    return roundMoney(item.amount - debt.payments.filter((payment) => payment.itemId === itemId).reduce((total, payment) => total + payment.amount, 0));
+  }
+
   function owedItemSummary(item) {
     const items = item.items || [];
     if (items.length > 1) return `${items.length} separate items`;
@@ -1371,8 +1387,21 @@
     els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
     els.owedDetailContent.classList.toggle("hidden", !debt);
     if (!debt) { refreshIcons(); return; }
-    els.owedItemBreakdown.innerHTML = debt.items.map((entry) => `<div class="owed-item-row"><span><strong>${escapeHtml(entry.reason || "No reason added")}</strong><small>Separate amount</small></span><strong>${escapeHtml(owedMoney(entry.amount))}</strong></div>`).join("");
-    els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
+    const outstandingItems = debt.items.filter((entry) => owedItemBalance(debt, entry.id) > 0);
+    const selectedPaymentItem = els.owedPaymentItem.value;
+    els.owedPaymentItem.innerHTML = `<option value="">Select what this payment is for</option>${outstandingItems.map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.reason || "No reason added")} — ${escapeHtml(owedMoney(owedItemBalance(debt, entry.id)))} left</option>`).join("")}`;
+    if (outstandingItems.some((entry) => entry.id === selectedPaymentItem)) els.owedPaymentItem.value = selectedPaymentItem;
+    els.owedPaymentItem.disabled = !outstandingItems.length;
+    els.owedPaymentAmount.disabled = !outstandingItems.length;
+    els.moneyPaymentForm.querySelector("button[type='submit']").disabled = !outstandingItems.length;
+    els.owedItemBreakdown.innerHTML = debt.items.map((entry) => {
+      const remaining = owedItemBalance(debt, entry.id);
+      return `<div class="owed-item-row"><span><strong>${escapeHtml(entry.reason || "No reason added")}</strong><small>${escapeHtml(owedMoney(remaining))} remaining of ${escapeHtml(owedMoney(entry.amount))}</small></span><strong>${escapeHtml(remaining <= 0 ? "Paid" : owedMoney(remaining))}</strong></div>`;
+    }).join("");
+    els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => {
+      const item = debt.items.find((entry) => entry.id === payment.itemId);
+      return `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}<small>${escapeHtml(item?.reason || "General payment")}</small></span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`;
+    }).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
   }
 
@@ -1400,8 +1429,12 @@
     event.preventDefault();
     const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
     const amount = roundMoney(els.owedPaymentAmount.value);
-    if (!debt || amount <= 0) return;
-    debt.payments.push({ id: uid(), amount, date: els.owedPaymentDate.value || todayIso() });
+    const itemId = els.owedPaymentItem.value;
+    const item = debt?.items.find((entry) => entry.id === itemId);
+    if (!debt || !item || amount <= 0) return;
+    const remaining = owedItemBalance(debt, itemId);
+    if (amount > remaining) { showToast(`This item only has ${owedMoney(remaining)} left to pay.`); return; }
+    debt.payments.push({ id: uid(), itemId, amount, date: els.owedPaymentDate.value || todayIso() });
     els.moneyPaymentForm.reset(); els.owedPaymentDate.value = todayIso(); saveState(); renderMoneyOwed(); showToast("Payment recorded.");
   }
 

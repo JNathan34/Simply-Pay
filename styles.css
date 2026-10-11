@@ -467,7 +467,9 @@ button:disabled {
 .owed-remove-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-weight: 800; }
 .owed-remove-button:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
 .owed-remove-button svg { width: 16px; height: 16px; }
-.owed-payment-row { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+.owed-payment-row { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
+.owed-payment-row span { display: grid; gap: 3px; }
+.owed-payment-row small { color: var(--muted); }
 .owed-payment-row strong { color: var(--ink); }
 
 @media (max-width: 960px) {
