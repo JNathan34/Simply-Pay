@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=65" />
+    <link rel="stylesheet" href="styles.css?v=66" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -317,8 +317,8 @@
                   <form class="money-payment-form owed-action-card" id="owedAddToTabForm"><div class="owed-action-heading"><span class="owed-action-icon"><i data-lucide="plus"></i></span><div><h3>Add another amount</h3><p>Keep a separate record for each thing.</p></div></div><label>Amount<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this amount is for" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add amount</button></form>
                   <form class="money-payment-form owed-action-card" id="moneyPaymentForm"><div class="owed-action-heading"><span class="owed-action-icon"><i data-lucide="credit-card"></i></span><div><h3>Record payment</h3><p>Reduce the remaining balance.</p></div></div><label>Amount<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
                 </div>
-                <section class="money-owed-items"><div class="owed-history-heading"><div><h3>What they owe for</h3><p>Each amount is kept separately.</p></div></div><div class="owed-item-breakdown" id="owedItemBreakdown"></div></section>
-                <section class="money-payment-history"><div class="owed-history-heading"><div><h3>Payment history</h3><p>Every payment recorded for this person.</p></div><button class="ghost danger-text owed-remove-button" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button></div><div id="owedPaymentHistory"></div></section>
+                <section class="money-owed-items"><div class="owed-history-heading"><div><h3>What they owe for</h3></div></div><div class="owed-item-breakdown" id="owedItemBreakdown"></div></section>
+                <section class="money-payment-history"><div class="owed-history-heading"><div><h3>Payment history</h3></div><button class="ghost danger-text owed-remove-button" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button></div><div id="owedPaymentHistory"></div></section>
               </div>
             </aside>
           </section>
