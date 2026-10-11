@@ -410,8 +410,8 @@ button:disabled {
 .money-owed-detail .empty-state p { max-width: 290px; }
 #owedDetailContent:not(.hidden) { display: grid; gap: 22px; }
 .owed-detail-overview { display: flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 102px; padding: 22px 24px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--teal) 8%, transparent); }
-.owed-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
-.owed-action-card { align-content: start; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
+.owed-action-card { height: 100%; box-sizing: border-box; align-content: start; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
 .owed-action-heading { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
 .owed-action-heading h3, .owed-action-heading p { margin: 0; }
 .owed-action-heading p { margin-top: 3px; color: var(--muted); font-size: 13px; font-weight: 600; }
