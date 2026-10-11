@@ -1655,7 +1655,12 @@ select:focus {
   }
 
   .topbar {
-    position: static;
+    position: relative;
+    z-index: 50;
+  }
+
+  .product-menu {
+    z-index: 60;
   }
 
   .topbar-content {
