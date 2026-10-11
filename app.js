@@ -184,6 +184,7 @@
     accountEmail: document.querySelector("#accountEmail"),
     accountAvatar: document.querySelector("#accountAvatar"),
     googleButton: document.querySelector("#googleButton"),
+    googleAccountSection: document.querySelector("#googleAccountSection"),
     googleStatus: document.querySelector("#googleStatus"),
     signOutGoogle: document.querySelector("#signOutGoogle"),
     syncNowGoogle: document.querySelector("#syncNowGoogle"),
@@ -1301,7 +1302,7 @@
     renderCalendar();
     renderAccount();
     renderMoneyOwed();
-    scheduleGoogleSignIn();
+    if (activeProduct === "simply-pay") scheduleGoogleSignIn();
     refreshIcons();
   }
 
@@ -2653,6 +2654,7 @@
   }
 
   function scheduleGoogleSignIn() {
+    if (activeProduct !== "simply-pay") return;
     window.clearTimeout(googleRenderTimer);
     googleRenderTimer = window.setTimeout(renderGoogleSignIn, 80);
   }
@@ -3095,7 +3097,9 @@
 
   function openSettings() {
     const isPlexPoint = activeProduct === "plexpoint";
+    const isWorkBilling = activeProduct === "simply-pay";
     els.settingsForm.classList.toggle("hidden", isPlexPoint);
+    els.googleAccountSection.classList.toggle("hidden", !isWorkBilling);
     els.plexpointSettings.classList.toggle("hidden", !isPlexPoint);
     els.plexpointSettings.setAttribute("aria-hidden", String(!isPlexPoint));
     els.settingsEyebrow.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
@@ -3103,8 +3107,8 @@
     els.settingsOverlay.classList.remove("hidden");
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
-    if (!isPlexPoint) scheduleGoogleSignIn();
-    else {
+    if (isWorkBilling) scheduleGoogleSignIn();
+    if (isPlexPoint) {
       renderManagedPlexUsers();
       void (async () => { await loadPlexDemoStatus(); await loadManagedPlexUsers(); })();
     }
