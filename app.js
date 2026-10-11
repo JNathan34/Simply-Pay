@@ -2752,7 +2752,7 @@
   function refreshGoogleDataOnArrival() {
     if (activeProduct === "plexpoint" || !state.account || arrivalGoogleRefreshRequested) return;
     arrivalGoogleRefreshRequested = true;
-    void syncAccountSave();
+    void pullAccountSave();
   }
 
   function updateGoogleStatus(message) {
@@ -2820,7 +2820,8 @@
       saveState({ touch: false, queueSync: false });
       syncFormsFromState();
       await connectGoogleDriveSync(false);
-      const synced = await syncAccountSave();
+      const pulled = await pullAccountSave();
+      const synced = pulled === null ? await syncAccountSave() : pulled;
       render();
       showToast(synced ? "Signed in. Automatic sync is on." : "Google signed in, but automatic sync could not start.");
     } catch (error) {
@@ -2934,6 +2935,45 @@
         accountSyncPending = false;
         queueCloudSync(100);
       }
+    }
+  }
+
+  async function pullAccountSave() {
+    if (!state.account || applyingCloudState) return false;
+    try {
+      const headers = {};
+      if (googleIdCredential) headers.Authorization = `Bearer ${googleIdCredential}`;
+      const response = await fetch("/api/sync", {
+        method: "GET",
+        credentials: "same-origin",
+        headers,
+      });
+
+      if (response.status === 401) {
+        accountSyncReady = false;
+        updateGoogleStatus();
+        scheduleGoogleSignIn();
+        return false;
+      }
+      if (!response.ok) throw new Error(`Automatic sync failed (${response.status}).`);
+
+      const data = await response.json();
+      accountSyncReady = true;
+      googleIdCredential = "";
+      if (!data.state) {
+        updateGoogleStatus();
+        return null;
+      }
+
+      const remoteState = normalizeRemoteState(data.state);
+      if (shouldUseRemoteState(remoteState)) applyRemoteState(remoteState);
+      lastGoogleSyncAt = new Date().toISOString();
+      updateGoogleStatus();
+      return true;
+    } catch (error) {
+      accountSyncReady = false;
+      updateGoogleStatus("Automatic sync could not connect. It will retry when the app is active.");
+      return false;
     }
   }
 

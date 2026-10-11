@@ -141,6 +141,33 @@ export async function onRequestPost(context) {
   );
 }
 
+export async function onRequestGet(context) {
+  const { request, env } = context;
+  if (!env.SYNC_DB) return json({ error: "Sync storage is not configured." }, 503);
+
+  const identity = await authenticate(request, env);
+  if (!identity) return json({ error: "Google sign-in is required." }, 401);
+
+  const saved = await env.SYNC_DB.prepare(
+    "SELECT payload, updated_at FROM account_sync WHERE google_sub = ?"
+  ).bind(identity.sub).first();
+
+  let state = null;
+  if (saved?.payload) {
+    try {
+      state = JSON.parse(saved.payload);
+    } catch (error) {
+      return json({ error: "Saved sync data could not be read." }, 500);
+    }
+  }
+
+  return json(
+    { state, updatedAt: saved?.updated_at || "" },
+    200,
+    identity.setCookie ? { "Set-Cookie": identity.setCookie } : {}
+  );
+}
+
 export async function onRequestDelete(context) {
   const { request, env } = context;
   const sessionToken = readCookie(request, SESSION_COOKIE);
