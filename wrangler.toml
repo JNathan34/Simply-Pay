@@ -9,3 +9,8 @@ database_name = "simply-pay-sync"
 database_id = "91fe1920-35fa-4db5-a230-3abaa5b199e0"
 
 [env.production]
+
+[[env.production.d1_databases]]
+binding = "SYNC_DB"
+database_name = "simply-pay-sync"
+database_id = "91fe1920-35fa-4db5-a230-3abaa5b199e0"
