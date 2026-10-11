@@ -405,14 +405,14 @@ button:disabled {
 .money-owed-form label, .money-payment-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .money-owed-form input, .money-payment-form input { width: 100%; }
 .money-owed-list-panel, .money-owed-detail { min-width: 0; }
-.money-owed-detail { grid-column: 1 / -1; }
+.money-owed-detail { grid-column: 1 / -1; padding: 22px; }
 .money-owed-detail .empty-state { text-align: center; }
 .money-owed-detail .empty-state p { max-width: 290px; }
-#owedDetailContent:not(.hidden) { display: grid; gap: 18px; }
-.owed-detail-overview { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--teal) 8%, transparent); }
-.owed-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
-.owed-action-card { align-content: start; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
-.owed-action-heading { display: flex; align-items: center; gap: 11px; padding-bottom: 4px; }
+#owedDetailContent:not(.hidden) { display: grid; gap: 22px; }
+.owed-detail-overview { display: flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 102px; padding: 22px 24px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--teal) 8%, transparent); }
+.owed-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.owed-action-card { align-content: start; padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-action-heading { display: flex; align-items: center; gap: 12px; padding-bottom: 6px; }
 .owed-action-heading h3, .owed-action-heading p { margin: 0; }
 .owed-action-heading p { margin-top: 3px; color: var(--muted); font-size: 13px; font-weight: 600; }
 .owed-action-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 10px; color: var(--teal); background: color-mix(in srgb, var(--teal) 17%, transparent); }
@@ -430,9 +430,10 @@ button:disabled {
 .owed-detail-balance { margin: 0; color: var(--teal); font-size: clamp(22px, 3vw, 28px); font-weight: 900; line-height: 1.1; }
 .money-payment-form { padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 #owedDetailContent .money-payment-form { margin: 0; }
+#owedDetailContent .money-payment-form.owed-action-card { gap: 16px; padding: 22px; border: 1px solid var(--line); }
 .money-payment-form h3, .money-payment-history h3 { margin: 0; }
-.money-payment-history { padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
-.owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+.money-payment-history { padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
 .owed-history-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .owed-remove-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-weight: 800; }
 .owed-remove-button:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
@@ -449,10 +450,13 @@ button:disabled {
   .money-owed-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .money-owed-grid, .owed-detail-actions { grid-template-columns: 1fr; }
   .money-owed-detail { grid-column: auto; }
-  .owed-detail-overview { align-items: flex-start; padding: 16px; }
+  .money-owed-detail { padding: 16px; }
+  #owedDetailContent:not(.hidden) { gap: 16px; }
+  .owed-detail-overview { align-items: flex-start; min-height: 0; gap: 16px; padding: 18px; }
+  #owedDetailContent .money-payment-form.owed-action-card { padding: 18px; gap: 14px; }
   .owed-detail-total { justify-items: end; }
   .owed-detail-balance { max-width: 140px; text-align: right; font-size: 21px; }
-  .money-payment-history { padding: 16px; }
+  .money-payment-history { padding: 18px; }
   .owed-history-heading { align-items: flex-start; }
 }
 .plex-current-plan, .plex-tier-picker, .plex-tier-label { --tier-color: #94a3b8; }
