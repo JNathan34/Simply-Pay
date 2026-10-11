@@ -67,6 +67,7 @@
   let lastRenderedGoogleClientId = "";
   let googleTokenClient = null;
   let lastTokenClientId = "";
+  let googleIdCredential = "";
   let googleAccessToken = "";
   let googleDriveFileId = "";
   let googleTokenRequest = null;
@@ -74,6 +75,9 @@
   let cloudSyncing = false;
   let cloudSyncPending = false;
   let cloudReconnectPromise = null;
+  let accountSyncing = false;
+  let accountSyncPending = false;
+  let accountSyncReady = null;
   let applyingCloudState = false;
   let lastGoogleSyncAt = "";
   let arrivalGoogleRefreshRequested = false;
@@ -2676,7 +2680,7 @@
   }
 
   function shouldPrepareGoogleSignIn() {
-    return activeProduct === "simply-pay" || (activeProduct === "money-owed" && !state.account);
+    return activeProduct !== "plexpoint" && (!state.account || accountSyncReady === false);
   }
 
   function scheduleGoogleSignIn() {
@@ -2704,7 +2708,7 @@
     }
 
     setupGoogleTokenClient(clientId);
-    const signedIn = Boolean(state.account);
+    const signedIn = Boolean(state.account) && accountSyncReady !== false;
     els.syncNowGoogle.classList.toggle("hidden", !signedIn);
     els.googleButton.classList.toggle("hidden", signedIn);
 
@@ -2738,6 +2742,7 @@
       });
       lastRenderedGoogleClientId = clientId;
       updateGoogleStatus();
+      if (state.account && accountSyncReady === false) window.google.accounts.id.prompt();
     } catch (error) {
       lastRenderedGoogleClientId = "";
       els.googleStatus.textContent = "Google sign-in could not start with that Client ID.";
@@ -2746,13 +2751,8 @@
 
   function refreshGoogleDataOnArrival() {
     if (activeProduct === "plexpoint" || !state.account || arrivalGoogleRefreshRequested) return;
-    if (!window.google?.accounts?.oauth2) {
-      window.setTimeout(refreshGoogleDataOnArrival, 250);
-      return;
-    }
-
     arrivalGoogleRefreshRequested = true;
-    void connectGoogleDriveSync(false);
+    void syncAccountSave();
   }
 
   function updateGoogleStatus(message) {
@@ -2766,16 +2766,16 @@
       return;
     }
 
-    if (state.account && googleAccessToken) {
+    if (state.account && accountSyncReady) {
       els.googleStatus.textContent = lastGoogleSyncAt
-        ? `Google Drive sync is on. Last saved ${formatSyncTime(lastGoogleSyncAt)}.`
-        : "Google Drive sync is on.";
+        ? `Automatic Google account sync is on. Last saved ${formatSyncTime(lastGoogleSyncAt)}.`
+        : "Automatic Google account sync is on.";
       return;
     }
 
     els.googleStatus.textContent = state.account
-      ? "Signed in. Click Sync now if Google asks for Drive permission."
-      : "Google sign-in is ready. Your hours will sync to Google Drive after permission.";
+      ? "Reconnect Google once to turn automatic sync back on."
+      : "Sign in once on this device to keep your data synced automatically.";
   }
 
   function setupGoogleTokenClient(clientId) {
@@ -2799,6 +2799,7 @@
 
   async function handleGoogleCredential(response) {
     try {
+      googleIdCredential = response.credential || "";
       const profile = decodeJwtPayload(response.credential);
       state.account = {
         provider: "google",
@@ -2818,9 +2819,10 @@
 
       saveState({ touch: false, queueSync: false });
       syncFormsFromState();
-      const synced = await connectGoogleDriveSync(true);
+      await connectGoogleDriveSync(false);
+      const synced = await syncAccountSave();
       render();
-      showToast(synced ? "Signed in and synced with Google." : "Signed in. Click Sync now to finish connecting Google Drive.");
+      showToast(synced ? "Signed in. Automatic sync is on." : "Google signed in, but automatic sync could not start.");
     } catch (error) {
       showToast("Google sign-in could not be completed.");
     }
@@ -2878,17 +2880,61 @@
     window.clearTimeout(cloudSyncTimer);
     cloudSyncTimer = window.setTimeout(() => {
       syncGoogleAutomatically().catch(() => {
-        updateGoogleStatus("Google sync paused. Click Sync now to reconnect.");
+        updateGoogleStatus("Automatic sync is waiting for Google sign-in on this device.");
       });
     }, Math.max(0, delayMs));
   }
 
   async function syncGoogleAutomatically() {
     if (!state.account || applyingCloudState) return false;
-    const hasAccess = await ensureGoogleAccessToken();
-    if (!hasAccess) return false;
-    await pullThenPushGoogleSave();
-    return true;
+    return syncAccountSave();
+  }
+
+  async function syncAccountSave() {
+    if (!state.account || applyingCloudState) return false;
+    if (accountSyncing) {
+      accountSyncPending = true;
+      return false;
+    }
+
+    accountSyncing = true;
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (googleIdCredential) headers.Authorization = `Bearer ${googleIdCredential}`;
+      const response = await fetch("/api/sync", {
+        method: "POST",
+        credentials: "same-origin",
+        headers,
+        body: JSON.stringify({ state, updatedAt: state.updatedAt }),
+      });
+
+      if (response.status === 401) {
+        accountSyncReady = false;
+        updateGoogleStatus();
+        scheduleGoogleSignIn();
+        return false;
+      }
+      if (!response.ok) throw new Error(`Automatic sync failed (${response.status}).`);
+
+      const data = await response.json();
+      const remoteState = normalizeRemoteState(data.state || {});
+      if (shouldUseRemoteState(remoteState)) applyRemoteState(remoteState);
+      accountSyncReady = true;
+      googleIdCredential = "";
+      lastGoogleSyncAt = new Date().toISOString();
+      updateGoogleStatus();
+      return true;
+    } catch (error) {
+      accountSyncReady = false;
+      updateGoogleStatus("Automatic sync could not connect. It will retry when the app is active.");
+      return false;
+    } finally {
+      accountSyncing = false;
+      if (accountSyncPending) {
+        accountSyncPending = false;
+        queueCloudSync(100);
+      }
+    }
   }
 
   async function ensureGoogleAccessToken() {
@@ -3114,17 +3160,27 @@
     return JSON.parse(json);
   }
 
-  function signOutGoogle() {
+  async function signOutGoogle() {
     if (window.google?.accounts?.id) {
       window.google.accounts.id.disableAutoSelect();
     }
+    await fetch("/api/sync", { method: "DELETE", credentials: "same-origin" }).catch(() => {});
     state.account = null;
+    googleIdCredential = "";
     googleAccessToken = "";
     googleDriveFileId = "";
+    accountSyncReady = false;
     lastGoogleSyncAt = "";
     saveState({ touch: false, queueSync: false });
     render();
     showToast("Signed out.");
+  }
+
+  async function forceGoogleSync() {
+    const accountSynced = await syncAccountSave();
+    const driveSynced = await connectGoogleDriveSync(true);
+    if (driveSynced) await syncAccountSave();
+    showToast(accountSynced || driveSynced ? "Sync complete." : "Sign in with Google to sync this device.");
   }
 
   function applyTheme() {
@@ -3351,7 +3407,7 @@
       if (!els.productMenu.classList.contains("hidden") && !event.target.closest(".product-switcher")) closeProductMenu();
     });
     els.signOutGoogle.addEventListener("click", signOutGoogle);
-    els.syncNowGoogle.addEventListener("click", () => connectGoogleDriveSync(true));
+    els.syncNowGoogle.addEventListener("click", () => void forceGoogleSync());
     document.addEventListener("keydown", (event) => {
       if (event.key !== "Escape") return;
       if (!els.settingsOverlay.classList.contains("hidden")) closeSettings();
