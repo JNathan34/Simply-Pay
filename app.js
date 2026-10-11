@@ -2808,9 +2808,9 @@
 
       saveState({ touch: false, queueSync: false });
       syncFormsFromState();
+      const synced = await connectGoogleDriveSync(true);
       render();
-      showToast("Signed in with Google.");
-      await connectGoogleDriveSync(true);
+      showToast(synced ? "Signed in and synced with Google." : "Signed in. Click Sync now to finish connecting Google Drive.");
     } catch (error) {
       showToast("Google sign-in could not be completed.");
     }
@@ -2854,9 +2854,11 @@
       await requestGoogleDriveAccess(interactive ? "consent" : "none");
       await pullThenPushGoogleSave();
       updateGoogleStatus();
+      return true;
     } catch (error) {
       googleAccessToken = "";
       updateGoogleStatus("Google Drive sync could not connect. Check the Client ID origin and Drive API, then try Sync now.");
+      return false;
     }
   }
 
