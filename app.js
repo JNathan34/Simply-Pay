@@ -150,6 +150,10 @@
     owedDetailReason: document.querySelector("#owedDetailReason"),
     owedDetailStatus: document.querySelector("#owedDetailStatus"),
     owedDetailBalance: document.querySelector("#owedDetailBalance"),
+    owedAddToTabForm: document.querySelector("#owedAddToTabForm"),
+    owedAddToTabAmount: document.querySelector("#owedAddToTabAmount"),
+    owedAddToTabReason: document.querySelector("#owedAddToTabReason"),
+    owedAddToTabDueDate: document.querySelector("#owedAddToTabDueDate"),
     moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
     owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
     owedPaymentDate: document.querySelector("#owedPaymentDate"),
@@ -1386,6 +1390,19 @@
     if (!debt || amount <= 0) return;
     debt.payments.push({ id: uid(), amount, date: els.owedPaymentDate.value || todayIso() });
     els.moneyPaymentForm.reset(); els.owedPaymentDate.value = todayIso(); saveState(); renderMoneyOwed(); showToast("Payment recorded.");
+  }
+
+  function addToOwedTab(event) {
+    event.preventDefault();
+    const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
+    const amount = roundMoney(els.owedAddToTabAmount.value);
+    if (!debt || amount <= 0) return;
+    const reason = els.owedAddToTabReason.value.trim();
+    const dueDate = els.owedAddToTabDueDate.value;
+    debt.amount = roundMoney(debt.amount + amount);
+    if (reason) debt.reason = reason;
+    if (dueDate) debt.dueDate = dueDate;
+    els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${money(amount)} to ${debt.person}'s debt.`);
   }
 
   function removeMoneyOwed() {
@@ -3264,6 +3281,7 @@
     els.plexPaymentHistory.addEventListener("click", handlePlexPaymentAction);
     els.moneyOwedForm.addEventListener("submit", addMoneyOwed);
     els.moneyOwedList.addEventListener("click", (event) => { const id = event.target.closest("[data-owed-id]")?.dataset.owedId; if (id) { selectedOwedId = id; renderMoneyOwed(); } });
+    els.owedAddToTabForm.addEventListener("submit", addToOwedTab);
     els.moneyPaymentForm.addEventListener("submit", recordOwedPayment);
     els.deleteOwedDebt.addEventListener("click", removeMoneyOwed);
     els.plexCancelPaymentEdit.addEventListener("click", resetPlexPaymentEditor);

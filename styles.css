@@ -404,6 +404,7 @@ button:disabled {
 .money-owed-form, .money-payment-form { display: grid; gap: 13px; }
 .money-owed-form label, .money-payment-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .money-owed-form input, .money-payment-form input { width: 100%; }
+#owedAddToTabForm { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .money-owed-list-panel, .money-owed-detail { min-width: 0; }
 .money-owed-detail .empty-state { text-align: center; }
 .money-owed-detail .empty-state p { max-width: 290px; }
