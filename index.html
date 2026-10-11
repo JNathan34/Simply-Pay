@@ -299,7 +299,7 @@
               <div class="panel-heading"><h2>Add money owed</h2></div>
               <label>Person<input id="owedPerson" type="text" maxlength="80" list="owedPeopleOptions" placeholder="Their name" required /></label>
               <datalist id="owedPeopleOptions"></datalist>
-              <label>Amount (£)<input id="owedAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
+              <label>Amount<input id="owedAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
               <label>Due date<input id="owedDueDate" type="date" /></label>
               <label>Reason <small>Optional</small><input id="owedReason" type="text" maxlength="160" placeholder="What the money is for" /></label>
               <button class="primary-button" type="submit"><i data-lucide="plus"></i>Add debt</button>
@@ -318,8 +318,8 @@
                   <div class="money-payment-history"><h3>Payment history</h3><div id="owedPaymentHistory"></div></div>
                   <button class="secondary-button danger-text" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button>
                 </section>
-                <form class="money-payment-form" id="owedAddToTabForm"><h3>Add to this debt</h3><label>Amount (£)<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this extra amount is for" /></label><label>Due date <small>Optional</small><input id="owedAddToTabDueDate" type="date" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add to debt</button></form>
-                <form class="money-payment-form" id="moneyPaymentForm"><h3>Record payment</h3><label>Amount (£)<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
+                <form class="money-payment-form" id="owedAddToTabForm"><h3>Add to this debt</h3><label>Amount<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this extra amount is for" /></label><label>Due date <small>Optional</small><input id="owedAddToTabDueDate" type="date" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add to debt</button></form>
+                <form class="money-payment-form" id="moneyPaymentForm"><h3>Record payment</h3><label>Amount<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
               </div>
             </aside>
           </section>
@@ -362,7 +362,21 @@
                 <span>Sign out</span>
               </button>
             </div>
-            <p class="settings-note" id="googleStatus">Google sign-in is ready. Your hours will sync after permission.</p>
+            <p class="settings-note" id="googleStatus">Google sign-in is ready. Your data will sync after permission.</p>
+          </section>
+
+          <section class="settings-section debt-tracker-settings">
+            <h3>Debt Tracker</h3>
+            <label>
+              <span>Currency</span>
+              <select id="moneyOwedCurrency">
+                <option value="GBP">GBP</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="CAD">CAD</option>
+                <option value="AUD">AUD</option>
+              </select>
+            </label>
           </section>
 
           <section class="settings-section">
@@ -377,7 +391,7 @@
             </label>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section work-billing-settings">
             <h3>Companies</h3>
             <div class="company-add-row">
               <label>
@@ -392,7 +406,7 @@
             <div class="company-list" id="companiesList"></div>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section work-billing-settings">
             <h3>Your Bill Details</h3>
             <label>
               <span>Business / heading</span>
@@ -408,7 +422,7 @@
             </label>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section work-billing-settings">
             <h3>Bank Details</h3>
             <label>
               <span>Name on account</span>
@@ -424,7 +438,7 @@
             </label>
           </section>
 
-          <section class="settings-section">
+          <section class="settings-section work-billing-settings">
             <h3>Defaults</h3>
             <div class="two-column">
               <label>

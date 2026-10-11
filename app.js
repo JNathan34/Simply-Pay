@@ -47,6 +47,7 @@
       accountNumber: "58925008",
       sortCode: "09-01-28",
       currency: "GBP",
+      moneyOwedCurrency: "GBP",
       defaultRate: "",
       defaultWork: "Manual Labour",
       companies: [DEFAULT_COMPANY],
@@ -197,6 +198,7 @@
     accountNumber: document.querySelector("#accountNumber"),
     sortCode: document.querySelector("#sortCode"),
     currency: document.querySelector("#currency"),
+    moneyOwedCurrency: document.querySelector("#moneyOwedCurrency"),
     currencySymbols: document.querySelectorAll("[data-currency-symbol]"),
     defaultRate: document.querySelector("#defaultRate"),
     defaultWork: document.querySelector("#defaultWork"),
@@ -391,6 +393,9 @@
       companyColors,
       defaultCompany,
       nextInvoiceNumber: String(settings.nextInvoiceNumber || defaultState.settings.nextInvoiceNumber),
+      moneyOwedCurrency: ["GBP", "USD", "EUR", "CAD", "AUD"].includes(settings.moneyOwedCurrency)
+        ? settings.moneyOwedCurrency
+        : (settings.currency || defaultState.settings.moneyOwedCurrency),
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
       darkMode: Boolean(settings.darkMode),
     };
@@ -492,6 +497,10 @@
       style: "currency",
       currency,
     }).format(asNumber(value));
+  }
+
+  function owedMoney(value) {
+    return money(value, state.settings.moneyOwedCurrency || "GBP");
   }
 
   function currencySymbol(currency = state.settings.currency || "GBP") {
@@ -907,6 +916,7 @@
       accountNumber: els.accountNumber.value.trim(),
       sortCode: els.sortCode.value.trim(),
       currency: els.currency.value,
+      moneyOwedCurrency: els.moneyOwedCurrency.value,
       defaultRate: els.defaultRate.value,
       defaultWork: els.defaultWork.value.trim() || "Manual Labour",
       companies: state.settings.companies,
@@ -1334,7 +1344,7 @@
     const debts = state.moneyOwed || [];
     const open = debts.filter((item) => owedBalance(item) > 0);
     const total = open.reduce((sum, item) => sum + owedBalance(item), 0);
-    els.owedTotal.textContent = money(total);
+    els.owedTotal.textContent = owedMoney(total);
     els.owedPeople.textContent = String(open.length);
     els.owedCount.textContent = `${debts.length} ${debts.length === 1 ? "person" : "people"}`;
     els.owedPeopleOptions.innerHTML = debts
@@ -1345,7 +1355,7 @@
     els.moneyOwedEmpty.classList.toggle("hidden", debts.length > 0);
     els.moneyOwedList.innerHTML = debts.slice().sort((a, b) => owedBalance(b) - owedBalance(a)).map((item) => {
       const status = owedStatus(item);
-      return `<button class="money-owed-row ${item.id === selectedOwedId ? "selected" : ""}" type="button" data-owed-id="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.person)}</strong><small>${escapeHtml(item.reason || "No reason added")}</small></span><span><strong>${escapeHtml(money(owedBalance(item)))}</strong><em class="status-badge ${owedStatusClass(status)}">${escapeHtml(status)}</em></span></button>`;
+      return `<button class="money-owed-row ${item.id === selectedOwedId ? "selected" : ""}" type="button" data-owed-id="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.person)}</strong><small>${escapeHtml(item.reason || "No reason added")}</small></span><span><strong>${escapeHtml(owedMoney(owedBalance(item)))}</strong><em class="status-badge ${owedStatusClass(status)}">${escapeHtml(status)}</em></span></button>`;
     }).join("");
     const debt = debts.find((item) => item.id === selectedOwedId);
     els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
@@ -1356,8 +1366,8 @@
     els.owedDetailReason.textContent = debt.reason || (debt.dueDate ? `Due ${formatShortDate(debt.dueDate)}` : "No due date set");
     els.owedDetailStatus.textContent = status;
     els.owedDetailStatus.className = `status-badge ${owedStatusClass(status)}`;
-    els.owedDetailBalance.textContent = `${money(owedBalance(debt))} remaining`;
-    els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(money(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
+    els.owedDetailBalance.textContent = `${owedMoney(owedBalance(debt))} remaining`;
+    els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
   }
 
@@ -1374,7 +1384,7 @@
       if (dueDate) existing.dueDate = dueDate;
       if (reason) existing.reason = reason;
       selectedOwedId = existing.id;
-      els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${money(amount)} to ${existing.person}'s tab.`);
+      els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${existing.person}'s tab.`);
       return;
     }
 
@@ -1402,7 +1412,7 @@
     debt.amount = roundMoney(debt.amount + amount);
     if (reason) debt.reason = reason;
     if (dueDate) debt.dueDate = dueDate;
-    els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${money(amount)} to ${debt.person}'s debt.`);
+    els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${debt.person}'s debt.`);
   }
 
   function removeMoneyOwed() {
@@ -2074,7 +2084,7 @@
     }
 
     els.accountName.textContent = "Not signed in";
-    els.accountEmail.textContent = "Sign in to sync your hours automatically.";
+    els.accountEmail.textContent = "Sign in to keep your data synced.";
     els.accountAvatar.innerHTML = '<i data-lucide="user"></i>';
   }
 
@@ -3120,15 +3130,17 @@
     const isWorkBilling = activeProduct === "simply-pay";
     const isDebtTracker = activeProduct === "money-owed";
     els.settingsForm.classList.toggle("hidden", isPlexPoint);
-    els.googleAccountSection.classList.toggle("hidden", !(isWorkBilling || (isDebtTracker && !state.account)));
+    els.googleAccountSection.classList.toggle("hidden", !(isWorkBilling || isDebtTracker));
+    document.querySelectorAll(".work-billing-settings").forEach((section) => section.classList.toggle("hidden", !isWorkBilling));
+    document.querySelectorAll(".debt-tracker-settings").forEach((section) => section.classList.toggle("hidden", !isDebtTracker));
     els.plexpointSettings.classList.toggle("hidden", !isPlexPoint);
     els.plexpointSettings.setAttribute("aria-hidden", String(!isPlexPoint));
-    els.settingsEyebrow.textContent = isPlexPoint ? "PlexPoint" : "Simply Pay";
+    els.settingsEyebrow.textContent = isPlexPoint ? "PlexPoint" : isDebtTracker ? "Debt Tracker" : "Shift Logger";
     els.settingsTitle.textContent = "Settings";
     els.settingsOverlay.classList.remove("hidden");
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
-    if (shouldPrepareGoogleSignIn()) scheduleGoogleSignIn();
+    if (isWorkBilling || isDebtTracker) renderGoogleSignIn();
     if (isPlexPoint) {
       renderManagedPlexUsers();
       void (async () => { await loadPlexDemoStatus(); await loadManagedPlexUsers(); })();
