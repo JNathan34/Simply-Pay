@@ -1,6 +1,6 @@
 {
-  "name": "Simply Pay",
-  "short_name": "Simply Pay",
+  "name": "Shift Logger",
+  "short_name": "Shift Logger",
   "description": "Track work hours, invoices, and billing history.",
   "start_url": "./",
   "scope": "./",

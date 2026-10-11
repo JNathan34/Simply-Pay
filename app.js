@@ -2618,8 +2618,8 @@
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <dc:title>${xmlEscape(invoiceFileName(invoice))}</dc:title>
-        <dc:creator>Simply Pay</dc:creator>
-        <cp:lastModifiedBy>Simply Pay</cp:lastModifiedBy>
+        <dc:creator>Shift Logger</dc:creator>
+        <cp:lastModifiedBy>Shift Logger</cp:lastModifiedBy>
         <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
         <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
       </cp:coreProperties>`;
@@ -2628,7 +2628,7 @@
   function docxAppPropertiesXml() {
     return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
       <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
-        <Application>Simply Pay</Application>
+        <Application>Shift Logger</Application>
       </Properties>`;
   }
 
@@ -3271,13 +3271,13 @@
     const isMoneyOwed = product === "money-owed";
     activeProduct = product;
     localStorage.setItem(PRODUCT_MODE_KEY, activeProduct);
-    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Simply Pay";
+    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Shift Logger";
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : isMoneyOwed ? "Personal tracker" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png?v=2" : isMoneyOwed ? "icons/money-owed-logo.png?v=2" : "icons/work-billing-logo.png?v=2";
     els.brandMark.alt = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "";
     els.brandMark.classList.toggle("is-plexpoint", isPlexPoint);
     els.brandMark.classList.toggle("is-money-owed", isMoneyOwed);
-    document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Simply Pay";
+    document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Shift Logger";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint || isMoneyOwed);
     els.plexpointContent.classList.toggle("hidden", !isPlexPoint);
