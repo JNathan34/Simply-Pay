@@ -142,7 +142,6 @@
     owedPerson: document.querySelector("#owedPerson"),
     owedPeopleOptions: document.querySelector("#owedPeopleOptions"),
     owedAmount: document.querySelector("#owedAmount"),
-    owedDueDate: document.querySelector("#owedDueDate"),
     owedReason: document.querySelector("#owedReason"),
     owedTotal: document.querySelector("#owedTotal"),
     owedPeople: document.querySelector("#owedPeople"),
@@ -158,7 +157,6 @@
     owedAddToTabForm: document.querySelector("#owedAddToTabForm"),
     owedAddToTabAmount: document.querySelector("#owedAddToTabAmount"),
     owedAddToTabReason: document.querySelector("#owedAddToTabReason"),
-    owedAddToTabDueDate: document.querySelector("#owedAddToTabDueDate"),
     moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
     owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
     owedPaymentDate: document.querySelector("#owedPaymentDate"),
@@ -349,7 +347,6 @@
     if (!person || amount <= 0) return null;
     return {
       id: String(source.id || uid()), person, amount,
-      dueDate: String(source.dueDate || "").slice(0, 10),
       reason: String(source.reason || "").trim().slice(0, 160),
       payments: Array.isArray(source.payments) ? source.payments.map((payment) => ({
         id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
@@ -1328,16 +1325,11 @@
 
   function owedStatus(item) {
     const balance = owedBalance(item);
-    if (balance <= 0) return "settled";
-    if (!item.dueDate) return "owed";
-    const today = todayIso();
-    if (item.dueDate < today) return "overdue";
-    const soon = new Date(`${today}T00:00:00`); soon.setDate(soon.getDate() + 7);
-    return item.dueDate <= toIsoDate(soon) ? "due soon" : "owed";
+    return balance <= 0 ? "settled" : "owed";
   }
 
   function owedStatusClass(status) {
-    return status === "settled" ? "paid" : status === "overdue" ? "overdue" : status === "due soon" ? "due" : "unpaid";
+    return status === "settled" ? "paid" : "unpaid";
   }
 
   function owedPersonKey(person) {
@@ -1367,7 +1359,7 @@
     if (!debt) { refreshIcons(); return; }
     const status = owedStatus(debt);
     els.owedDetailName.textContent = debt.person;
-    els.owedDetailReason.textContent = debt.reason || (debt.dueDate ? `Due ${formatShortDate(debt.dueDate)}` : "No due date set");
+    els.owedDetailReason.textContent = debt.reason || "No reason added";
     els.owedDetailStatus.textContent = status;
     els.owedDetailStatus.className = `status-badge ${owedStatusClass(status)}`;
     els.owedDetailBalance.textContent = `${owedMoney(owedBalance(debt))} remaining`;
@@ -1380,19 +1372,17 @@
     const person = els.owedPerson.value.trim();
     const amount = roundMoney(els.owedAmount.value);
     if (!person || amount <= 0) return;
-    const dueDate = els.owedDueDate.value;
     const reason = els.owedReason.value.trim();
     const existing = state.moneyOwed.find((item) => owedPersonKey(item.person) === owedPersonKey(person));
     if (existing) {
       existing.amount = roundMoney(existing.amount + amount);
-      if (dueDate) existing.dueDate = dueDate;
       if (reason) existing.reason = reason;
       selectedOwedId = existing.id;
       els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${existing.person}'s tab.`);
       return;
     }
 
-    const debt = { id: uid(), person, amount, dueDate, reason, payments: [] };
+    const debt = { id: uid(), person, amount, reason, payments: [] };
     state.moneyOwed.push(debt); selectedOwedId = debt.id;
     els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast("Debt added.");
   }
@@ -1412,10 +1402,8 @@
     const amount = roundMoney(els.owedAddToTabAmount.value);
     if (!debt || amount <= 0) return;
     const reason = els.owedAddToTabReason.value.trim();
-    const dueDate = els.owedAddToTabDueDate.value;
     debt.amount = roundMoney(debt.amount + amount);
     if (reason) debt.reason = reason;
-    if (dueDate) debt.dueDate = dueDate;
     els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${debt.person}'s debt.`);
   }
 
