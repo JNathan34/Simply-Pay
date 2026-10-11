@@ -246,6 +246,10 @@ button:disabled {
   height: 34px;
   border-radius: 9px;
   object-fit: cover;
+  box-sizing: border-box;
+  border: 1px solid rgba(72, 230, 211, 0.62);
+  background: #003f40;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.32);
 }
 
 .workspace.plexpoint-workspace {
@@ -256,7 +260,10 @@ button:disabled {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(13, 81, 74, 0.18);
+  box-sizing: border-box;
+  border: 1px solid rgba(72, 230, 211, 0.62);
+  background: #003f40;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.32), 0 12px 30px rgba(13, 81, 74, 0.18);
 }
 
 .brand-mark,
