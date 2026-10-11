@@ -141,8 +141,6 @@
     owedReason: document.querySelector("#owedReason"),
     owedTotal: document.querySelector("#owedTotal"),
     owedPeople: document.querySelector("#owedPeople"),
-    owedDueSoon: document.querySelector("#owedDueSoon"),
-    owedOverdue: document.querySelector("#owedOverdue"),
     owedCount: document.querySelector("#owedCount"),
     moneyOwedList: document.querySelector("#moneyOwedList"),
     moneyOwedEmpty: document.querySelector("#moneyOwedEmpty"),
@@ -1332,11 +1330,8 @@
     const debts = state.moneyOwed || [];
     const open = debts.filter((item) => owedBalance(item) > 0);
     const total = open.reduce((sum, item) => sum + owedBalance(item), 0);
-    const statuses = open.map((item) => owedStatus(item));
     els.owedTotal.textContent = money(total);
     els.owedPeople.textContent = String(open.length);
-    els.owedDueSoon.textContent = String(statuses.filter((status) => status === "due soon").length);
-    els.owedOverdue.textContent = String(statuses.filter((status) => status === "overdue").length);
     els.owedCount.textContent = `${debts.length} ${debts.length === 1 ? "person" : "people"}`;
     els.owedPeopleOptions.innerHTML = debts
       .slice()
