@@ -2992,11 +2992,11 @@
   function shouldUseRemoteState(remoteState) {
     const remoteTime = Date.parse(remoteState.updatedAt || "");
     const localTime = Date.parse(state.updatedAt || "");
-    const remoteHasWork = remoteState.entries.length || remoteState.invoices.length;
-    const localHasWork = state.entries.length || state.invoices.length;
+    const remoteHasData = remoteState.entries.length || remoteState.invoices.length || remoteState.plexPayments.length || remoteState.moneyOwed.length;
+    const localHasData = state.entries.length || state.invoices.length || state.plexPayments.length || state.moneyOwed.length;
 
     if (Number.isFinite(remoteTime) && Number.isFinite(localTime)) return remoteTime > localTime;
-    if (remoteHasWork && !localHasWork) return true;
+    if (remoteHasData && !localHasData) return true;
     return Number.isFinite(remoteTime) && !Number.isFinite(localTime);
   }
 
