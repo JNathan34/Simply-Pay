@@ -2877,10 +2877,18 @@
 
     window.clearTimeout(cloudSyncTimer);
     cloudSyncTimer = window.setTimeout(() => {
-      pushGoogleSaveWithReconnect().catch(() => {
+      syncGoogleAutomatically().catch(() => {
         updateGoogleStatus("Google sync paused. Click Sync now to reconnect.");
       });
     }, Math.max(0, delayMs));
+  }
+
+  async function syncGoogleAutomatically() {
+    if (!state.account || applyingCloudState) return false;
+    const hasAccess = await ensureGoogleAccessToken();
+    if (!hasAccess) return false;
+    await pullThenPushGoogleSave();
+    return true;
   }
 
   async function ensureGoogleAccessToken() {
@@ -3221,6 +3229,17 @@
     });
   }
 
+  function startAutomaticGoogleSync() {
+    const syncWhenActive = () => {
+      if (document.visibilityState !== "hidden") void syncGoogleAutomatically();
+    };
+
+    window.addEventListener("focus", syncWhenActive);
+    window.addEventListener("online", syncWhenActive);
+    document.addEventListener("visibilitychange", syncWhenActive);
+    window.setInterval(syncWhenActive, 60000);
+  }
+
   function bindEvents() {
     els.entryForm.addEventListener("submit", submitEntry);
     els.chargeType.addEventListener("change", updateChargeTypeControls);
@@ -3358,4 +3377,5 @@
     void finishPlexSignin();
   }
   registerServiceWorker();
+  startAutomaticGoogleSync();
 })();
