@@ -84,6 +84,7 @@
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false, editingPaymentId: null };
   const plexImport = { busy: false, users: [] };
+  let plexDemoStatus = { total: 0, enabled: 0, active: false };
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -174,6 +175,7 @@
     plexImportSave: document.querySelector("#plexImportSave"),
     plexUsersLoad: document.querySelector("#plexUsersLoad"),
     plexDemoUsers: document.querySelector("#plexDemoUsers"),
+    plexDemoToggle: document.querySelector("#plexDemoToggle"),
     plexManagedUsers: document.querySelector("#plexManagedUsers"),
     accountName: document.querySelector("#accountName"),
     accountEmail: document.querySelector("#accountEmail"),
@@ -1680,8 +1682,24 @@
 
   function setPlexImportBusy(busy) {
     plexImport.busy = busy;
-    for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave, els.plexDemoUsers]) control.disabled = busy;
+    for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave, els.plexDemoUsers, els.plexDemoToggle]) control.disabled = busy;
     for (const control of els.plexImportList.querySelectorAll("input")) control.disabled = busy;
+  }
+
+  function renderPlexDemoToggle() {
+    const added = Number(plexDemoStatus.total || 0) > 0;
+    els.plexDemoToggle.checked = Boolean(plexDemoStatus.active);
+    els.plexDemoToggle.disabled = !added || plexImport.busy;
+    els.plexDemoUsers.classList.toggle("hidden", added);
+  }
+
+  async function loadPlexDemoStatus() {
+    try {
+      plexDemoStatus = await plexRequest("billing", { action: "demo_users_status" });
+      renderPlexDemoToggle();
+    } catch (error) {
+      plexImportMessage(error.message || "Could not load the demo-user setting.", true);
+    }
   }
 
   async function createPlexDemoUsers() {
@@ -1696,8 +1714,28 @@
         : "The 48 paid demo users are already in the payment manager.");
       await loadPlexManager();
       renderManagedPlexUsers();
+      await loadPlexDemoStatus();
     } catch (error) { plexImportMessage(error.message || "Could not add demo users.", true); }
-    finally { setPlexImportBusy(false); }
+    finally { setPlexImportBusy(false); renderPlexDemoToggle(); }
+  }
+
+  async function setPlexDemoUsersEnabled() {
+    if (plexImport.busy || !Number(plexDemoStatus.total || 0)) return;
+    const enabled = els.plexDemoToggle.checked;
+    setPlexImportBusy(true);
+    plexImportMessage(enabled ? "Showing paid demo users…" : "Hiding paid demo users…");
+    try {
+      plexDemoStatus = await plexRequest("billing", { action: "set_demo_users_enabled", enabled });
+      await loadPlexManager();
+      renderManagedPlexUsers();
+      plexImportMessage(enabled ? "Paid demo users are now visible." : "Paid demo users are now hidden.");
+    } catch (error) {
+      els.plexDemoToggle.checked = !enabled;
+      plexImportMessage(error.message || "Could not update the demo-user setting.", true);
+    } finally {
+      setPlexImportBusy(false);
+      renderPlexDemoToggle();
+    }
   }
 
   async function loadPlexImportUsers() {
@@ -1763,7 +1801,7 @@
 
   function renderPlexUsers() {
     const filter = els.plexSearch.value.trim().toLowerCase();
-    const users = plexManager.users.filter((user) => [user.displayName, user.email, user.plexUsername].filter(Boolean)
+    const users = plexManager.users.filter((user) => user.accountStatus === "enabled" && [user.displayName, user.email, user.plexUsername].filter(Boolean)
       .some((value) => value.toLowerCase().includes(filter)));
     els.plexUserRows.innerHTML = users.map((user) => {
       const billing = user.billing;
@@ -2991,7 +3029,7 @@
     els.settingsOverlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("settings-open");
     if (!isPlexPoint) scheduleGoogleSignIn();
-    else { renderManagedPlexUsers(); if (!plexManager.loaded) void loadManagedPlexUsers(); }
+    else { renderManagedPlexUsers(); if (!plexManager.loaded) void loadManagedPlexUsers(); void loadPlexDemoStatus(); }
     refreshIcons();
   }
 
@@ -3155,6 +3193,7 @@
     });
     els.plexUsersLoad.addEventListener("click", () => void loadManagedPlexUsers());
     els.plexDemoUsers.addEventListener("click", () => void createPlexDemoUsers());
+    els.plexDemoToggle.addEventListener("change", () => void setPlexDemoUsersEnabled());
     els.plexManagedUsers.addEventListener("click", (event) => void managePlexUser(event));
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
