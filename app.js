@@ -85,6 +85,7 @@
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false, editingPaymentId: null };
   const plexImport = { busy: false, users: [] };
   let plexDemoStatus = { total: 0, enabled: 0, active: false };
+  let plexSort = { column: null, direction: "asc" };
 
   const els = {
     entryForm: document.querySelector("#entryForm"),
@@ -208,6 +209,7 @@
     plexDueSoonTotal: document.querySelector("#plexDueSoonTotal"),
     plexOverdueTotal: document.querySelector("#plexOverdueTotal"),
     plexSearch: document.querySelector("#plexSearch"),
+    plexPaymentTable: document.querySelector("#plexPaymentTable"),
     plexUserRows: document.querySelector("#plexUserRows"),
     plexEmptyUsers: document.querySelector("#plexEmptyUsers"),
     plexEmptyDetail: document.querySelector("#plexEmptyDetail"),
@@ -1802,8 +1804,17 @@
   function renderPlexUsers() {
     const filter = els.plexSearch.value.trim().toLowerCase();
     const users = plexManager.users.filter((user) => user.accountStatus === "enabled" && [user.displayName, user.email, user.plexUsername].filter(Boolean)
-      .some((value) => value.toLowerCase().includes(filter)));
-    els.plexUserRows.innerHTML = users.map((user) => {
+      .some((value) => value.toLowerCase().includes(filter))).map((user, index) => ({ user, index }));
+    if (plexSort.column) {
+      users.sort((left, right) => {
+        const a = plexSortValue(left.user, plexSort.column);
+        const b = plexSortValue(right.user, plexSort.column);
+        const comparison = typeof a === "string" ? a.localeCompare(b) : a - b;
+        return comparison ? comparison * (plexSort.direction === "asc" ? 1 : -1) : left.index - right.index;
+      });
+    }
+    renderPlexSortHeaders();
+    els.plexUserRows.innerHTML = users.map(({ user }) => {
       const billing = user.billing;
       const status = billing?.status || user.subscription?.status || "No plan";
       const tier = user.subscription?.tier || "No plan";
@@ -1816,6 +1827,31 @@
     }).join("");
     els.plexEmptyUsers.classList.toggle("hidden", users.length > 0);
     refreshIcons();
+  }
+
+  function plexSortValue(user, column) {
+    const billing = user.billing || {};
+    if (column === "customer") return (user.displayName || "").toLocaleLowerCase();
+    if (column === "plan") return (user.subscription?.tier || "").toLocaleLowerCase();
+    if (column === "status") return (billing.status || user.subscription?.status || "").toLocaleLowerCase();
+    if (column === "due") return Date.parse(billing.nextDueAt || "") || Number.MAX_SAFE_INTEGER;
+    return Number(billing.outstandingMinor || 0);
+  }
+
+  function renderPlexSortHeaders() {
+    els.plexPaymentTable.querySelectorAll("[data-plex-sort]").forEach((button) => {
+      const active = button.dataset.plexSort === plexSort.column;
+      const direction = active ? plexSort.direction : "none";
+      button.parentElement.setAttribute("aria-sort", direction === "none" ? "none" : direction === "asc" ? "ascending" : "descending");
+      button.querySelector("span").textContent = active ? (direction === "asc" ? "↑" : "↓") : "↕";
+    });
+  }
+
+  function sortPlexUsers(column) {
+    plexSort = plexSort.column === column
+      ? { column, direction: plexSort.direction === "asc" ? "desc" : "asc" }
+      : { column, direction: "asc" };
+    renderPlexUsers();
   }
 
   function renderPlexDetail() {
@@ -3141,6 +3177,10 @@
     els.companiesList.addEventListener("change", handleCompanyChange);
     els.plexSigninButton.addEventListener("click", startPlexSignin);
     els.plexSearch.addEventListener("input", renderPlexUsers);
+    els.plexPaymentTable.querySelector("thead").addEventListener("click", (event) => {
+      const column = event.target.closest("[data-plex-sort]")?.dataset.plexSort;
+      if (column) sortPlexUsers(column);
+    });
     els.plexUserRows.addEventListener("click", (event) => {
       const id = event.target.closest("[data-plex-user-id]")?.dataset.plexUserId;
       if (id) selectPlexUser(id);

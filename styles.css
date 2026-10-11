@@ -385,7 +385,10 @@ button:disabled {
 .plex-search, .plex-form input, .plex-form select { width: 100%; }
 .plex-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
 .plex-payment-table { width: 100%; border-collapse: collapse; min-width: 660px; font-size: 14px; }
-.plex-payment-table th { padding: 11px 14px; color: var(--muted); text-align: left; font-size: 12px; }
+.plex-payment-table th { padding: 0; color: var(--muted); text-align: left; font-size: 12px; }
+.plex-sort-button { display: flex; width: 100%; align-items: center; gap: 5px; padding: 11px 14px; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.plex-sort-button:hover, .plex-payment-table th[aria-sort="ascending"] .plex-sort-button, .plex-payment-table th[aria-sort="descending"] .plex-sort-button { color: var(--teal); }
+.plex-sort-button span { color: var(--muted); font-size: 13px; line-height: 1; }
 .plex-payment-table td { padding: 13px 14px; border-top: 1px solid var(--line); color: var(--ink); }
 .plex-payment-table tr[data-plex-user-id] { cursor: pointer; }
 .plex-payment-table tr[data-plex-user-id]:hover, .plex-payment-table tr.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); }

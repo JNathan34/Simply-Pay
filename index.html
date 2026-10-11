@@ -274,7 +274,7 @@
             <section class="panel plexpoint-table-panel">
               <div class="panel-heading"><h2>Customer payment log</h2></div>
               <input class="plex-search" id="plexSearch" type="search" aria-label="Search customers" placeholder="Name, email, or Plex username" />
-              <div class="plex-table-wrap"><table class="plex-payment-table"><thead><tr><th>Customer</th><th>Plan</th><th>Status</th><th>Next due</th><th>Outstanding</th></tr></thead><tbody id="plexUserRows"></tbody></table></div>
+              <div class="plex-table-wrap"><table class="plex-payment-table" id="plexPaymentTable"><thead><tr><th aria-sort="none"><button class="plex-sort-button" type="button" data-plex-sort="customer">Customer <span aria-hidden="true">↕</span></button></th><th aria-sort="none"><button class="plex-sort-button" type="button" data-plex-sort="plan">Plan <span aria-hidden="true">↕</span></button></th><th aria-sort="none"><button class="plex-sort-button" type="button" data-plex-sort="status">Status <span aria-hidden="true">↕</span></button></th><th aria-sort="none"><button class="plex-sort-button" type="button" data-plex-sort="due">Next due <span aria-hidden="true">↕</span></button></th><th aria-sort="none"><button class="plex-sort-button" type="button" data-plex-sort="outstanding">Outstanding <span aria-hidden="true">↕</span></button></th></tr></thead><tbody id="plexUserRows"></tbody></table></div>
               <div class="empty-state hidden" id="plexEmptyUsers"><i data-lucide="users"></i><p>No PlexPoint users found.</p></div>
             </section>
             <aside class="plexpoint-detail-panel">
