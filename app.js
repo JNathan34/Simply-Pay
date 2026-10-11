@@ -3004,6 +3004,8 @@
       state: {
         entries: state.entries,
         invoices: state.invoices,
+        plexPayments: state.plexPayments,
+        moneyOwed: state.moneyOwed,
         invoiceDraft: state.invoiceDraft,
         settings: state.settings,
         account: state.account,
