@@ -471,6 +471,9 @@ button:disabled {
 .owed-payment-row span { display: grid; gap: 3px; }
 .owed-payment-row small { color: var(--muted); }
 .owed-payment-row strong { color: var(--ink); }
+.owed-payment-actions, .owed-item-actions, .owed-payment-submit { display: flex; align-items: center; gap: 8px; }
+.owed-payment-actions .icon-only, .owed-item-actions .icon-only { width: 34px; height: 34px; }
+.owed-payment-submit .primary-button { flex: 1; justify-content: center; }
 
 @media (max-width: 960px) {
   .money-owed-grid { grid-template-columns: 1fr 1fr; }

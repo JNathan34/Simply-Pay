@@ -85,6 +85,8 @@
   let selectedCalendarDate = todayIso();
   let activeProduct = ["plexpoint", "money-owed"].includes(localStorage.getItem(PRODUCT_MODE_KEY)) ? localStorage.getItem(PRODUCT_MODE_KEY) : "simply-pay";
   let selectedOwedId = null;
+  let editingOwedPaymentId = null;
+  let editingOwedItemId = null;
   const PLEXPOINT_API = "https://plexpoint.uk/api/portal/admin/";
   const PLEXPOINT_PLEX_API = "https://plexpoint.uk/api/portal/plex/";
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
@@ -151,9 +153,16 @@
     owedDetailEmpty: document.querySelector("#owedDetailEmpty"),
     owedDetailContent: document.querySelector("#owedDetailContent"),
     owedAddToTabForm: document.querySelector("#owedAddToTabForm"),
+    owedItemFormTitle: document.querySelector("#owedItemFormTitle"),
+    owedItemFormCopy: document.querySelector("#owedItemFormCopy"),
+    owedItemSubmitText: document.querySelector("#owedItemSubmitText"),
+    cancelOwedItemEdit: document.querySelector("#cancelOwedItemEdit"),
     owedAddToTabAmount: document.querySelector("#owedAddToTabAmount"),
     owedAddToTabReason: document.querySelector("#owedAddToTabReason"),
     moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
+    owedPaymentFormTitle: document.querySelector("#owedPaymentFormTitle"),
+    owedPaymentSubmitText: document.querySelector("#owedPaymentSubmitText"),
+    cancelOwedPaymentEdit: document.querySelector("#cancelOwedPaymentEdit"),
     owedPaymentItem: document.querySelector("#owedPaymentItem"),
     owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
     owedPaymentDate: document.querySelector("#owedPaymentDate"),
@@ -1342,9 +1351,13 @@
   }
 
   function owedItemBalance(debt, itemId) {
+    return owedItemAvailableBalance(debt, itemId);
+  }
+
+  function owedItemAvailableBalance(debt, itemId, ignoredPaymentId = "") {
     const item = debt.items.find((entry) => entry.id === itemId);
     if (!item) return 0;
-    return roundMoney(item.amount - debt.payments.filter((payment) => payment.itemId === itemId).reduce((total, payment) => total + payment.amount, 0));
+    return roundMoney(item.amount - debt.payments.filter((payment) => payment.itemId === itemId && payment.id !== ignoredPaymentId).reduce((total, payment) => total + payment.amount, 0));
   }
 
   function owedItemSummary(item) {
@@ -1387,20 +1400,27 @@
     els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
     els.owedDetailContent.classList.toggle("hidden", !debt);
     if (!debt) { refreshIcons(); return; }
-    const outstandingItems = debt.items.filter((entry) => owedItemBalance(debt, entry.id) > 0);
+    const outstandingItems = debt.items.filter((entry) => owedItemAvailableBalance(debt, entry.id, editingOwedPaymentId || "") > 0);
     const selectedPaymentItem = els.owedPaymentItem.value;
-    els.owedPaymentItem.innerHTML = `<option value="">Select what this payment is for</option>${outstandingItems.map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.reason || "No reason added")} — ${escapeHtml(owedMoney(owedItemBalance(debt, entry.id)))} left</option>`).join("")}`;
+    els.owedPaymentItem.innerHTML = `<option value="">Select what this payment is for</option>${outstandingItems.map((entry) => `<option value="${escapeHtml(entry.id)}">${escapeHtml(entry.reason || "No reason added")} — ${escapeHtml(owedMoney(owedItemAvailableBalance(debt, entry.id, editingOwedPaymentId || "")))} left</option>`).join("")}`;
     if (outstandingItems.some((entry) => entry.id === selectedPaymentItem)) els.owedPaymentItem.value = selectedPaymentItem;
     els.owedPaymentItem.disabled = !outstandingItems.length;
     els.owedPaymentAmount.disabled = !outstandingItems.length;
     els.moneyPaymentForm.querySelector("button[type='submit']").disabled = !outstandingItems.length;
+    els.owedPaymentFormTitle.textContent = editingOwedPaymentId ? "Edit payment" : "Record payment";
+    els.owedPaymentSubmitText.textContent = editingOwedPaymentId ? "Save changes" : "Record payment";
+    els.cancelOwedPaymentEdit.classList.toggle("hidden", !editingOwedPaymentId);
+    els.owedItemFormTitle.textContent = editingOwedItemId ? "Edit amount" : "Add another amount";
+    els.owedItemFormCopy.textContent = editingOwedItemId ? "Update what this person owes you for." : "Keep a separate record for each thing.";
+    els.owedItemSubmitText.textContent = editingOwedItemId ? "Save changes" : "Add amount";
+    els.cancelOwedItemEdit.classList.toggle("hidden", !editingOwedItemId);
     els.owedItemBreakdown.innerHTML = debt.items.map((entry) => {
       const remaining = owedItemBalance(debt, entry.id);
-      return `<div class="owed-item-row"><span><strong>${escapeHtml(entry.reason || "No reason added")}</strong><small>${escapeHtml(owedMoney(remaining))} remaining of ${escapeHtml(owedMoney(entry.amount))}</small></span><strong>${escapeHtml(remaining <= 0 ? "Paid" : owedMoney(remaining))}</strong></div>`;
+      return `<div class="owed-item-row"><span><strong>${escapeHtml(entry.reason || "No reason added")}</strong><small>${escapeHtml(owedMoney(remaining))} remaining of ${escapeHtml(owedMoney(entry.amount))}</small></span><div class="owed-item-actions"><strong>${escapeHtml(remaining <= 0 ? "Paid" : owedMoney(remaining))}</strong><button class="icon-only ghost" type="button" data-owed-item-action="edit" data-owed-item-id="${escapeHtml(entry.id)}" title="Edit amount"><i data-lucide="pencil"></i><span class="sr-only">Edit amount</span></button><button class="icon-only ghost danger" type="button" data-owed-item-action="remove" data-owed-item-id="${escapeHtml(entry.id)}" title="Remove amount"><i data-lucide="trash-2"></i><span class="sr-only">Remove amount</span></button></div></div>`;
     }).join("");
     els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => {
       const item = debt.items.find((entry) => entry.id === payment.itemId);
-      return `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}<small>${escapeHtml(item?.reason || "General payment")}</small></span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`;
+      return `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}<small>${escapeHtml(item?.reason || "General payment")}</small></span><div class="owed-payment-actions"><strong>${escapeHtml(owedMoney(payment.amount))}</strong><button class="icon-only ghost" type="button" data-owed-payment-action="edit" data-owed-payment-id="${escapeHtml(payment.id)}" title="Edit payment"><i data-lucide="pencil"></i><span class="sr-only">Edit payment</span></button><button class="icon-only ghost danger" type="button" data-owed-payment-action="remove" data-owed-payment-id="${escapeHtml(payment.id)}" title="Remove payment"><i data-lucide="trash-2"></i><span class="sr-only">Remove payment</span></button></div></div>`;
     }).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
   }
@@ -1432,10 +1452,41 @@
     const itemId = els.owedPaymentItem.value;
     const item = debt?.items.find((entry) => entry.id === itemId);
     if (!debt || !item || amount <= 0) return;
-    const remaining = owedItemBalance(debt, itemId);
+    const editing = debt.payments.find((payment) => payment.id === editingOwedPaymentId);
+    const remaining = owedItemAvailableBalance(debt, itemId, editing?.id || "");
     if (amount > remaining) { showToast(`This item only has ${owedMoney(remaining)} left to pay.`); return; }
-    debt.payments.push({ id: uid(), itemId, amount, date: els.owedPaymentDate.value || todayIso() });
-    els.moneyPaymentForm.reset(); els.owedPaymentDate.value = todayIso(); saveState(); renderMoneyOwed(); showToast("Payment recorded.");
+    if (editing) Object.assign(editing, { itemId, amount, date: els.owedPaymentDate.value || todayIso() });
+    else debt.payments.push({ id: uid(), itemId, amount, date: els.owedPaymentDate.value || todayIso() });
+    editingOwedPaymentId = null;
+    els.moneyPaymentForm.reset(); els.owedPaymentDate.value = todayIso(); saveState(); renderMoneyOwed(); showToast(editing ? "Payment updated." : "Payment recorded.");
+  }
+
+  function handleOwedPaymentAction(event) {
+    const button = event.target.closest("[data-owed-payment-action]");
+    if (!button) return;
+    const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
+    const payment = debt?.payments.find((item) => item.id === button.dataset.owedPaymentId);
+    if (!debt || !payment) return;
+    if (button.dataset.owedPaymentAction === "edit") {
+      editingOwedPaymentId = payment.id;
+      renderMoneyOwed();
+      els.owedPaymentItem.value = payment.itemId;
+      els.owedPaymentAmount.value = payment.amount.toFixed(2);
+      els.owedPaymentDate.value = payment.date || todayIso();
+      els.moneyPaymentForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (!window.confirm("Remove this payment? The amount will be added back to the selected item.")) return;
+    debt.payments = debt.payments.filter((item) => item.id !== payment.id);
+    if (editingOwedPaymentId === payment.id) editingOwedPaymentId = null;
+    saveState(); renderMoneyOwed(); showToast("Payment removed.");
+  }
+
+  function cancelOwedPaymentEdit() {
+    editingOwedPaymentId = null;
+    els.moneyPaymentForm.reset();
+    els.owedPaymentDate.value = todayIso();
+    renderMoneyOwed();
   }
 
   function addToOwedTab(event) {
@@ -1444,9 +1495,53 @@
     const amount = roundMoney(els.owedAddToTabAmount.value);
     if (!debt || amount <= 0) return;
     const reason = els.owedAddToTabReason.value.trim();
+    const editing = debt.items.find((item) => item.id === editingOwedItemId);
+    const paid = editing ? roundMoney(editing.amount - owedItemBalance(debt, editing.id)) : 0;
+    if (editing && amount < paid) { showToast(`This item already has ${owedMoney(paid)} in payments.`); return; }
+    if (editing) {
+      Object.assign(editing, { amount, reason });
+      debt.amount = roundMoney(debt.items.reduce((total, entry) => total + entry.amount, 0));
+      editingOwedItemId = null;
+      els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast("Amount updated.");
+      return;
+    }
     debt.items.push({ id: uid(), amount, reason });
     debt.amount = roundMoney(debt.items.reduce((total, entry) => total + entry.amount, 0));
     els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} as a separate item to ${debt.person}'s debt.`);
+  }
+
+  function handleOwedItemAction(event) {
+    const button = event.target.closest("[data-owed-item-action]");
+    if (!button) return;
+    const debt = state.moneyOwed.find((item) => item.id === selectedOwedId);
+    const item = debt?.items.find((entry) => entry.id === button.dataset.owedItemId);
+    if (!debt || !item) return;
+    if (button.dataset.owedItemAction === "edit") {
+      editingOwedItemId = item.id;
+      renderMoneyOwed();
+      els.owedAddToTabAmount.value = item.amount.toFixed(2);
+      els.owedAddToTabReason.value = item.reason || "";
+      els.owedAddToTabForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (debt.payments.some((payment) => payment.itemId === item.id)) {
+      showToast("Remove this item's payments first, then remove the amount.");
+      return;
+    }
+    if (!window.confirm(`Remove ${item.reason || "this amount"} from ${debt.person}'s debt?`)) return;
+    debt.items = debt.items.filter((entry) => entry.id !== item.id);
+    if (!debt.items.length) {
+      state.moneyOwed = state.moneyOwed.filter((entry) => entry.id !== debt.id);
+      selectedOwedId = null;
+    } else debt.amount = roundMoney(debt.items.reduce((total, entry) => total + entry.amount, 0));
+    if (editingOwedItemId === item.id) editingOwedItemId = null;
+    saveState(); renderMoneyOwed(); showToast("Amount removed.");
+  }
+
+  function cancelOwedItemEdit() {
+    editingOwedItemId = null;
+    els.owedAddToTabForm.reset();
+    renderMoneyOwed();
   }
 
   function removeMoneyOwed() {
@@ -3449,7 +3544,11 @@
     els.moneyOwedForm.addEventListener("submit", addMoneyOwed);
     els.moneyOwedList.addEventListener("click", (event) => { const id = event.target.closest("[data-owed-id]")?.dataset.owedId; if (id) { selectedOwedId = id; renderMoneyOwed(); } });
     els.owedAddToTabForm.addEventListener("submit", addToOwedTab);
+    els.owedItemBreakdown.addEventListener("click", handleOwedItemAction);
+    els.cancelOwedItemEdit.addEventListener("click", cancelOwedItemEdit);
     els.moneyPaymentForm.addEventListener("submit", recordOwedPayment);
+    els.owedPaymentHistory.addEventListener("click", handleOwedPaymentAction);
+    els.cancelOwedPaymentEdit.addEventListener("click", cancelOwedPaymentEdit);
     els.deleteOwedDebt.addEventListener("click", removeMoneyOwed);
     els.plexCancelPaymentEdit.addEventListener("click", resetPlexPaymentEditor);
     els.plexImportLoad.addEventListener("click", () => void loadPlexImportUsers());
