@@ -150,10 +150,6 @@
     moneyOwedEmpty: document.querySelector("#moneyOwedEmpty"),
     owedDetailEmpty: document.querySelector("#owedDetailEmpty"),
     owedDetailContent: document.querySelector("#owedDetailContent"),
-    owedDetailName: document.querySelector("#owedDetailName"),
-    owedDetailReason: document.querySelector("#owedDetailReason"),
-    owedDetailStatus: document.querySelector("#owedDetailStatus"),
-    owedDetailBalance: document.querySelector("#owedDetailBalance"),
     owedAddToTabForm: document.querySelector("#owedAddToTabForm"),
     owedAddToTabAmount: document.querySelector("#owedAddToTabAmount"),
     owedAddToTabReason: document.querySelector("#owedAddToTabReason"),
@@ -1357,12 +1353,6 @@
     els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
     els.owedDetailContent.classList.toggle("hidden", !debt);
     if (!debt) { refreshIcons(); return; }
-    const status = owedStatus(debt);
-    els.owedDetailName.textContent = debt.person;
-    els.owedDetailReason.textContent = debt.reason || "No reason added";
-    els.owedDetailStatus.textContent = status;
-    els.owedDetailStatus.className = `status-badge ${owedStatusClass(status)}`;
-    els.owedDetailBalance.textContent = `${owedMoney(owedBalance(debt))} remaining`;
     els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
   }
