@@ -264,6 +264,14 @@ button:disabled {
   object-fit: cover;
 }
 
+/* The receipt artwork has a fuller composition than the other product marks. */
+.brand-mark.is-money-owed,
+.product-menu-item[data-product="money-owed"] .product-menu-icon {
+  box-sizing: border-box;
+  padding: 2px;
+  background: #003f40;
+}
+
 .brand-title,
 .panel h2,
 .settings-header h2 {
