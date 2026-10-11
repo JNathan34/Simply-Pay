@@ -429,7 +429,7 @@ button:disabled {
 .money-payment-form { padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 #owedDetailContent .money-payment-form { margin: 0; }
 #owedDetailContent .money-payment-form.owed-action-card { gap: 16px; padding: 22px; border: 1px solid var(--line); }
-.money-payment-form h3, .money-payment-history h3 { margin: 0; }
+.money-payment-form h3, .money-owed-items h3, .money-payment-history h3 { margin: 0; }
 .money-owed-items { padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
 .owed-item-breakdown { display: grid; }
 .owed-item-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line); }
@@ -437,7 +437,7 @@ button:disabled {
 .owed-item-row span { display: grid; gap: 3px; min-width: 0; }
 .owed-item-row small { color: var(--muted); }
 .money-payment-history { padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
-.owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 17px; border-bottom: 1px solid var(--line); }
+.owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .owed-history-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .owed-remove-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-weight: 800; }
 .owed-remove-button:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
