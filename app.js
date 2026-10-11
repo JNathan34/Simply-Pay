@@ -3271,13 +3271,13 @@
     const isMoneyOwed = product === "money-owed";
     activeProduct = product;
     localStorage.setItem(PRODUCT_MODE_KEY, activeProduct);
-    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
+    els.productTitle.textContent = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Simply Pay";
     els.productEyebrow.textContent = isPlexPoint ? "Plex Billing" : isMoneyOwed ? "Personal tracker" : "Work Billing";
     els.brandMark.src = isPlexPoint ? "icons/plexpoint-pay-logo.png?v=2" : isMoneyOwed ? "icons/money-owed-logo.png?v=2" : "icons/work-billing-logo.png?v=2";
-    els.brandMark.alt = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "";
+    els.brandMark.alt = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "";
     els.brandMark.classList.toggle("is-plexpoint", isPlexPoint);
     els.brandMark.classList.toggle("is-money-owed", isMoneyOwed);
-    document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Money Owed" : "Simply Pay";
+    document.title = isPlexPoint ? "PlexPoint" : isMoneyOwed ? "Debt Tracker" : "Simply Pay";
     els.workspace.classList.toggle("plexpoint-workspace", isPlexPoint);
     els.billingContent.classList.toggle("hidden", isPlexPoint || isMoneyOwed);
     els.plexpointContent.classList.toggle("hidden", !isPlexPoint);

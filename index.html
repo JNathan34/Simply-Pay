@@ -17,7 +17,7 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script defer src="app.js?v=19"></script>
+    <script defer src="app.js?v=20"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -289,14 +289,14 @@
           </div>
         </section>
 
-        <section class="money-owed-content hidden" id="moneyOwedContent" aria-label="Money owed tracker">
-          <section class="money-owed-metrics" aria-label="Money owed summary">
+        <section class="money-owed-content hidden" id="moneyOwedContent" aria-label="Debt tracker">
+          <section class="money-owed-metrics" aria-label="Debt tracker summary">
             <article class="metric-card accent"><span>Total owed</span><strong id="owedTotal">£0.00</strong></article>
             <article class="metric-card"><span>People owing</span><strong id="owedPeople">0</strong></article>
           </section>
           <section class="money-owed-grid">
             <form class="panel money-owed-form" id="moneyOwedForm">
-              <div class="panel-heading"><h2>Add money owed</h2></div>
+              <div class="panel-heading"><h2>Add debt</h2></div>
               <label>Person<input id="owedPerson" type="text" maxlength="80" list="owedPeopleOptions" placeholder="Their name" required /></label>
               <datalist id="owedPeopleOptions"></datalist>
               <label>Amount<input id="owedAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required /></label>
@@ -307,7 +307,7 @@
               <div class="panel-heading"><div><h2>People who owe you</h2><p id="owedCount">0 people</p></div></div>
               <div class="money-owed-scroll">
                 <div class="money-owed-list" id="moneyOwedList"></div>
-                <div class="empty-state" id="moneyOwedEmpty"><i data-lucide="hand-coins"></i><p>No money owed yet.</p></div>
+                <div class="empty-state" id="moneyOwedEmpty"><i data-lucide="hand-coins"></i><p>No debts yet.</p></div>
               </div>
             </section>
             <aside class="panel money-owed-detail" id="moneyOwedDetail">
