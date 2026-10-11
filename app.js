@@ -173,6 +173,7 @@
     plexImportAll: document.querySelector("#plexImportAll"),
     plexImportSave: document.querySelector("#plexImportSave"),
     plexUsersLoad: document.querySelector("#plexUsersLoad"),
+    plexDemoUsers: document.querySelector("#plexDemoUsers"),
     plexManagedUsers: document.querySelector("#plexManagedUsers"),
     accountName: document.querySelector("#accountName"),
     accountEmail: document.querySelector("#accountEmail"),
@@ -1679,8 +1680,24 @@
 
   function setPlexImportBusy(busy) {
     plexImport.busy = busy;
-    for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave]) control.disabled = busy;
+    for (const control of [els.plexImportLoad, els.plexImportAll, els.plexImportSave, els.plexDemoUsers]) control.disabled = busy;
     for (const control of els.plexImportList.querySelectorAll("input")) control.disabled = busy;
+  }
+
+  async function createPlexDemoUsers() {
+    if (plexImport.busy) return;
+    setPlexImportBusy(true);
+    plexImportMessage("Adding 48 paid demo customers…");
+    try {
+      const result = await plexRequest("billing", { action: "create_demo_users" });
+      const created = Number(result.created || 0);
+      plexImportMessage(created
+        ? `${created} paid demo users added — £${(Number(result.monthlyTotalMinor || 0) / 100).toFixed(2)} monthly in total.`
+        : "The 48 paid demo users are already in the payment manager.");
+      await loadPlexManager();
+      renderManagedPlexUsers();
+    } catch (error) { plexImportMessage(error.message || "Could not add demo users.", true); }
+    finally { setPlexImportBusy(false); }
   }
 
   async function loadPlexImportUsers() {
@@ -3137,6 +3154,7 @@
       els.plexImportList.querySelectorAll("input[data-plex-import-user]").forEach((input) => { input.checked = event.target.checked; });
     });
     els.plexUsersLoad.addEventListener("click", () => void loadManagedPlexUsers());
+    els.plexDemoUsers.addEventListener("click", () => void createPlexDemoUsers());
     els.plexManagedUsers.addEventListener("click", (event) => void managePlexUser(event));
     els.productSwitcher.addEventListener("click", toggleProductMenu);
     els.productMenu.addEventListener("click", (event) => {
