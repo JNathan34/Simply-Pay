@@ -1832,7 +1832,10 @@
   function plexSortValue(user, column) {
     const billing = user.billing || {};
     if (column === "customer") return (user.displayName || "").toLocaleLowerCase();
-    if (column === "plan") return (user.subscription?.tier || "").toLocaleLowerCase();
+    if (column === "plan") {
+      const tiers = { "bronze tier": 1, "silver tier": 2, "gold tier": 3, "diamond tier": 4, "ruby tier": 5, "platinum tier": 6, vip: 7 };
+      return tiers[(user.subscription?.tier || "").toLocaleLowerCase()] || 0;
+    }
     if (column === "status") return (billing.status || user.subscription?.status || "").toLocaleLowerCase();
     if (column === "due") return Date.parse(billing.nextDueAt || "") || Number.MAX_SAFE_INTEGER;
     return Number(billing.outstandingMinor || 0);
@@ -1850,7 +1853,7 @@
   function sortPlexUsers(column) {
     plexSort = plexSort.column === column
       ? { column, direction: plexSort.direction === "asc" ? "desc" : "asc" }
-      : { column, direction: "asc" };
+      : { column, direction: column === "plan" ? "desc" : "asc" };
     renderPlexUsers();
   }
 
