@@ -156,6 +156,7 @@
     moneyPaymentForm: document.querySelector("#moneyPaymentForm"),
     owedPaymentAmount: document.querySelector("#owedPaymentAmount"),
     owedPaymentDate: document.querySelector("#owedPaymentDate"),
+    owedItemBreakdown: document.querySelector("#owedItemBreakdown"),
     owedPaymentHistory: document.querySelector("#owedPaymentHistory"),
     deleteOwedDebt: document.querySelector("#deleteOwedDebt"),
     productSwitcher: document.querySelector("#productSwitcher"),
@@ -340,10 +341,21 @@
     const source = item && typeof item === "object" ? item : {};
     const person = String(source.person || "").trim();
     const amount = roundMoney(source.amount);
-    if (!person || amount <= 0) return null;
+    const fallbackReason = String(source.reason || "").trim().slice(0, 160);
+    const sourceItems = Array.isArray(source.items) && source.items.length
+      ? source.items
+      : [{ id: source.id || uid(), amount, reason: fallbackReason }];
+    const items = sourceItems.map((entry) => ({
+      id: String(entry?.id || uid()),
+      amount: roundMoney(entry?.amount),
+      reason: String(entry?.reason || "").trim().slice(0, 160),
+    })).filter((entry) => entry.amount > 0);
+    if (!person || !items.length || amount <= 0) return null;
     return {
-      id: String(source.id || uid()), person, amount,
-      reason: String(source.reason || "").trim().slice(0, 160),
+      id: String(source.id || uid()), person,
+      amount: roundMoney(items.reduce((total, entry) => total + entry.amount, 0)),
+      reason: fallbackReason,
+      items,
       payments: Array.isArray(source.payments) ? source.payments.map((payment) => ({
         id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
       })).filter((payment) => payment.amount > 0) : [],
@@ -1319,6 +1331,12 @@
     return roundMoney(item.amount - item.payments.reduce((total, payment) => total + payment.amount, 0));
   }
 
+  function owedItemSummary(item) {
+    const items = item.items || [];
+    if (items.length > 1) return `${items.length} separate items`;
+    return items[0]?.reason || item.reason || "No reason added";
+  }
+
   function owedStatus(item) {
     const balance = owedBalance(item);
     return balance <= 0 ? "settled" : "owed";
@@ -1347,12 +1365,13 @@
     els.moneyOwedEmpty.classList.toggle("hidden", debts.length > 0);
     els.moneyOwedList.innerHTML = debts.slice().sort((a, b) => owedBalance(b) - owedBalance(a)).map((item) => {
       const status = owedStatus(item);
-      return `<button class="money-owed-row ${item.id === selectedOwedId ? "selected" : ""}" type="button" data-owed-id="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.person)}</strong><small>${escapeHtml(item.reason || "No reason added")}</small></span><span><strong>${escapeHtml(owedMoney(owedBalance(item)))}</strong><em class="status-badge ${owedStatusClass(status)}">${escapeHtml(status)}</em></span></button>`;
+      return `<button class="money-owed-row ${item.id === selectedOwedId ? "selected" : ""}" type="button" data-owed-id="${escapeHtml(item.id)}"><span><strong>${escapeHtml(item.person)}</strong><small>${escapeHtml(owedItemSummary(item))}</small></span><span><strong>${escapeHtml(owedMoney(owedBalance(item)))}</strong><em class="status-badge ${owedStatusClass(status)}">${escapeHtml(status)}</em></span></button>`;
     }).join("");
     const debt = debts.find((item) => item.id === selectedOwedId);
     els.owedDetailEmpty.classList.toggle("hidden", Boolean(debt));
     els.owedDetailContent.classList.toggle("hidden", !debt);
     if (!debt) { refreshIcons(); return; }
+    els.owedItemBreakdown.innerHTML = debt.items.map((entry) => `<div class="owed-item-row"><span><strong>${escapeHtml(entry.reason || "No reason added")}</strong><small>Separate amount</small></span><strong>${escapeHtml(owedMoney(entry.amount))}</strong></div>`).join("");
     els.owedPaymentHistory.innerHTML = debt.payments.length ? debt.payments.slice().reverse().map((payment) => `<div class="owed-payment-row"><span>${escapeHtml(formatShortDate(payment.date))}</span><strong>${escapeHtml(owedMoney(payment.amount))}</strong></div>`).join("") : "<p>No payments recorded yet.</p>";
     refreshIcons();
   }
@@ -1365,14 +1384,14 @@
     const reason = els.owedReason.value.trim();
     const existing = state.moneyOwed.find((item) => owedPersonKey(item.person) === owedPersonKey(person));
     if (existing) {
-      existing.amount = roundMoney(existing.amount + amount);
-      if (reason) existing.reason = reason;
+      existing.items.push({ id: uid(), amount, reason });
+      existing.amount = roundMoney(existing.items.reduce((total, entry) => total + entry.amount, 0));
       selectedOwedId = existing.id;
-      els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${existing.person}'s tab.`);
+      els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} as a separate item to ${existing.person}'s tab.`);
       return;
     }
 
-    const debt = { id: uid(), person, amount, reason, payments: [] };
+    const debt = { id: uid(), person, amount, reason, items: [{ id: uid(), amount, reason }], payments: [] };
     state.moneyOwed.push(debt); selectedOwedId = debt.id;
     els.moneyOwedForm.reset(); saveState(); renderMoneyOwed(); showToast("Debt added.");
   }
@@ -1392,9 +1411,9 @@
     const amount = roundMoney(els.owedAddToTabAmount.value);
     if (!debt || amount <= 0) return;
     const reason = els.owedAddToTabReason.value.trim();
-    debt.amount = roundMoney(debt.amount + amount);
-    if (reason) debt.reason = reason;
-    els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} to ${debt.person}'s debt.`);
+    debt.items.push({ id: uid(), amount, reason });
+    debt.amount = roundMoney(debt.items.reduce((total, entry) => total + entry.amount, 0));
+    els.owedAddToTabForm.reset(); saveState(); renderMoneyOwed(); showToast(`Added ${owedMoney(amount)} as a separate item to ${debt.person}'s debt.`);
   }
 
   function removeMoneyOwed() {
