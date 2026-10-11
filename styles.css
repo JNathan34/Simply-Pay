@@ -408,39 +408,52 @@ button:disabled {
 .money-owed-detail { grid-column: 1 / -1; }
 .money-owed-detail .empty-state { text-align: center; }
 .money-owed-detail .empty-state p { max-width: 290px; }
-#owedDetailContent:not(.hidden) { display: grid; grid-template-columns: minmax(220px, .8fr) repeat(2, minmax(250px, 1fr)); gap: 18px; align-items: start; }
-.owed-detail-summary { display: grid; gap: 16px; align-content: start; }
-#owedAddToTabForm, #moneyPaymentForm { margin: 0; padding: 0 0 18px; border: 0; }
-#moneyPaymentForm { border-left: 1px solid var(--line); padding-left: 18px; }
+#owedDetailContent:not(.hidden) { display: grid; gap: 18px; }
+.owed-detail-overview { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 20px; border: 1px solid color-mix(in srgb, var(--teal) 35%, var(--line)); border-radius: 12px; background: color-mix(in srgb, var(--teal) 8%, transparent); }
+.owed-detail-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.owed-action-card { align-content: start; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-action-heading { display: flex; align-items: center; gap: 11px; padding-bottom: 4px; }
+.owed-action-heading h3, .owed-action-heading p { margin: 0; }
+.owed-action-heading p { margin-top: 3px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.owed-action-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: 0 0 36px; border-radius: 10px; color: var(--teal); background: color-mix(in srgb, var(--teal) 17%, transparent); }
+.owed-action-icon svg { width: 18px; height: 18px; }
 .money-owed-list { display: grid; gap: 8px; }
 .money-owed-row { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); text-align: left; }
 .money-owed-row:hover, .money-owed-row.selected { background: color-mix(in srgb, var(--teal) 13%, transparent); border-color: var(--teal); }
 .money-owed-row > span { display: grid; gap: 4px; min-width: 0; }
 .money-owed-row > span:last-child { justify-items: end; flex: 0 0 auto; }
 .money-owed-row small, .money-owed-detail-header p, .money-payment-history p { color: var(--muted); }
-.money-owed-detail-header { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.money-owed-detail-header { min-width: 0; }
 .money-owed-detail-header h2 { margin: 3px 0; }
 .money-owed-detail-header p { margin: 0; }
-.owed-detail-balance { margin: 0 0 18px; color: var(--teal); font-size: 22px; font-weight: 900; }
+.owed-detail-total { display: grid; justify-items: end; gap: 8px; flex: 0 0 auto; }
+.owed-detail-balance { margin: 0; color: var(--teal); font-size: clamp(22px, 3vw, 28px); font-weight: 900; line-height: 1.1; }
 .money-payment-form { padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-#owedDetailContent .money-payment-form { margin: 0; padding: 0 0 18px; border: 0; }
-#owedDetailContent #moneyPaymentForm { border-left: 1px solid var(--line); padding-left: 18px; }
+#owedDetailContent .money-payment-form { margin: 0; }
 .money-payment-form h3, .money-payment-history h3 { margin: 0; }
-.money-payment-history { padding: 16px 0; }
+.money-payment-history { padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-bottom: 13px; border-bottom: 1px solid var(--line); }
+.owed-history-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.owed-remove-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-weight: 800; }
+.owed-remove-button:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.owed-remove-button svg { width: 16px; height: 16px; }
 .owed-payment-row { display: flex; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
 .owed-payment-row strong { color: var(--ink); }
 
 @media (max-width: 960px) {
   .money-owed-grid { grid-template-columns: 1fr 1fr; }
   .money-owed-detail { grid-column: 1 / -1; }
-  #owedDetailContent:not(.hidden) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .owed-detail-summary { grid-column: 1 / -1; }
-  #moneyPaymentForm { border-left: 0; padding-left: 0; }
+  .owed-detail-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .money-owed-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .money-owed-grid, #owedDetailContent:not(.hidden) { grid-template-columns: 1fr; }
-  .money-owed-detail, .owed-detail-summary { grid-column: auto; }
+  .money-owed-grid, .owed-detail-actions { grid-template-columns: 1fr; }
+  .money-owed-detail { grid-column: auto; }
+  .owed-detail-overview { align-items: flex-start; padding: 16px; }
+  .owed-detail-total { justify-items: end; }
+  .owed-detail-balance { max-width: 140px; text-align: right; font-size: 21px; }
+  .money-payment-history { padding: 16px; }
+  .owed-history-heading { align-items: flex-start; }
 }
 .plex-current-plan, .plex-tier-picker, .plex-tier-label { --tier-color: #94a3b8; }
 .plex-current-plan[data-tier="bronze"], .plex-tier-picker[data-tier="bronze"], .plex-tier-label[data-tier="bronze"] { --tier-color: #f59e0b; }

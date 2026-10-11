@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icons/icon-192.png" />
     <link rel="apple-touch-icon" href="icons/icon-180.png" />
-    <link rel="stylesheet" href="styles.css?v=57" />
+    <link rel="stylesheet" href="styles.css?v=58" />
     <script defer src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -312,14 +312,15 @@
             <aside class="panel money-owed-detail" id="moneyOwedDetail">
               <div class="empty-state" id="owedDetailEmpty"><i data-lucide="mouse-pointer-click"></i><p>Select a person to record a payment or update their debt.</p></div>
               <div class="hidden" id="owedDetailContent">
-                <section class="owed-detail-summary">
-                  <div class="money-owed-detail-header"><div><p class="eyebrow">Person</p><h2 id="owedDetailName">—</h2><p id="owedDetailReason"></p></div><span class="status-badge" id="owedDetailStatus">—</span></div>
-                  <p class="owed-detail-balance" id="owedDetailBalance">£0.00 remaining</p>
-                  <div class="money-payment-history"><h3>Payment history</h3><div id="owedPaymentHistory"></div></div>
-                  <button class="secondary-button danger-text" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button>
-                </section>
-                <form class="money-payment-form" id="owedAddToTabForm"><h3>Add to this debt</h3><label>Amount<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this extra amount is for" /></label><label>Due date <small>Optional</small><input id="owedAddToTabDueDate" type="date" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add to debt</button></form>
-                <form class="money-payment-form" id="moneyPaymentForm"><h3>Record payment</h3><label>Amount<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
+                <header class="owed-detail-overview">
+                  <div class="money-owed-detail-header"><div><p class="eyebrow">Person</p><h2 id="owedDetailName">—</h2><p id="owedDetailReason"></p></div></div>
+                  <div class="owed-detail-total"><span class="status-badge" id="owedDetailStatus">—</span><p class="owed-detail-balance" id="owedDetailBalance">£0.00 remaining</p></div>
+                </header>
+                <div class="owed-detail-actions">
+                  <form class="money-payment-form owed-action-card" id="owedAddToTabForm"><div class="owed-action-heading"><span class="owed-action-icon"><i data-lucide="plus"></i></span><div><h3>Add to debt</h3><p>Increase this person’s balance.</p></div></div><label>Amount<input id="owedAddToTabAmount" type="number" min="0.01" step="0.01" required /></label><label>Reason <small>Optional</small><input id="owedAddToTabReason" type="text" maxlength="160" placeholder="What this extra amount is for" /></label><label>Due date <small>Optional</small><input id="owedAddToTabDueDate" type="date" /></label><button class="secondary-button" type="submit"><i data-lucide="plus"></i>Add to debt</button></form>
+                  <form class="money-payment-form owed-action-card" id="moneyPaymentForm"><div class="owed-action-heading"><span class="owed-action-icon"><i data-lucide="credit-card"></i></span><div><h3>Record payment</h3><p>Reduce the remaining balance.</p></div></div><label>Amount<input id="owedPaymentAmount" type="number" min="0.01" step="0.01" required /></label><label>Date paid<input id="owedPaymentDate" type="date" required /></label><button class="primary-button" type="submit"><i data-lucide="credit-card"></i>Record payment</button></form>
+                </div>
+                <section class="money-payment-history"><div class="owed-history-heading"><div><h3>Payment history</h3><p>Every payment recorded for this person.</p></div><button class="ghost danger-text owed-remove-button" type="button" id="deleteOwedDebt"><i data-lucide="trash-2"></i>Remove debt</button></div><div id="owedPaymentHistory"></div></section>
               </div>
             </aside>
           </section>
