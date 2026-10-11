@@ -290,17 +290,6 @@
     const invoiceDraft = { ...defaultState.invoiceDraft, ...(stored.invoiceDraft || {}) };
     invoiceDraft.company = companyChoice(invoiceDraft.company || settings.defaultCompany, invoiceCompanyOptionsFromEntries(entries, settings));
 
-    const payments = Array.isArray(source.payments) ? source.payments.map((payment) => ({
-      id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
-      itemId: String(payment?.itemId || ""),
-    })).filter((payment) => payment.amount > 0) : [];
-    const remainingByItem = new Map(items.map((entry) => [entry.id, entry.amount]));
-    payments.forEach((payment) => {
-      if (!remainingByItem.has(payment.itemId)) {
-        payment.itemId = items.find((entry) => (remainingByItem.get(entry.id) || 0) > 0)?.id || items[0].id;
-      }
-      remainingByItem.set(payment.itemId, roundMoney((remainingByItem.get(payment.itemId) || 0) - payment.amount));
-    });
     return {
       ...structuredClone(defaultState),
       ...stored,
@@ -372,6 +361,17 @@
       reason: String(entry?.reason || "").trim().slice(0, 160),
     })).filter((entry) => entry.amount > 0);
     if (!person || !items.length || amount <= 0) return null;
+    const payments = Array.isArray(source.payments) ? source.payments.map((payment) => ({
+      id: String(payment?.id || uid()), amount: roundMoney(payment?.amount), date: String(payment?.date || "").slice(0, 10),
+      itemId: String(payment?.itemId || ""),
+    })).filter((payment) => payment.amount > 0) : [];
+    const remainingByItem = new Map(items.map((entry) => [entry.id, entry.amount]));
+    payments.forEach((payment) => {
+      if (!remainingByItem.has(payment.itemId)) {
+        payment.itemId = items.find((entry) => (remainingByItem.get(entry.id) || 0) > 0)?.id || items[0].id;
+      }
+      remainingByItem.set(payment.itemId, roundMoney((remainingByItem.get(payment.itemId) || 0) - payment.amount));
+    });
     return {
       id: String(source.id || uid()), person,
       amount: roundMoney(items.reduce((total, entry) => total + entry.amount, 0)),
