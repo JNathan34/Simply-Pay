@@ -372,9 +372,16 @@ button:disabled {
 .plex-detail-card { min-width: 0; }
 .plex-form label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 800; }
 .plex-search, .plex-form input, .plex-form select { width: 100%; }
-.plex-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.plex-table-wrap {
+  max-height: min(68vh, 680px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  scrollbar-color: color-mix(in srgb, var(--teal) 45%, var(--surface-strong)) transparent;
+  scrollbar-width: thin;
+}
 .plex-payment-table { width: 100%; border-collapse: collapse; min-width: 660px; font-size: 14px; }
-.plex-payment-table th { padding: 0; color: var(--muted); text-align: left; font-size: 12px; }
+.plex-payment-table th { position: sticky; top: 0; z-index: 1; padding: 0; color: var(--muted); background: var(--surface); text-align: left; font-size: 12px; }
 .plex-sort-button { display: flex; width: 100%; align-items: center; gap: 5px; padding: 11px 14px; border: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
 .plex-sort-button:hover, .plex-payment-table th[aria-sort="ascending"] .plex-sort-button, .plex-payment-table th[aria-sort="descending"] .plex-sort-button { color: var(--teal); }
 .plex-sort-button span { color: var(--muted); font-size: 13px; line-height: 1; }
@@ -1568,6 +1575,7 @@ select:focus {
 }
 
 @media (max-width: 620px) {
+  .plex-table-wrap { max-height: 56vh; }
   .plexpoint-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .plexpoint-manager-grid { grid-template-columns: 1fr; }
   .plexpoint-signin { grid-template-columns: 1fr; justify-items: start; padding: 22px; }
