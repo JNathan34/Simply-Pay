@@ -455,13 +455,12 @@ button:disabled {
 #owedDetailContent .money-payment-form { margin: 0; }
 #owedDetailContent .money-payment-form.owed-action-card { gap: 16px; padding: 22px; border: 1px solid var(--line); }
 .money-payment-form h3, .money-owed-items h3, .money-payment-history h3 { margin: 0; }
-.money-owed-items { padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
-.owed-item-breakdown { display: grid; }
+.money-owed-items, .money-payment-history { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 360px; box-sizing: border-box; padding: 22px 24px; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
+.owed-item-breakdown, #owedPaymentHistory { display: grid; min-height: 0; overflow-y: auto; padding-right: 5px; scrollbar-color: color-mix(in srgb, var(--teal) 45%, var(--surface-strong)) transparent; scrollbar-width: thin; }
 .owed-item-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--line); }
 .owed-item-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .owed-item-row span { display: grid; gap: 3px; min-width: 0; }
 .owed-item-row small { color: var(--muted); }
-.money-payment-history { padding: 22px 24px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 92%, var(--surface-strong)); }
 .owed-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .owed-history-heading p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .owed-remove-button { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 10px; border: 0; border-radius: 8px; background: transparent; font-weight: 800; }
@@ -488,7 +487,7 @@ button:disabled {
   .money-owed-detail { padding: 16px; }
   #owedDetailContent:not(.hidden) { gap: 16px; }
   #owedDetailContent .money-payment-form.owed-action-card { padding: 18px; gap: 14px; }
-  .money-owed-items, .money-payment-history { padding: 18px; }
+  .money-owed-items, .money-payment-history { height: 320px; padding: 18px; }
   .owed-history-heading { align-items: flex-start; }
 }
 .plex-current-plan, .plex-tier-picker, .plex-tier-label { --tier-color: #94a3b8; }
