@@ -49,6 +49,7 @@
       currency: "GBP",
       moneyOwedCurrency: "GBP",
       defaultRate: "",
+      dailyRate: "",
       defaultWork: "Manual Labour",
       companies: [DEFAULT_COMPANY],
       companyColors: {},
@@ -211,6 +212,7 @@
     moneyOwedCurrency: document.querySelector("#moneyOwedCurrency"),
     currencySymbols: document.querySelectorAll("[data-currency-symbol]"),
     defaultRate: document.querySelector("#defaultRate"),
+    dailyRate: document.querySelector("#dailyRate"),
     defaultWork: document.querySelector("#defaultWork"),
     newCompanyName: document.querySelector("#newCompanyName"),
     addCompany: document.querySelector("#addCompany"),
@@ -491,9 +493,30 @@
     return "0 hrs";
   }
 
+  function dailyWage(rate = hourlyRate()) {
+    return roundMoney(asNumber(state.settings.dailyRate) || asNumber(rate) * 8);
+  }
+
+  function invoiceDailyWage(invoice) {
+    return asNumber(invoice.dailyRate) || dailyWage(invoice.rate);
+  }
+
   function invoiceWorkDaysLabel(invoice) {
-    const days = new Set((invoice.entries || []).map((entry) => entry.date).filter(Boolean)).size;
+    const entries = invoice.entries || [];
+    const workDays = new Set(entries.filter((entry) => entryHours(entry) > 0).map((entry) => entry.date).filter(Boolean)).size;
+    const fixedMinor = Math.round(entriesFixedTotal(entries) * 100);
+    const dailyMinor = Math.round(invoiceDailyWage(invoice) * 100);
+    if (fixedMinor > 0 && dailyMinor <= 0) return "";
+    const extraDays = fixedMinor > 0 ? Math.floor(fixedMinor / dailyMinor) + (fixedMinor % dailyMinor > 0 ? 0.5 : 0) : 0;
+    const days = workDays + extraDays;
     return `${days} ${days === 1 ? "work day" : "work days"}`;
+  }
+
+  function invoiceHasDailyWage(invoice) {
+    if (entriesFixedTotal(invoice.entries || []) <= 0 || invoiceDailyWage(invoice) > 0) return true;
+    showToast("Set your daily wage in Settings to calculate work days.");
+    openSettings();
+    return false;
   }
 
   function currentHours() {
@@ -941,6 +964,7 @@
       currency: els.currency.value,
       moneyOwedCurrency: els.moneyOwedCurrency.value,
       defaultRate: els.defaultRate.value,
+      dailyRate: els.dailyRate.value,
       defaultWork: els.defaultWork.value.trim() || "Manual Labour",
       companies: state.settings.companies,
       companyColors: state.settings.companyColors,
@@ -1082,6 +1106,8 @@
       return;
     }
 
+    if (!invoiceHasDailyWage({ entries, rate: hourlyRate() })) return;
+
     const hours = entriesHours(entries);
     const rate = hourlyRate();
     const total = entriesTotal(entries, rate);
@@ -1095,6 +1121,7 @@
       entries,
       hours,
       rate,
+      dailyRate: dailyWage(rate),
       total,
       currency: state.settings.currency,
       status: "unpaid",
@@ -2313,6 +2340,7 @@
   }
 
   function exportInvoicePdf(invoice) {
+    if (!invoiceHasDailyWage(invoice)) return;
     if (!window.jspdf?.jsPDF) {
       showToast("PDF tools are still loading. Try again in a moment.");
       return;
@@ -2437,6 +2465,7 @@
   }
 
   async function exportInvoiceWord(invoice) {
+    if (!invoiceHasDailyWage(invoice)) return;
     if (!window.JSZip) {
       showToast("Word export is still loading. Try again in a second.");
       return;
