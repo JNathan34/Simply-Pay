@@ -491,6 +491,11 @@
     return "0 hrs";
   }
 
+  function invoiceWorkDaysLabel(invoice) {
+    const days = new Set((invoice.entries || []).map((entry) => entry.date).filter(Boolean)).size;
+    return `${days} ${days === 1 ? "work day" : "work days"}`;
+  }
+
   function currentHours() {
     return entriesHours(state.entries);
   }
@@ -2381,8 +2386,9 @@
     doc.text(plainMoney(invoice.total, invoice.currency), margin + 18, y + 55);
     doc.setTextColor(...ink);
     doc.setFontSize(11);
+    doc.text(invoiceWorkDaysLabel(invoice), pageWidth - margin - 18, y + 32, { align: "right" });
     doc.setTextColor(...muted);
-    doc.text(companyName, pageWidth - margin - 18, y + 43, { align: "right" });
+    doc.text(companyName, pageWidth - margin - 18, y + 52, { align: "right" });
     y += 108;
 
     doc.setFillColor(249, 251, 251);
@@ -2515,7 +2521,10 @@
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
           docxCell(
-            [docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
+            [
+              docxParagraph(invoiceWorkDaysLabel(invoice), { align: "right", bold: true, size: 22 }),
+              docxParagraph(companyName, { align: "right", bold: true, size: 22 }),
+            ],
             4700,
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
