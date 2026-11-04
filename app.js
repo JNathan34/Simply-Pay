@@ -490,17 +490,6 @@
     return "0 hrs";
   }
 
-  function invoiceBillingSummary(invoice) {
-    const entries = invoice.entries || [];
-    const hours = entriesHours(entries);
-    const fixedTotal = entriesFixedTotal(entries);
-    if (hours > 0 && fixedTotal > 0) {
-      return `${formatHours(hours)} hours at ${money(invoice.rate, invoice.currency)} per hour + ${money(fixedTotal, invoice.currency)} fixed`;
-    }
-    if (hours > 0) return `${formatHours(hours)} hours at ${money(invoice.rate, invoice.currency)} per hour`;
-    return `${money(invoice.total, invoice.currency)} fixed amount`;
-  }
-
   function currentHours() {
     return entriesHours(state.entries);
   }
@@ -2323,7 +2312,6 @@
     const ink = [23, 33, 31];
     const muted = [99, 113, 109];
     const contentWidth = pageWidth - margin * 2;
-    const workTitle = invoice.entries[0]?.work || state.settings.defaultWork || "Manual Labour";
     const companyName = invoiceCompanyName(invoice);
     const paid = invoiceIsPaid(invoice);
     let y = 58;
@@ -2380,28 +2368,9 @@
     doc.text(plainMoney(invoice.total, invoice.currency), margin + 18, y + 55);
     doc.setTextColor(...ink);
     doc.setFontSize(11);
-    doc.text(invoiceBillingSummary(invoice), pageWidth - margin - 18, y + 32, { align: "right" });
     doc.setTextColor(...muted);
-    doc.text(companyName, pageWidth - margin - 18, y + 52, { align: "right" });
+    doc.text(companyName, pageWidth - margin - 18, y + 43, { align: "right" });
     y += 108;
-
-    doc.setTextColor(...ink);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.text("Work Summary", margin, y);
-    y += 18;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10.5);
-    doc.setTextColor(...muted);
-    const summaryLines = [
-      `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}: ${billingSummary(invoice.entries || [], invoice.currency, invoice.rate)}.`
-    ].filter(Boolean);
-    summaryLines.forEach((lineText) => {
-      const wrapped = doc.splitTextToSize(lineText, contentWidth);
-      doc.text(wrapped, margin, y);
-      y += wrapped.length * 14 + 4;
-    });
-    y += 14;
 
     doc.setFillColor(249, 251, 251);
     doc.setDrawColor(...line);
@@ -2416,16 +2385,7 @@
     doc.text(`Name: ${details.bankName || details.yourName || "Jacob Nathan"}`, margin + 16, y + 45);
     doc.text(`Account Number: ${details.accountNumber || ""}`, margin + 16, y + 63);
     doc.text(`Sort Code: ${details.sortCode || ""}`, margin + 260, y + 63);
-    y += 112;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(...ink);
-    doc.text("Work Log", margin, y);
-    y += 16;
-    y = drawPdfWorkTable(doc, invoice, margin, y, contentWidth, pageHeight, { teal, line, ink });
-
-    y += 30;
+    y += 114;
     if (y > pageHeight - 110) {
       doc.addPage();
       y = 72;
@@ -2455,57 +2415,6 @@
     doc.setFontSize(12);
     doc.setTextColor(...ink);
     doc.text(doc.splitTextToSize(value, width - 28).slice(0, 2), x + 14, y + 40);
-  }
-
-  function drawPdfWorkTable(doc, invoice, margin, startY, width, pageHeight, colors) {
-    const colWidths = [150, width - 340, 82, 108];
-    const headers = ["Date", "Work", "Hours", "Amount"];
-    let y = startY;
-
-    const drawHeader = () => {
-      doc.setFillColor(...colors.teal);
-      doc.rect(margin, y, width, 28, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9.5);
-      let x = margin;
-      headers.forEach((header, index) => {
-        doc.text(header, x + 8, y + 18);
-        x += colWidths[index];
-      });
-      y += 28;
-    };
-
-    drawHeader();
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9.5);
-    sortedEntries(invoice.entries).forEach((entry, index) => {
-      if (y > pageHeight - 88) {
-        doc.addPage();
-        y = 72;
-        drawHeader();
-      }
-
-      const rowHeight = 32;
-      if (index % 2 === 0) {
-        doc.setFillColor(249, 251, 251);
-        doc.rect(margin, y, width, rowHeight, "F");
-      }
-      doc.setDrawColor(...colors.line);
-      doc.rect(margin, y, width, rowHeight);
-      doc.setTextColor(...colors.ink);
-      let x = margin;
-      doc.text(doc.splitTextToSize(formatWorkDate(entry.date), colWidths[0] - 16), x + 8, y + 19);
-      x += colWidths[0];
-      doc.text(doc.splitTextToSize(invoiceWorkDescription(entry, invoice), colWidths[1] - 16), x + 8, y + 19);
-      x += colWidths[1];
-      doc.text(entryIsFixed(entry) ? "Fixed" : formatHours(entryHours(entry)), x + colWidths[2] - 8, y + 19, { align: "right" });
-      x += colWidths[2];
-      doc.text(plainMoney(entryAmount(entry, invoice.rate), invoice.currency), x + colWidths[3] - 8, y + 19, { align: "right" });
-      y += rowHeight;
-    });
-
-    return y;
   }
 
   async function exportInvoiceWord(invoice) {
@@ -2545,7 +2454,6 @@
   function docxDocumentXml(invoice) {
     const details = invoice.details || {};
     const paid = invoiceIsPaid(invoice);
-    const workTitle = invoice.entries[0]?.work || "Manual Labour";
     const companyName = invoiceCompanyName(invoice);
     const period = `${formatShortDate(invoice.periodStart)} to ${formatShortDate(invoice.periodEnd)}`;
     const paidText = paid ? `PAID${invoice.paidAt ? ` ${formatShortDate(invoice.paidAt)}` : ""}` : "";
@@ -2594,17 +2502,13 @@
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
           docxCell(
-            [docxParagraph(invoiceBillingSummary(invoice), { align: "right", bold: true, size: 22 }), docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
+            [docxParagraph(companyName, { align: "right", bold: true, size: 22 })],
             4700,
             { shading: "E6F5EF", borderColor: "B6D6CE" }
           ),
         ],
       ]),
-      docxParagraph("Work Summary", { bold: true, size: 26, before: 360, after: 120 }),
-      docxParagraph(
-        `${workTitle} for ${companyName} across ${invoice.entries.length} ${invoice.entries.length === 1 ? "work day" : "work days"}: ${billingSummary(invoice.entries || [], invoice.currency, invoice.rate)}.`,
-        { size: 22, after: 120 }
-      ),
+      docxParagraph("", { after: 180 }),
       docxTable([
         [
           docxCell(
@@ -2619,8 +2523,6 @@
           ),
         ],
       ]),
-      docxParagraph("Work Log", { bold: true, size: 26, before: 360, after: 120 }),
-      docxWorkLogTable(invoice),
       docxParagraph(invoice.note || "Thank you for your business", { bold: true, size: 22, before: 360, after: 320 }),
       docxParagraph(details.yourName || details.bankName || "Jacob Nathan", { bold: true, size: 22 }),
       docxSectionProperties(),
@@ -2630,23 +2532,6 @@
       <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
         <w:body>${body}</w:body>
       </w:document>`;
-  }
-
-  function docxWorkLogTable(invoice) {
-    const header = [
-      docxCell([docxParagraph("Date", { bold: true, color: "FFFFFF", size: 19 })], 2800, { shading: "16756B", borderColor: "16756B" }),
-      docxCell([docxParagraph("Work", { bold: true, color: "FFFFFF", size: 19 })], 4100, { shading: "16756B", borderColor: "16756B" }),
-      docxCell([docxParagraph("Hours", { bold: true, color: "FFFFFF", size: 19 })], 1200, { shading: "16756B", borderColor: "16756B" }),
-      docxCell([docxParagraph("Amount", { bold: true, color: "FFFFFF", size: 19 })], 1300, { shading: "16756B", borderColor: "16756B" }),
-    ];
-    const rows = sortedEntries(invoice.entries).map((entry, index) => [
-      docxCell([docxParagraph(formatWorkDate(entry.date), { size: 20 })], 2800, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(invoiceWorkDescription(entry, invoice), { size: 20 })], 4100, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(entryIsFixed(entry) ? "Fixed" : formatHours(entryHours(entry)), { align: "right", size: 20 })], 1200, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-      docxCell([docxParagraph(plainMoney(entryAmount(entry, invoice.rate), invoice.currency), { align: "right", size: 20 })], 1300, { shading: index % 2 === 0 ? "F9FBFB" : "FFFFFF" }),
-    ]);
-
-    return docxTable([header, ...rows]);
   }
 
   function docxTable(rows) {
