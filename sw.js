@@ -1,10 +1,10 @@
-const CACHE_NAME = "simply-pay-v89";
+const CACHE_NAME = "simply-pay-v90";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css",
   "./styles.css?v=73",
-  "./app.js?v=25",
+  "./app.js?v=26",
   "./manifest.webmanifest",
   "./icons/simply-pay-logo.svg",
   "./icons/plexpoint-logo.png",

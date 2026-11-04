@@ -92,6 +92,7 @@
   const PLEX_MANAGER_SESSION_KEY = "plexpoint_manager_session";
   const plexManager = { users: [], selectedId: null, detail: null, loaded: false, editingPaymentId: null };
   const plexImport = { busy: false, users: [] };
+  let plexManagerLoadVersion = 0;
   let plexDemoStatus = { total: 0, enabled: 0, active: false };
   let plexSort = { column: null, direction: "asc" };
 
@@ -1772,9 +1773,14 @@
     els.plexpointNotice.classList.toggle("error", error);
   }
 
+  function savedPlexManagerSession() {
+    const session = localStorage.getItem(PLEX_MANAGER_SESSION_KEY) || sessionStorage.getItem(PLEX_MANAGER_SESSION_KEY);
+    if (session && !localStorage.getItem(PLEX_MANAGER_SESSION_KEY)) localStorage.setItem(PLEX_MANAGER_SESSION_KEY, session);
+    return session;
+  }
+
   async function plexRequest(path, body) {
-    const managerSession = localStorage.getItem(PLEX_MANAGER_SESSION_KEY) || sessionStorage.getItem(PLEX_MANAGER_SESSION_KEY);
-    if (managerSession && !localStorage.getItem(PLEX_MANAGER_SESSION_KEY)) localStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
+    const managerSession = savedPlexManagerSession();
     const response = await fetch(`${PLEXPOINT_API}${path}`, {
       method: body ? "POST" : "GET", credentials: "include", cache: "no-store",
       headers: { ...(body ? { "Content-Type": "application/json", "X-PlexPoint-Request": "1" } : {}), ...(managerSession ? { "X-PlexPoint-Manager-Session": managerSession } : {}) },
@@ -2088,21 +2094,28 @@
   }
 
   async function loadPlexManager() {
+    const loadVersion = ++plexManagerLoadVersion;
+    const session = savedPlexManagerSession();
+    const isCurrent = () => loadVersion === plexManagerLoadVersion && session === savedPlexManagerSession();
     plexMessage("Loading live PlexPoint payment data…");
     try {
       const data = await plexRequest("users");
+      if (!isCurrent()) return;
       plexManager.users = (data.users || []).filter((user) => user.accountStatus !== "disabled"); plexManager.loaded = true;
       els.plexSigninPanel.classList.add("hidden");
       els.plexLiveContent.classList.remove("hidden");
       renderPlexSummary(); renderPlexUsers(); renderPlexDetail(); plexMessage();
     } catch (error) {
+      if (!isCurrent()) return;
       if (error.status === 401 || error.status === 403) {
-        localStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
-        sessionStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
+        if (error.status === 401) {
+          localStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
+          sessionStorage.removeItem(PLEX_MANAGER_SESSION_KEY);
+        }
         plexManager.users = []; plexManager.detail = null; plexManager.loaded = false;
         els.plexSigninPanel.classList.remove("hidden");
         els.plexLiveContent.classList.add("hidden");
-        plexMessage();
+        plexMessage(error.status === 403 ? error.message : "", error.status === 403);
       }
       else plexMessage(error.message || "Could not load PlexPoint payments.", true);
     }
@@ -3484,15 +3497,17 @@
   syncFormsFromState();
   saveState({ touch: false, queueSync: false });
   render();
-  selectProduct(activeProduct);
+  // Save the returned session before selecting PlexPoint starts its first request.
   const managerSession = new URLSearchParams(window.location.hash.slice(1)).get("manager_session");
   if (managerSession && /^[a-f0-9]{64}$/.test(managerSession)) {
     localStorage.setItem(PLEX_MANAGER_SESSION_KEY, managerSession);
-    history.replaceState({}, "", window.location.pathname);
+    history.replaceState({}, "", `${window.location.pathname}${window.location.search}`);
     selectProduct("plexpoint");
   } else if (new URLSearchParams(window.location.search).get("plex") === "return") {
     history.replaceState({}, "", window.location.pathname);
     void finishPlexSignin();
+  } else {
+    selectProduct(activeProduct);
   }
   registerServiceWorker();
   startAutomaticGoogleSync();
