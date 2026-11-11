@@ -17,7 +17,7 @@
     <script async defer src="https://accounts.google.com/gsi/client"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-    <script defer src="app.js?v=29"></script>
+    <script defer src="app.js?v=30"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -409,11 +409,11 @@
             <h3>Your Bill Details</h3>
             <label>
               <span>Business / heading</span>
-              <input id="businessName" type="text" placeholder="A nathan Brickwork" autocomplete="organization" />
+              <input id="businessName" type="text" autocomplete="organization" />
             </label>
             <label>
               <span>Your name</span>
-              <input id="yourName" type="text" placeholder="Jacob Nathan" autocomplete="name" />
+              <input id="yourName" type="text" autocomplete="name" />
             </label>
             <label>
               <span>Email / phone</span>
@@ -425,15 +425,15 @@
             <h3>Bank Details</h3>
             <label>
               <span>Name on account</span>
-              <input id="bankName" type="text" placeholder="Jacob Nathan" />
+              <input id="bankName" type="text" />
             </label>
             <label>
               <span>Account number</span>
-              <input id="accountNumber" type="text" inputmode="numeric" placeholder="58925008" />
+              <input id="accountNumber" type="text" inputmode="numeric" />
             </label>
             <label>
               <span>Sort code</span>
-              <input id="sortCode" type="text" inputmode="numeric" placeholder="09-01-28" />
+              <input id="sortCode" type="text" inputmode="numeric" />
             </label>
           </section>
 
@@ -474,7 +474,7 @@
             </label>
             <label>
               <span>Next invoice number</span>
-              <input id="nextInvoiceNumber" type="text" placeholder="14" />
+              <input id="nextInvoiceNumber" type="text" placeholder="1" />
             </label>
           </section>
 

@@ -40,12 +40,12 @@
       company: DEFAULT_COMPANY,
     },
     settings: {
-      businessName: "A nathan Brickwork",
-      yourName: "Jacob Nathan",
+      businessName: "",
+      yourName: "",
       businessContact: "",
-      bankName: "Jacob Nathan",
-      accountNumber: "58925008",
-      sortCode: "09-01-28",
+      bankName: "",
+      accountNumber: "",
+      sortCode: "",
       currency: "GBP",
       moneyOwedCurrency: "GBP",
       defaultRate: "",
@@ -54,7 +54,7 @@
       companies: [DEFAULT_COMPANY],
       companyColors: {},
       defaultCompany: DEFAULT_COMPANY,
-      nextInvoiceNumber: "14",
+      nextInvoiceNumber: "1",
       googleClientId: DEFAULT_GOOGLE_CLIENT_ID,
       darkMode: false,
     },
@@ -262,6 +262,14 @@
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
       if (stored && typeof stored === "object") {
+        // First visits saved the old defaults without a modification timestamp.
+        const settings = stored.settings;
+        if (stored.updatedAt === "" && !stored.account && !localStorage.getItem(OLD_STORAGE_KEY)
+          && [stored.entries, stored.invoices, stored.plexPayments, stored.moneyOwed].every((items) => Array.isArray(items) && !items.length)
+          && settings?.businessName && settings.yourName && settings.yourName === settings.bankName
+          && settings.accountNumber && settings.sortCode && settings.nextInvoiceNumber === "14") {
+          return structuredClone(defaultState);
+        }
         return normalizeState(stored);
       }
     } catch (error) {
@@ -2368,7 +2376,7 @@
     doc.setTextColor(...ink);
     doc.setFont("times", "bold");
     doc.setFontSize(25);
-    const businessLines = doc.splitTextToSize(details.businessName || "A nathan Brickwork", contentWidth - 180);
+    const businessLines = doc.splitTextToSize(details.businessName || details.yourName || "", contentWidth - 180);
     doc.text(businessLines, margin, y);
 
     doc.setFont("helvetica", "bold");
@@ -2429,7 +2437,7 @@
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10.5);
     doc.setTextColor(...muted);
-    doc.text(`Name: ${details.bankName || details.yourName || "Jacob Nathan"}`, margin + 16, y + 45);
+    doc.text(`Name: ${details.bankName || details.yourName || ""}`, margin + 16, y + 45);
     doc.text(`Account Number: ${details.accountNumber || ""}`, margin + 16, y + 63);
     doc.text(`Sort Code: ${details.sortCode || ""}`, margin + 260, y + 63);
     y += 114;
@@ -2445,7 +2453,7 @@
     doc.setTextColor(...ink);
     doc.text(invoice.note || "Thank you for your business", margin, y);
     y += 42;
-    doc.text(details.yourName || details.bankName || "Jacob Nathan", margin, y);
+    doc.text(details.yourName || details.bankName || "", margin, y);
 
     doc.save(`${invoiceFileName(invoice)}.pdf`);
     showToast(`Invoice ${invoice.number} PDF downloaded.`);
@@ -2509,7 +2517,7 @@
     const body = [
       docxTable([
         [
-          docxCell([docxParagraph(details.businessName || "A nathan Brickwork", { bold: true, size: 54, font: "Cambria" })], 6500, { border: "none" }),
+          docxCell([docxParagraph(details.businessName || details.yourName || "", { bold: true, size: 54, font: "Cambria" })], 6500, { border: "none" }),
           docxCell(
             [
               docxParagraph("INVOICE", { align: "right", bold: true, color: "0D514A", size: 44 }),
@@ -2565,7 +2573,7 @@
           docxCell(
             [
               docxParagraph("PAYMENT DETAILS", { bold: true, color: "63716D", size: 18 }),
-              docxParagraph(`Name: ${details.bankName || details.yourName || "Jacob Nathan"}`, { size: 21 }),
+              docxParagraph(`Name: ${details.bankName || details.yourName || ""}`, { size: 21 }),
               docxParagraph(`Account Number: ${details.accountNumber || ""}`, { size: 21 }),
               docxParagraph(`Sort Code: ${details.sortCode || ""}`, { size: 21 }),
             ],
@@ -2575,7 +2583,7 @@
         ],
       ]),
       docxParagraph(invoice.note || "Thank you for your business", { bold: true, size: 22, before: 360, after: 320 }),
-      docxParagraph(details.yourName || details.bankName || "Jacob Nathan", { bold: true, size: 22 }),
+      docxParagraph(details.yourName || details.bankName || "", { bold: true, size: 22 }),
       docxSectionProperties(),
     ].join("");
 
