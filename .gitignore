@@ -1,2 +1,3 @@
 .wrangler/
 /.codex-remote-attachments/
+node_modules/
